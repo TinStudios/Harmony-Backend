@@ -3,7 +3,7 @@ module.exports = (websockets, app, database, checkLogin) => {
         const userId = await checkLogin(req.headers.authorization);
         if (userId) {
             if (req.body.username && req.body.username.length < 31) {
-                database.query(`UPDATE users SET username = '${req.body.username}' WHERE id = '${userId}'`, err => {
+                database.query(`UPDATE users SET username = $1 WHERE id = '${userId}'`, [req.body.username], err => {
                     if (!err) {
                         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                             if (!err) {
