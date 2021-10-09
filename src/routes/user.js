@@ -1,5 +1,5 @@
 module.exports = (websockets, app, database, flake) => {
-    app.patch('/user/@me', (req, res) => {
+    app.patch('/users/@me', (req, res) => {
         const userId = await checkLogin(req.headers.authorization);
         if (userId) {
             if (req.body.username && req.body.username.length < 31) {
