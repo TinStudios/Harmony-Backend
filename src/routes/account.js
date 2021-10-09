@@ -19,6 +19,8 @@ module.exports = (websockets, app, database, flake) => {
                                             websocket.send(JSON.stringify({ event: "tokenChange", newToken: token }));
                                             websocket.terminate();
                                         });
+                                        websockets[token] = websockets[oldToken];
+                                        delete websockets[oldToken];
                                     }
                                     res.send({ token: token });
                                 } else {
