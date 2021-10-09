@@ -6,9 +6,13 @@ module.exports = (websockets, app, database, checkLogin) => {
                 database.query(`SELECT * FROM users`, async (err, dbRes) => {
                     if (!err) {
                         const user = dbRes.rows.find(x => x.token == req.headers.authorization);
-                database.query(`UPDATE users SET username = $1, discriminator = $2 WHERE id = '${userId}'`, [req.body.username, dbRes.rows.find(x => x.username == req.body.username && x.discriminator == user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username)) : user.discriminator], err => {
+                        const discriminator = dbRes.rows.find(x => x.username == req.body.username && x.discriminator == user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username)) : user.discriminator;
+                database.query(`UPDATE users SET username = $1, discriminator = $2 WHERE id = '${userId}'`, [req.body.username, discriminator], err => {
                             if (!err) {
-                                res.send(Object.keys(user).reduce((obj, key, index) => key != "token" && key != "password" ? ({ ...obj, [key]: Object.keys(user).map(x => x == "guilds" ? JSON.parse(user[x]) : user[x])[index] }) : null, {}));
+                                const returnedUser = Object.keys(user).reduce((obj, key, index) => key != "token" && key != "password" ? ({ ...obj, [key]: Object.keys(user).map(x => x == "guilds" ? JSON.parse(user[x]) : user[x])[index] }) : null, {});
+                                returnedUser.username = req.body.username;
+                                returnedUser.discriminator = discriminator;
+                                res.send();
                             } else {
                                 res.status(500).send({});
                             }
