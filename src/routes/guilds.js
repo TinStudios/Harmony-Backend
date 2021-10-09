@@ -40,7 +40,7 @@ module.exports = (websockets, app, database, checkLogin, flake) => {
                     owner: userId,
                     channels: [{ id: flake.gen().toString(), name: 'general', messages: [] }]
                 }
-            database.query(`INSERT INTO guilds (id, name, owner, channels) VALUES ('${guild.id}', '${guild.name}', '${guild.owner}', '${JSON.stringify(guild.channels)}')`, (err, dbRes) => {
+            database.query(`INSERT INTO guilds (id, name, owner, channels) VALUES($1, $2, $3, $4)`, [guild.id, guild.name, guild.owner, JSON.stringify(guild.channels)], (err, dbRes) => {
                 if (!err) {
                     res.status(200).send(guild);
                 } else {
