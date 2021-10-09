@@ -1,0 +1,28 @@
+{
+  "name": "dot-chat",
+  "version": "0.0.0",
+  "description": "Dot Chat server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dot-Studios/Dot-Chat-Server.git"
+  },
+  "author": "Dot Studios",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Dot-Studios/Dot-Chat-Server/issues"
+  },
+  "homepage": "https://github.com/Dot-Studios/Dot-Chat-Server#readme",
+  "dependencies": {
+    "argon2": "^0.28.2",
+    "express": "^4.17.1",
+    "flakeid": "^1.0.0",
+    "jose": "^3.20.1",
+    "pg": "^8.7.1",
+    "ws": "^8.2.3"
+  }
+}
