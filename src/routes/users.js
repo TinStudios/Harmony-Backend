@@ -1,4 +1,5 @@
 module.exports = (websockets, app, database, checkLogin) => {
+    const argon2 = require('argon2');
     app.patch('/users/@me', async (req, res) => {
         const userId = await checkLogin(req.headers.authorization);
         if (userId) {
