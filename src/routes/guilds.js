@@ -44,13 +44,13 @@ module.exports = (websockets, app, database, checkLogin, flake) => {
                 if (!err) {
                     database.query(`SELECT * FROM users`, (err, dbRes) => {
                         if (!err) {
-                            console.log(dbRes.rows)
                     let guilds = JSON.parse(dbRes.rows.find(x => x.token == req.headers.authorization).guilds);
                     guilds.push(guild.id);
                     database.query(`UPDATE users SET guilds = ${JSON.stringify(guilds)} WHERE id = userId`, (err, dbRes) => {
                         if (!err) {
                     res.status(200).send(guild);
                         } else {
+                            console.log(err);
                             res.status(500).send({});  
                         }
                     });
