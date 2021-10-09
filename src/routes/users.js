@@ -33,6 +33,8 @@ module.exports = (websockets, app, database, checkLogin) => {
                         res.status(500).send({});
                     }
                 });
+            } else {
+                res.status(400).send({});
             }
         } else {
             res.status(401).send({});
