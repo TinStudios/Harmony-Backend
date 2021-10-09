@@ -1,7 +1,8 @@
 module.exports = (websockets, app, database, checkLogin) => {
-    const argon2 = require('argon2');const { SignJWT } = require('jose/jwt/sign');
+    const argon2 = require('argon2');
+    const { SignJWT } = require('jose/jwt/sign');
     const { importPKCS8 } = require('jose/key/import');
-    
+
     app.patch('/users/@me', async (req, res) => {
         const userId = await checkLogin(req.headers.authorization);
         if (userId) {
