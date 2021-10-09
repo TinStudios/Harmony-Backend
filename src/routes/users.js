@@ -34,6 +34,8 @@ module.exports = (websockets, app, database, checkLogin) => {
                     }
                 });
             }
+        } else {
+            res.status(401).send({});
         }
     });
 
