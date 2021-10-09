@@ -52,7 +52,7 @@ module.exports = (websockets, app, database, flake) => {
                         const discriminator = generateDiscriminator(dbRes.rows.find(x => x.username == req.body.username)?.map(x => x.discriminator) ?? []);
                         database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, guilds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)` [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), '[]'], (err, dbRes) => {
                             if (!err) {
-                                res.status(20a0).send({ token: token });
+                                res.status(200).send({ token: token });
                             } else {
                                 res.status(500).send({});
                             }
