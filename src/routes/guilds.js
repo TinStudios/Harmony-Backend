@@ -13,7 +13,7 @@ module.exports = (websockets, app, database, checkLogin, flake) => {
                     database.query(`SELECT * FROM users`, async (err, dbRes) => {
                         if (!err) {
                             if (await checkLogin(req.headers.authorization) && dbRes.rows.find(x => x.token == req.headers.authorization).guilds.includes(guildId)) {
-                                res.send(guild);
+                                res.send(Object.keys(guild).map(x => x == "channels" ? JSON.parse(guild[x]) : guild[x]));
                             } else {
                                 res.status(401).send({});
                             }
