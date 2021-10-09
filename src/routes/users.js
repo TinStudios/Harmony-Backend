@@ -8,7 +8,7 @@ module.exports = (websockets, app, database, checkLogin) => {
                         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                             if (!err) {
                                 const user = dbRes.rows.find(x => x.token == req.headers.authorization);
-                                res.send(user);
+                                res.send(Object.keys(user).reduce((obj, key, index) => key != "token" && key != "password" ? ({ ...obj, [key]: Object.keys(user).map(x => x == "guilds" ? JSON.parse(user[x]) : user[x])[index] }) : null, {}));
                             } else {
                                 res.status(500).send({});
                             }
