@@ -1,4 +1,4 @@
-module.exports = (websockets, app, database, flake) => {
+module.exports = (websockets, app, database, checkLogin) => {
     app.patch('/users/@me', (req, res) => {
         const userId = await checkLogin(req.headers.authorization);
         if (userId) {
