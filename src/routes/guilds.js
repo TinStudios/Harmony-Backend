@@ -48,7 +48,7 @@ module.exports = (websockets, app, database, checkLogin, flake) => {
                                 guilds.push(guild.id);
                                 database.query(`UPDATE users SET guilds = '${JSON.stringify(guilds)}' WHERE id = '${userId}'`, (err, dbRes) => {
                                     if (!err) {
-                                        websockets.get(rew.headers.authorization)?.forEach(websocket => {
+                                        websockets.get(req.headers.authorization)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: "guildCreated", guild: guild }));
                                         });
                                         res.status(200).send(guild);
