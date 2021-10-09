@@ -43,4 +43,19 @@ module.exports = (websockets, app, database, checkLogin) => {
             return final;
         }
     }
+
+    async function generateToken(info) {
+        const privateKey = await importPKCS8(`-----BEGIN PRIVATE KEY-----
+                    MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgR252wNfLbo3OaP47
+                    onGOGsL/YIj+iAUA/AK0dP6hW1WhRANCAAT6m/cL0d62FZFEWFjndgPpcNGlhqDp
+                    2msc+XGMbRsgbL7YUxWFa60lNyc6UcCCZi/kZFeSarkAbClv6yNB4esV
+                    -----END PRIVATE KEY-----`, 'ES256');
+        return await new SignJWT({ info })
+            .setProtectedHeader({ alg: 'ES256' })
+            .setIssuedAt()
+            .setIssuer('dot-studios')
+            .setAudience("dot-studios")
+            .setExpirationTime('7d')
+            .sign(privateKey);
+    }
 };
