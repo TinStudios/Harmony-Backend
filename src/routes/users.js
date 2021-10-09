@@ -12,7 +12,7 @@ module.exports = (websockets, app, database, checkLogin) => {
                                 const returnedUser = Object.keys(user).reduce((obj, key, index) => key != "token" && key != "password" ? ({ ...obj, [key]: Object.keys(user).map(x => x == "guilds" ? JSON.parse(user[x]) : user[x])[index] }) : null, {});
                                 returnedUser.username = req.body.username;
                                 returnedUser.discriminator = discriminator;
-                                res.send();
+                                res.send(returnedUser);
                             } else {
                                 res.status(500).send({});
                             }
