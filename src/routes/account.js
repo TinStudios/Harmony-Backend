@@ -42,7 +42,6 @@ module.exports = (websockets, app, database, flake) => {
 
     app.post('/register', (req, res) => {
         if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
-
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
                     if (!dbRes.rows.find(x => x.email == req.body.email)) {
