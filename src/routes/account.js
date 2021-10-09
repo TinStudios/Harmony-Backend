@@ -15,7 +15,7 @@ module.exports = (websockets, app, database, flake) => {
                             database.query(`UPDATE users SET token = '${token}' WHERE id = '${user.id}'`, err => {
                                 if (!err) {
                                     if (websockets.has(oldToken)) {
-                                        websockets.get(oldToken).forEach(websocket => {
+                                        websockets.get(oldToken)?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: "tokenChange", newToken: token }));
                                             websocket.terminate();
                                         });
