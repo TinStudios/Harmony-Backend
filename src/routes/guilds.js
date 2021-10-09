@@ -42,9 +42,8 @@ module.exports = (websockets, app, database, checkLogin, flake) => {
                 }
             database.query(`INSERT INTO guilds (id, name, owner, channels) VALUES($1, $2, $3, $4)`, [guild.id, guild.name, guild.owner, JSON.stringify(guild.channels)], (err, dbRes) => {
                 if (!err) {
-                    database.query(`SELECT guilds FROM users`, (err, dbRes) => {
+                    database.query(`SELECT * FROM users`, (err, dbRes) => {
                         if (!err) {
-                            console.log(dbRes.rows);
                     let guilds = JSON.parse(dbRes.rows.find(x => x.token == req.headers.authorization)[0].guilds);
                     guilds.push(guild.id);
                     database.query(`UPDATE users SET guilds = ${JSON.stringify(guilds)} WHERE id = userId`, (err, dbRes) => {
