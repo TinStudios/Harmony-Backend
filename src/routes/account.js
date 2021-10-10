@@ -49,8 +49,13 @@ module.exports = (websockets, app, database, flake) => {
                         const id = flake.gen().toString();
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = "Bearer " +  await generateToken({ id: id });
+<<<<<<< HEAD
                         const discriminator = generateDiscriminator(dbRes.rows.find(x => x.username == req.body.username)?.map(x => x.discriminator) ?? []);
                         database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, guilds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)` [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), '[]'], (err, dbRes) => {
+=======
+                        const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username).map(x => x.discriminator) ?? []);
+                        database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, guilds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), '[]'], (err, dbRes) => {
+>>>>>>> 1e07bff (Revert "Initial Dot Account")
                             if (!err) {
                                 res.status(200).send({ token: token });
                             } else {

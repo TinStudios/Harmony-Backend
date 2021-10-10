@@ -3,6 +3,10 @@ module.exports = (websockets, app, database, checkLogin) => {
     const flake = new FlakeId();
 
     require('./account')(websockets, app, database, flake);
+<<<<<<< HEAD
+=======
+    require('./users')(websockets, app, database, checkLogin);
+>>>>>>> 1e07bff (Revert "Initial Dot Account")
     require('./guilds')(websockets, app, database, checkLogin, flake);
 
     app.use((req, res, next) => {
