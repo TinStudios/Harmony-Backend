@@ -1,7 +1,7 @@
 {
-  "name": "dot-chat",
+  "name": "dot-account",
   "version": "0.0.0",
-  "description": "Dot Chat server",
+  "description": "Dot Account server",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

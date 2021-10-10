@@ -9,36 +9,11 @@ module.exports = async database => {
         username text NOT NULL,
         discriminator text NOT NULL,
         creation text NOT NULL,
-        guilds text NOT NULL,
+        services text NOT NULL,
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            console.error("Something went terribly wrong initializing. Dot Chat will shutdown.");
-            process.exit(-1);
-        }
-    });
-
-    database.query(`CREATE TABLE IF NOT EXISTS guilds (
-        id text NOT NULL,
-        name text NOT NULL,
-        owner text NOT NULL,
-        channels text NOT NULL,
-        PRIMARY KEY (id)
-    )`, (err, dbRes) => {
-        if (err) {
-            console.error("Something went terribly wrong initializing. Dot Chat will shutdown.");
-            process.exit(-1);
-        }
-    });
-
-    database.query(`CREATE TABLE IF NOT EXISTS invites (
-        code text NOT NULL,
-        guild text NOT NULL,
-        channels text NOT NULL,
-        PRIMARY KEY (code)
-    )`, (err, dbRes) => {
-        if (err) {
-            console.error("Something went terribly wrong initializing. Dot Chat will shutdown.");
+            console.error("Something went terribly wrong initializing. Dot Accounts will shutdown.");
             process.exit(-1);
         }
     });
