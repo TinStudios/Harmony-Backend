@@ -1,6 +1,10 @@
-module.exports = (websockets, app, database) => {
-    require('./account')(websockets, app, database);
-    require('./users')(websockets, app, database);
+module.exports = (websockets, app, database, checkLogin) => {
+    const FlakeId = require('flakeid');
+    const flake = new FlakeId();
+
+    require('./account')(websockets, app, database, flake);
+    require('./users')(websockets, app, database, checkLogin);
+    require('./guilds')(websockets, app, database, checkLogin, flake);
 
     app.use((req, res, next) => {
         res.status(404).send({});
