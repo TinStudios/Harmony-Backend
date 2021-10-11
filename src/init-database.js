@@ -7,6 +7,7 @@ module.exports = async database => {
         channels text NOT NULL,
         roles text NOT NULL,
         members text NOT NULL,
+        bans text NOT NULL,
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {

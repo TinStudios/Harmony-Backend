@@ -29,6 +29,12 @@ module.exports = (websockets, app, database) => {
         });
     });
 
+    require('./channels')(websockets, app, database, flake);
+
+    require('./roles')(websockets, app, database, flake);
+
+    require('./members')(websockets, app, database);
+
     require('./guilds')(websockets, app, database, flake);
 >>>>>>> 546e288 (Initial guild support)
 
