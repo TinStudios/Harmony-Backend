@@ -1,10 +1,27 @@
-module.exports = (websockets, app, database, checkLogin) => {
+module.exports = (websockets, app, database) => {
     const FlakeId = require('flakeid');
     const flake = new FlakeId();
 
-    require('./account')(websockets, app, database, flake);
-    require('./users')(websockets, app, database, checkLogin);
-    require('./guilds')(websockets, app, database, checkLogin, flake);
+    app.use((req, res, next) => {
+        require('needle').get('http://localhost:3000/users/@me', {
+            headers: {
+                'Authorization': req.headers.authorization
+            }
+        }, function (err, resp) {
+            if (!err) {
+                if (resp.statusCode == 200) {
+                    res.locals.user = resp.body.id;
+                    next();
+                } else {
+                    res.status(resp.statusCode).send({});
+                }
+            } else {
+                res.status(500).send({});
+            }
+        });
+    });
+
+    require('./guilds')(websockets, app, database, flake);
 
     app.use((req, res, next) => {
         res.status(404).send({});
