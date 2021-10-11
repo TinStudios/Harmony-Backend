@@ -7,7 +7,7 @@ const { Client } = require('pg');
 const app = express();
 app.use(express.json());
 const wss = new WebSocketServer({ noServer: true });
-const config = JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString());
+const config = JSON.parse(require('fs').readFileSync(__dirname + '/../config.json').toString());
 const ws = new WebSocket(`${config.dotAccount}/socket?dot-key=${encodeURIComponent(config.dotKey)}`);
 const server = createServer(app);
 const database = new Client({
