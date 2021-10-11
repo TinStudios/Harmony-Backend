@@ -34,5 +34,10 @@ server.listen(3001, async () => {
         });
     });
 
+    ws.on('close', () => {
+        console.error('We lost connection to Dot Account. Dot Chat will shutdown.');
+        process.exit(-1);
+    });
+
     console.log('Listening on port 3001');
 });

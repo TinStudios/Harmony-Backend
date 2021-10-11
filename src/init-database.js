@@ -27,4 +27,15 @@ module.exports = async database => {
         }
     });
 
+    database.query(`CREATE TABLE IF NOT EXISTS friends (
+        id text NOT NULL,
+        friends text NOT NULL,
+        PRIMARY KEY (id)
+    )`, (err, dbRes) => {
+        if (err) {
+            console.error('Something went terribly wrong initializing. Dot Chat will shutdown.');
+            process.exit(-1);
+        }
+    });
+
 };

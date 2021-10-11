@@ -23,6 +23,8 @@ module.exports = (websockets, app, database) => {
 
     require('./guilds')(websockets, app, database, flake);
 
+    require('./friends')(websockets, app, database);
+
     app.use((req, res, next) => {
         res.status(404).send({});
     });
