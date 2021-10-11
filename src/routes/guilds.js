@@ -33,11 +33,12 @@ module.exports = (websockets, app, database, flake) => {
             const guild = {
                 id: flake.gen().toString(),
                 name: req.body.name,
-                channels: [{ id: flake.gen().toString(), name: 'general', topic: null, permissions: 192, position: 0, messages: [], pins: [] }],
-                roles: [{ id: 0, name: 'Owner', permissions: 3647, color: '#FFC0CB', hoist: false, position: 0 }],
-                members: [{ id: res.locals.user, nickname: null, roles: ['0'] }]
+                channels: [{ id: flake.gen().toString(), name: 'general', topic: null, roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }], messages: [], pins: [] }],
+                roles: [{ id: 0, name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: 1, name: 'Members', permissions: 513, color: null, hoist: false }],
+                members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
+                bans: []
             }
-            database.query(`INSERT INTO guilds (id, name, channels, roles, members) VALUES($1, $2, $3, $4, $5)`, [guild.id, guild.name, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members)], (err, dbRes) => {
+            database.query(`INSERT INTO guilds (id, name, channels, roles, members, bans) VALUES($1, $2, $3, $4, $5, $6)`, [guild.id, guild.name, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans)], (err, dbRes) => {
                 if (!err) {
                     websockets.get(res.locals.user)?.forEach(websocket => {
                         websocket.send(JSON.stringify({ event: 'guildCreated', guild: guild }));
