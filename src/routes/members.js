@@ -9,7 +9,7 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const guild = dbRes.rows.find(x => x.id == guildId);
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).includes(res.locals.user)) {
                         require('needle').get('http://localhost:3000/users/all', {
                             headers: {
@@ -21,8 +21,8 @@ module.exports = (websockets, app, database, flake) => {
                                     if (!err) {
                                         res.send(JSON.parse(guild.members).map(x => {
                                             if (x) {
-                                                x.username = resp.body.find(y => x.id == y.id).username;
-                                                x.discriminator = resp.body.find(y => x.id == y.id).discriminator;
+                                                x.username = resp.body.find(y => x?.id == y.id).username;
+                                                x.discriminator = resp.body.find(y => x?.id == y.id).discriminator;
                                             }
                                             return x;
                                         }));
@@ -59,7 +59,7 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId && userId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const guild = dbRes.rows.find(x => x.id == guildId);
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).includes(res.locals.user)) {
                         require('needle').get('http://localhost:3000/users/' + userId, {
                             headers: {
@@ -69,7 +69,7 @@ module.exports = (websockets, app, database, flake) => {
                             if (!err) {
                                 if (resp.statusCode == 200) {
                                     if (!err) {
-                                        res.send(JSON.parse(guild.members).filter(x => x.id == userId).map(x => {
+                                        res.send(JSON.parse(guild.members).filter(x => x?.id == userId).map(x => {
                                             x.username = resp.body.username;
                                             x.discriminator = resp.body.discriminator;
                                             return x;
@@ -105,14 +105,14 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const guild = dbRes.rows.find(x => x.id == guildId);
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         if (JSON.parse(guild.members).find(x => x?.id == res.locals.user)?.roles.find(x => (JSON.parse(guild.roles).find(y => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
-                                const user = members.find(x => x.id == res.locals.user);
+                                const user = members.find(x => x?.id == res.locals.user);
                                 user.nickname = req.body.nickname ? req.body.nickname : null;
-                                members[members.findIndex(x => x.id == res.locals.user)] = user;
+                                members[members.findIndex(x => x?.id == res.locals.user)] = user;
                                 database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach(member => {
@@ -154,14 +154,14 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId && userId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const guild = dbRes.rows.find(x => x.id == guildId);
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
-                        if (JSON.parse(guild.members).find(x => x.id == res.locals.user).roles.find(x => (JSON.parse(guild.roles).find(y => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
+                        if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (JSON.parse(guild.roles).find(y => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
-                                const user = members.find(x => x.id == userId);
+                                const user = members.find(x => x?.id == userId);
                                 user.nickname = req.body.nickname ? req.body.nickname : null;
-                                members[members.findIndex(x => x.id == userId)] = user;
+                                members[members.findIndex(x => x?.id == userId)] = user;
                                 database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach(member => {
@@ -203,13 +203,13 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId && userId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const guild = dbRes.rows.find(x => x.id == guildId);
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         if (JSON.parse(guild.members).find(x => x?.id == res.locals.user)?.roles.find(x => (JSON.parse(guild.roles).find(y => y?.id == x).permissions & 0x0000000002) == 0x0000000002)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
-                                const user = members.find(x => x.id == userId);
-                                delete members[members.findIndex(x => x.id == userId)];
+                                const user = members.find(x => x?.id == userId);
+                                delete members[members.findIndex(x => x?.id == userId)];
                                 let bans = JSON.parse(guild.bans);
                                 if (req.body.ban) {
                                     bans.push(userId);

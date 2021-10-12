@@ -9,6 +9,7 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x.id == guildId);
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -32,6 +33,9 @@ module.exports = (websockets, app, database, flake) => {
                     if (guild.members.includes(res.locals.user)) {
                         res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {}));
 =======
+=======
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
+>>>>>>> 7dfcbfd (I think we already have basic stuff ready. Though some checks and positions are missing)
                     if (guild) {
                         if (guild.members.includes(res.locals.user)) {
                             res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {}));
@@ -89,9 +93,10 @@ module.exports = (websockets, app, database, flake) => {
             const guild = {
                 id: flake.gen().toString(),
                 name: req.body.name,
-                channels: [{ id: flake.gen().toString(), name: 'general', topic: null, roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }], messages: [], pins: [] }],
-                roles: [{ id: 0, name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: 1, name: 'Members', permissions: 513, color: null, hoist: false }],
+                channels: [{ id: flake.gen().toString(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }], messages: [], pins: [] }],
+                roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: 1, name: 'Members', permissions: 513, color: null, hoist: false }],
                 members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
+                creation: Date.now(),
                 bans: []
             }
             database.query(`INSERT INTO guilds (id, name, channels, roles, members, bans) VALUES($1, $2, $3, $4, $5, $6)`, [guild.id, guild.name, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans)], (err, dbRes) => {
@@ -125,10 +130,10 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const preGuild = dbRes.rows.find(x => x.id == guildId);
+                    const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     const guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {});
                     if (guild) {
-                        if (guild.members.find(x => x.id == res.locals.user).roles.find(x => (guild.roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
+                        if (guild.members.find(x => x?.id == res.locals.user).roles.find(x => (guild.roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -136,9 +141,9 @@ module.exports = (websockets, app, database, flake) => {
                                 changesWereMade = true;
                             }
 
-                            if (req.body.owner && guild.members.find(x => x.id == res.locals.user).roles.includes('0') && guild.members.find(x => x.id == req.body.owner)) {
-                                guild.members[guild.members.findIndex(x => x.id == res.locals.user)].roles.splice(guild.members[guild.members.findIndex(x => x.id == res.locals.user)].roles.indexOf('0'), 1);
-                                guild.members[guild.members.findIndex(x => x.id == req.body.owner)].roles.push('0');
+                            if (req.body.owner && guild.members.find(x => x?.id == res.locals.user).roles.includes('0') && guild.members.find(x => x?.id == req.body.owner)) {
+                                guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.splice(guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.indexOf('0'), 1);
+                                guild.members[guild.members.findIndex(x => x?.id == req.body.owner)].roles.push('0');
                                 changesWereMade = true;
                             }
 
@@ -192,10 +197,10 @@ module.exports = (websockets, app, database, flake) => {
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
-                    const preGuild = dbRes.rows.find(x => x.id == guildId);
+                    const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     const guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {});
                     if (guild) {
-                        if (guild.members.find(x => x.id == res.locals.user).roles.includes('0')) {
+                        if (guild.members.find(x => x?.id == res.locals.user).roles.includes('0')) {
 
                             database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
                                 if (!err) {
