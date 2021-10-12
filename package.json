@@ -1,5 +1,5 @@
 {
-  "name": "dot-chat",
+  "name": "dot-chat-server",
   "version": "0.0.0",
   "description": "Dot Chat server",
   "main": "src/index.js",
