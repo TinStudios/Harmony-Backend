@@ -21,6 +21,8 @@ module.exports = (websockets, app, database) => {
         });
     });
 
+    require('./messages')(websockets, app, database, flake);
+
     require('./channels')(websockets, app, database, flake);
 
     require('./roles')(websockets, app, database, flake);

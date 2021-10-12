@@ -3,7 +3,7 @@ module.exports = (websockets, app, database) => {
     app.get('/friends', async (req, res) => {
         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
             if (!err) {
-                const friends = JSON.parse(dbRes.rows.find(x => x.id == res.locals.user)).friends;
+                const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user)).friends;
                 if (friends.length > 0) {
                     res.send(friends.friends);
                 } else {
@@ -24,8 +24,8 @@ module.exports = (websockets, app, database) => {
         if (friendId) {
             database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                 if (!err) {
-                    const friends = JSON.parse(dbRes.rows.find(x => x.id == res.locals.user)).friends;
-                    const friend = friends.find(x => x.id == friendId);
+                    const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user)).friends;
+                    const friend = friends.find(x => x?.id == friendId);
                     if (friend) {
                         res.send(friend);
                     } else {
@@ -54,9 +54,9 @@ module.exports = (websockets, app, database) => {
                     if (resp.statusCode == 200) {
                         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                             if (!err) {
-                                const dbEntry = dbRes.rows.find(x => x.id == res.locals.user);
+                                const dbEntry = dbRes.rows.find(x => x?.id == res.locals.user);
                                 const friends = JSON.parse(dbEntry?.friends ?? "[]");
-                                if (res.locals.user != friendId && !friends.find(x => x.id == friendId)) {
+                                if (res.locals.user != friendId && !friends.find(x => x?.id == friendId)) {
                                     const friend = { id: friendId, blocked: req.body.type == 'blocked' };
                                     friends.push(friend);
                                     if (dbEntry) {
@@ -104,12 +104,12 @@ module.exports = (websockets, app, database) => {
         if (friendId && (req.body.type == 'friend' || req.body.type == 'blocked')) {
             database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                 if (!err) {
-                    const friends = JSON.parse(dbRes.rows.find(x => x.id == res.locals.user)?.friends ?? "[]");
-                    if (res.locals.user != friendId && friends.find(x => x.id == friendId)) {
-                        friends[friends.findIndex(x => x.id == friendId)].blocked = req.body.type == 'blocked';
+                    const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user)?.friends ?? "[]");
+                    if (res.locals.user != friendId && friends.find(x => x?.id == friendId)) {
+                        friends[friends.findIndex(x => x?.id == friendId)].blocked = req.body.type == 'blocked';
                         database.query(`UPDATE friends SET friends = $1`, [JSON.stringify(friends)], (err, dbRes) => {
                             if (!err) {
-                                res.status(200).send(friends[friends.findIndex(x => x.id == friendId)]);
+                                res.status(200).send(friends[friends.findIndex(x => x?.id == friendId)]);
                             } else {
                                 res.status(500).send({});
                             }
@@ -135,10 +135,10 @@ module.exports = (websockets, app, database) => {
         if (friendId) {
             database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                 if (!err) {
-                    const friends = JSON.parse(dbRes.rows.find(x => x.id == res.locals.user)?.friends ?? "[]");
+                    const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user)?.friends ?? "[]");
                     const exFriend = friends.find(x => x?.id == friendId);
                     if (res.locals.user != friendId && exFriend) {
-                        delete friends[friends.findIndex(x => x.id == friendId)];
+                        delete friends[friends.findIndex(x => x?.id == friendId)];
                         database.query(`UPDATE friends SET friends = $1`, [JSON.stringify(friends)], (err, dbRes) => {
                             if (!err) {
                                 res.status(200).send(exFriend);
