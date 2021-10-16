@@ -3,6 +3,7 @@ module.exports = (websockets, app, database) => {
     const flake = new FlakeId();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     require('./account')(websockets, app, database, flake);
 <<<<<<< HEAD
 =======
@@ -10,10 +11,14 @@ module.exports = (websockets, app, database) => {
 >>>>>>> 1e07bff (Revert "Initial Dot Account")
     require('./guilds')(websockets, app, database, checkLogin, flake);
 =======
+=======
+    app.use('/icons', require('express').static(__dirname + '/../../icons'));
+
+>>>>>>> 487ffb6 (idk)
     app.use((req, res, next) => {
         require('needle').get('http://localhost:3000/users/@me', {
             headers: {
-                'Authorization': req.headers.authorization
+                'Authorization': req.headers.authorization ?? ""
             }
         }, function (err, resp) {
             if (!err) {

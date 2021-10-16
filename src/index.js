@@ -2,10 +2,12 @@ const { createServer } = require('http');
 const WebSocketServer = require('ws').WebSocketServer;
 const WebSocket = require('ws').WebSocket;
 const express = require('express');
+const cors = require('cors');
 const { Client } = require('pg');
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 const wss = new WebSocketServer({ noServer: true });
 const config = JSON.parse(require('fs').readFileSync(__dirname + '/../config.json').toString());
 const ws = new WebSocket(`${config.dotAccount}/socket?dot-key=${encodeURIComponent(config.dotKey)}`);
