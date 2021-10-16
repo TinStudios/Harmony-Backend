@@ -19,6 +19,7 @@
   "homepage": "https://github.com/Dot-Studios/Dot-Chat-Server#readme",
   "dependencies": {
     "argon2": "^0.28.2",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "flakeid": "^1.0.0",
     "is-color": "^1.0.2",

@@ -2,10 +2,12 @@ module.exports = (websockets, app, database) => {
     const FlakeId = require('flakeid');
     const flake = new FlakeId();
 
+    app.use('/icons', require('express').static(__dirname + '/../../icons'));
+
     app.use((req, res, next) => {
         require('needle').get('http://localhost:3000/users/@me', {
             headers: {
-                'Authorization': req.headers.authorization
+                'Authorization': req.headers.authorization ?? ""
             }
         }, function (err, resp) {
             if (!err) {

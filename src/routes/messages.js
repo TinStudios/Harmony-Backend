@@ -1,6 +1,4 @@
 module.exports = (websockets, app, database, flake) => {
-    const { importSPKI } = require('jose/key/import');
-    const { CompactEncrypt } = require('jose/jwe/compact/encrypt')
 
     app.get('/guilds/*/channels/*/messages', (req, res) => {
         const urlParams = Object.values(req.params)
@@ -97,16 +95,10 @@ module.exports = (websockets, app, database, flake) => {
                         if (JSON.parse(guild.members).find(x => x?.id == res.locals.user)?.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
                             let messages = channel.messages;
 
-                            const encoder = new TextEncoder()
-
-const jwe = await new CompactEncrypt(encoder.encode(req.body.message))
-  .setProtectedHeader({ alg: 'ECDH-ES+A256KW', enc: 'A256GCM' })
-  .encrypt(await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256'));
-
                             const message = {
                                 id: flake.gen().toString(),
                                 author: res.locals.user,
-                                content: jwe,
+                                content: req.locals.message,
                                 creation: Date.now()
                             };
                             messages.push(message);
@@ -160,15 +152,8 @@ const jwe = await new CompactEncrypt(encoder.encode(req.body.message))
                         let messages = channel.messages;
                         let message = messages.find(x => x?.id == messageId);
                         if (message.author == res.locals.user && JSON.parse(guild.members).find(x => x?.id == res.locals.user)?.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
-                            
 
-                            const encoder = new TextEncoder()
-
-const jwe = await new CompactEncrypt(encoder.encode(req.body.message))
-  .setProtectedHeader({ alg: 'ECDH-ES+A256KW', enc: 'A256GCM' })
-  .encrypt(await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256'));
-
-                            message.content = jwe;
+                            message.content = req.locals.message;
                             messages[messages.findIndex(x => x?.id == messageId)] = message;
                             channel.messages = messages;
                             channels[channels.findIndex(x => x?.id == channelId)] = channel;

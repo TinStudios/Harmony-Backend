@@ -4,6 +4,8 @@ module.exports = async database => {
     database.query(`CREATE TABLE IF NOT EXISTS guilds (
         id text NOT NULL,
         name text NOT NULL,
+        description TEXT,
+        public TEXT NOT NULL,
         channels text NOT NULL,
         roles text NOT NULL,
         members text NOT NULL,
