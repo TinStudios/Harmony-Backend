@@ -1,7 +1,7 @@
 {
-  "name": "dot-chat-server",
+  "name": "harmony-chat-server",
   "version": "0.0.0",
-  "description": "Dot Chat server",
+  "description": "Harmony's backend",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dot-Studios/Dot-Chat-Server.git"
+    "url": "git+https://github.com/Harmony-s-Chat/Server.git"
   },
-  "author": "Dot Studios",
+  "author": "Harmony Team",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Dot-Studios/Dot-Chat-Server/issues"
+    "url": "https://github.com/Harmony-s-Chat/Server/issues"
   },
-  "homepage": "https://github.com/Dot-Studios/Dot-Chat-Server#readme",
+  "homepage": "https://github.com/Harmony-s-Chat/Server#readme",
   "dependencies": {
     "argon2": "^0.28.2",
     "cors": "^2.8.5",
