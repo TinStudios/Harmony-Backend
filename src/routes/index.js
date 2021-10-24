@@ -5,7 +5,7 @@ module.exports = (websockets, app, database) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
     app.use((req, res, next) => {
-        require('needle').get('http://localhost:3000/users/@me', {
+        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/@me`, {
             headers: {
                 'Authorization': req.headers.authorization ?? ""
             }

@@ -45,7 +45,7 @@ module.exports = (websockets, app, database) => {
                 return x != '';
             })[0];
         if (friendId && (req.body.type == 'friend' || req.body.type == 'blocked')) {
-            require('needle').get('http://localhost:3000/users/' + friendId, {
+            require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/` + friendId, {
                 headers: {
                     'Authorization': req.headers.authorization
                 }

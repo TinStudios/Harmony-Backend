@@ -2,7 +2,7 @@ module.exports = (wss, websockets, server, database) => {
     server.on('upgrade', (request, socket, head) => {
         const pathname = request.url.split('?')[0];
         const token = decodeURIComponent(request.url.split('token=')[request.url.split('token=').length - 1]);
-        require('needle').get('http://localhost:3000/users/@me', {
+        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/@me`, {
             headers: {
                 'Authorization': token
             }
