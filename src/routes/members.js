@@ -10,25 +10,21 @@ module.exports = (websockets, app, database, flake) => {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
-                    if (JSON.parse(guild.members).includes(res.locals.user)) {
-                        require('needle').get('http://localhost:3000/users/all', {
+                    if (JSON.parse(guild.members).find(x => x.id == res.locals.user)) {
+                        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/all`, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }
                         }, function (err, resp) {
                             if (!err) {
                                 if (resp.statusCode == 200) {
-                                    if (!err) {
                                         res.send(JSON.parse(guild.members).map(x => {
                                             if (x) {
                                                 x.username = resp.body.find(y => x?.id == y.id).username;
                                                 x.discriminator = resp.body.find(y => x?.id == y.id).discriminator;
                                             }
                                             return x;
-                                        }));
-                                    } else {
-                                        res.status(500).send({});
-                                    }
+                                        }).sort((a, b) => (a.nickname ?? a.username) > (b.nickname ?? b.username) ? 1 : (a.nickname ?? a.username) < (b.nickname ?? b.username) ? -1 : 0));
                                 } else {
                                     res.status(resp.statusCode).send({});
                                 }
@@ -61,7 +57,7 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).includes(res.locals.user)) {
-                        require('needle').get('http://localhost:3000/users/' + userId, {
+                        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/` + userId, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }

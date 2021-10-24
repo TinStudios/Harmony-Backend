@@ -13,7 +13,7 @@ module.exports = async database => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            console.error('Something went terribly wrong initializing. Harmony Chat will shutdown.');
+            console.error('Something went terribly wrong initializing. Dot Chat will shutdown.');
             process.exit(-1);
         }
     });
@@ -25,7 +25,7 @@ module.exports = async database => {
         PRIMARY KEY (code)
     )`, (err, dbRes) => {
         if (err) {
-            console.error('Something went terribly wrong initializing. Harmony Chat will shutdown.');
+            console.error('Something went terribly wrong initializing. Dot Chat will shutdown.');
             process.exit(-1);
         }
     });
@@ -36,7 +36,7 @@ module.exports = async database => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            console.error('Something went terribly wrong initializing. Harmony Chat will shutdown.');
+            console.error('Something went terribly wrong initializing. Dot Chat will shutdown.');
             process.exit(-1);
         }
     });

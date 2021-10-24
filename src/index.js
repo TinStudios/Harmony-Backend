@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 const wss = new WebSocketServer({ noServer: true });
 const config = JSON.parse(require('fs').readFileSync(__dirname + '/../config.json').toString());
-const ws = new WebSocket(`${config.account}/socket?key=${encodeURIComponent(config.key)}`);
+const ws = new WebSocket(`ws://${config.account.split("//")[1]}/socket?key=${encodeURIComponent(config.key)}`);
 const server = createServer(app);
 const database = new Client({
     user: 'sapphire',
@@ -37,7 +37,7 @@ server.listen(3001, async () => {
     });
 
     ws.on('close', () => {
-        console.error('We lost connection to Harmony Account. Harmony Chat will shutdown.');
+        console.error('We lost connection to Dot Account. Dot Chat will shutdown.');
         process.exit(-1);
     });
 
