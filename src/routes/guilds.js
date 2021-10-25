@@ -84,7 +84,7 @@ module.exports = (websockets, app, database, flake) => {
                             if(req.body.image?.startsWith('data:image/png')) {    
                                require('fs').writeFileSync(__dirname + '/../../icons/' + guildId + '.png', req.body.image.replace(/^data:image\/png;base64,/, ""), 'base64');   
                                guild.members.forEach(member => {
-                                websockets.get(member)?.forEach(websocket => {
+                                websockets.get(member.id)?.forEach(websocket => {
                                     websocket.send(JSON.stringify({ event: 'guildIconEdited', id: guildId }));
                                 });
                             });       
@@ -150,7 +150,7 @@ module.exports = (websockets, app, database, flake) => {
                                 if (!err) {
                                     if (changesWereMade) {
                                         guild.members.forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'guildEdited', guild: guild }));
                                             });
                                         });
@@ -194,7 +194,7 @@ module.exports = (websockets, app, database, flake) => {
                             database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
                                 if (!err) {
                                     guild.members.forEach(member => {
-                                        websockets.get(member)?.forEach(websocket => {
+                                        websockets.get(member.id)?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: 'guildDelete', guild: guild }));
                                         });
                                     });

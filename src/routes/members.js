@@ -112,7 +112,7 @@ module.exports = (websockets, app, database, flake) => {
                                 database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'memberEdited', member: user }));
                                             });
                                         });
@@ -161,7 +161,7 @@ module.exports = (websockets, app, database, flake) => {
                                 database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'memberEdited', member: user }));
                                             });
                                         });
@@ -213,7 +213,7 @@ module.exports = (websockets, app, database, flake) => {
                                 database.query(`UPDATE guilds SET members = $1, bans = $2 WHERE id = $3`, [JSON.stringify(members), JSON.stringify(bans), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'memberKicked', member: user }));
                                             });
                                         });
