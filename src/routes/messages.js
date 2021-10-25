@@ -32,6 +32,7 @@ module.exports = (websockets, app, database, flake) => {
                                 if (resp.statusCode == 200) {
                             messages = messages.map(message => {
                                 message.author = {
+                                    id: message?.author,
                                     username: resp.body.find(x => x.id == message?.author).username,
                                     nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
                                     discriminator: resp.body.find(x => x.id == message?.author).discriminator
@@ -88,6 +89,7 @@ module.exports = (websockets, app, database, flake) => {
                             if (!err) {
                                 if (resp.statusCode == 200) {
                                 message.author = {
+                                    id: message?.author,
                                     username: resp.body.find(x => x.id == message?.author).username,
                                     nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
                                     discriminator: resp.body.find(x => x.id == message?.author).discriminator
@@ -156,13 +158,14 @@ module.exports = (websockets, app, database, flake) => {
                             if (!err) {
                                 if (resp.statusCode == 200) {
                                     message.author = {
+                                        id: message?.author,
                                         username: resp.body.find(x => x.id == message?.author).username,
                                         nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
                                         discriminator: resp.body.find(x => x.id == message?.author).discriminator
                                     }
                                         JSON.parse(guild.members).forEach(member => {
                                             if(member.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
                                             });
                                         }
@@ -222,7 +225,7 @@ module.exports = (websockets, app, database, flake) => {
                                 if (!err) {
                                         JSON.parse(guild.members).forEach(member => {
                                             if(member.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'messageEdited', guild: guildId, channel: channelId, message: message }));
                                             });
                                         }
@@ -274,7 +277,7 @@ module.exports = (websockets, app, database, flake) => {
                                 if (!err) {
                                         JSON.parse(guild.members).forEach(member => {
                                             if(member.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'messageEdited', guild: guildId, channel: channelId, message: message }));
                                             });
                                         }

@@ -147,7 +147,7 @@ module.exports = (websockets, app, database, flake) => {
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
                                         JSON.parse(guild.members).forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', channel: channel }));
                                             });
                                         });
@@ -208,7 +208,7 @@ module.exports = (websockets, app, database, flake) => {
                                 if (!err) {
                                     if (changesWereMade) {
                                         JSON.parse(guild.members).forEach(member => {
-                                            websockets.get(member)?.forEach(websocket => {
+                                            websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', channel: channel }));
                                             });
                                         });
