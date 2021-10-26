@@ -1,3 +1,5 @@
+const config = require('../utils/config');
+
 module.exports = (websockets, app, database) => {
 
     app.get('/friends', async (req, res) => {
@@ -45,7 +47,7 @@ module.exports = (websockets, app, database) => {
                 return x != '';
             })[0];
         if (friendId && (req.body.type == 'friend' || req.body.type == 'blocked')) {
-            require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/` + friendId, {
+            require('needle').get(`${config.ws.host}:${config.ws.port}/users/` + friendId, {
                 headers: {
                     'Authorization': req.headers.authorization
                 }

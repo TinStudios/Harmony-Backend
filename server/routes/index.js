@@ -1,3 +1,5 @@
+const config = require('../utils/config');
+
 module.exports = (websockets, app, database) => {
     const FlakeId = require('flakeid');
     const flake = new FlakeId();
@@ -5,7 +7,7 @@ module.exports = (websockets, app, database) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
     app.use((req, res, next) => {
-        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/@me`, {
+        require('needle').get(`${config.ws.host}:${config.ws.port}/users/@me`, {
             headers: {
                 'Authorization': req.headers.authorization ?? ""
             }

@@ -1,3 +1,5 @@
+const config = require('../utils/config');
+
 module.exports = (websockets, app, database, flake) => {
 
     app.get('/guilds/*/members', (req, res) => {
@@ -11,7 +13,7 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).find(x => x.id == res.locals.user)) {
-                        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/all`, {
+                        require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }
@@ -57,7 +59,7 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).includes(res.locals.user)) {
-                        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/` + userId, {
+                        require('needle').get(`${config.ws.host}:${config.ws.port}/users/` + userId, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }

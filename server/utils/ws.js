@@ -1,8 +1,10 @@
+const config = require('./config');
+
 module.exports = (wss, websockets, server, database) => {
     server.on('upgrade', (request, socket, head) => {
         const pathname = request.url.split('?')[0];
         const token = decodeURIComponent(request.url.split('token=')[request.url.split('token=').length - 1]);
-        require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/@me`, {
+        require('needle').get(`${config.ws.host}:${config.ws.port}/users/@me`, {
             headers: {
                 'Authorization': token
             }

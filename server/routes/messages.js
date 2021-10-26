@@ -1,3 +1,5 @@
+const config = require('../utils/config');
+
 module.exports = (websockets, app, database, flake) => {
 
     app.get('/guilds/*/channels/*/messages', (req, res) => {
@@ -23,7 +25,7 @@ module.exports = (websockets, app, database, flake) => {
                             } else {
                                 messages = messages.slice(-101);
                             }
-                            require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/all`, {
+                            require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }
@@ -81,7 +83,7 @@ module.exports = (websockets, app, database, flake) => {
                             const messages = channel.messages;
                             const message = messages.find(x => x?.id == messageId);
                             if(message) {
-                                require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/all`, {
+                                require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }
@@ -150,7 +152,7 @@ module.exports = (websockets, app, database, flake) => {
                             channels[channels.findIndex(x => x?.id == channelId)] = channel;
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
-                                    require('needle').get(`${JSON.parse(require('fs').readFileSync(__dirname + '/../../config.json').toString()).account}/users/all`, {
+                                    require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
                             headers: {
                                 'Authorization': req.headers.authorization
                             }
