@@ -16,8 +16,8 @@ const database = new Client({
     port: config.db.port,
 });
 
-const logger = createLogger(true);
-const server = createServer(config.env === 'development');
+const logger = createLogger(config.env === 'development');
+const server = createServer(app);
 
 const websockets = new Map();
 
