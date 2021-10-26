@@ -26,7 +26,7 @@ require('./utils/ws')(wss, websockets, server, database);
 require('./routes')(websockets, app, database);
 
 server.listen(config.server.port, async () => {
-    require('./utils/db')(database);
+    require('./utils/db')(database, logger);
 
     ws.on('message', data => {
         const parsed = JSON.parse(data.toString());
