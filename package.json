@@ -1,7 +1,7 @@
 {
-  "name": "dot-chat-server",
+  "name": "seltorn",
   "version": "0.0.0",
-  "description": "Dot Chat's backend",
+  "description": "Seltorn's backend",
   "main": "server/index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node .",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dot-Studioss/Dot-Chat-Server.git"
+    "url": "git+https://github.com/Seltorn/Seltorn.git"
   },
   "author": "Dot Studios",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Dot-Studioss/Dot-Chat-Server/issues"
+    "url": "https://github.com/Seltorn/Seltorn/issues"
   },
-  "homepage": "https://github.com/Dot-Studioss/Dot-Chat-Server#readme",
+  "homepage": "https://github.com/Seltorn/Seltorn#readme",
   "dependencies": {
     "argon2": "^0.28.2",
     "compression": "^1.7.4",
@@ -29,7 +29,6 @@
     "is-color": "^1.0.2",
     "joi": "^17.4.2",
     "jose": "^3.20.1",
-    "needle": "^3.0.0",
     "pg": "^8.7.1",
     "pino": "^7.0.5",
     "pino-pretty": "^7.1.0",

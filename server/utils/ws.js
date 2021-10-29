@@ -1,15 +1,10 @@
 const config = require('./config');
 
 module.exports = (wss, websockets, server, database) => {
-    server.on('upgrade', (request, socket, head) => {
+    server.on('upgrade', async (request, socket, head) => {
         const pathname = request.url.split('?')[0];
         const token = decodeURIComponent(request.url.split('token=')[request.url.split('token=').length - 1]);
-        require('needle').get(`${config.ws.host}:${config.ws.port}/users/@me`, {
-            headers: {
-                'Authorization': token
-            }
-        }, function (err, resp) {
-            if (pathname === '/socket' && !err && resp.statusCode == 200) {
+            if (pathname === '/socket' && await checkLogin(token)) {
                 wss.handleUpgrade(request, socket, head, (ws) => {
                     var websocketForThis = websockets.get(resp.body.id) ?? [];
                     websocketForThis.push(ws);
@@ -18,6 +13,35 @@ module.exports = (wss, websockets, server, database) => {
             } else {
                 socket.destroy();
             }
-        });
     });
+
+    async function checkLogin(token) {
+        return await new Promise(resolve => {
+            database.query(`SELECT * FROM users`, async (err, res) => {
+                if (!err) {
+                    if (res.rows.map(x => x.token == token).includes(true)) {
+                        try {
+                            const { importSPKI } = require('jose/key/import');
+                            const { jwtVerify } = require('jose/jwt/verify');
+
+                            const ecPublicKey = await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256');
+
+                            const info = await jwtVerify(token.split('Bearer ')[1], ecPublicKey, {
+                                issuer: 'seltorn',
+                                audience: 'seltorn'
+                            });
+                            resolve(res.rows.find(x => x.token == token));
+
+                        } catch {
+                            resolve(false);
+                        }
+                    } else {
+                        resolve(false);
+                    }
+                } else {
+                    resolve(false);
+                }
+            });
+        });
+    }
 }

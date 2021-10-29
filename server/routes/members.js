@@ -13,23 +13,15 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).find(x => x.id == res.locals.user)) {
-                        require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
-                            headers: {
-                                'Authorization': req.headers.authorization
-                            }
-                        }, function (err, resp) {
+                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
                             if (!err) {
-                                if (resp.statusCode == 200) {
                                         res.send(JSON.parse(guild.members).map(x => {
                                             if (x) {
-                                                x.username = resp.body.find(y => x?.id == y.id).username;
-                                                x.discriminator = resp.body.find(y => x?.id == y.id).discriminator;
+                                                x.username = dbRes.rows.find(y => x?.id == y.id).username;
+                                                x.discriminator = dbRes.rows.find(y => x?.id == y.id).discriminator;
                                             }
                                             return x;
                                         }).sort((a, b) => (a.nickname ?? a.username) > (b.nickname ?? b.username) ? 1 : (a.nickname ?? a.username) < (b.nickname ?? b.username) ? -1 : 0));
-                                } else {
-                                    res.status(resp.statusCode).send({});
-                                }
                             } else {
                                 res.status(500).send({});
                             }
@@ -59,28 +51,16 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).includes(res.locals.user)) {
-                        require('needle').get(`${config.ws.host}:${config.ws.port}/users/` + userId, {
-                            headers: {
-                                'Authorization': req.headers.authorization
-                            }
-                        }, function (err, resp) {
-                            if (!err) {
-                                if (resp.statusCode == 200) {
+                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
                                     if (!err) {
                                         res.send(JSON.parse(guild.members).filter(x => x?.id == userId).map(x => {
-                                            x.username = resp.body.username;
-                                            x.discriminator = resp.body.discriminator;
+                                            x.username = dbRes.rows.find(x => x.id == userId).username;
+                                            x.discriminator = dbRes.rows.find(x => x.id == userId).discriminator;
                                             return x;
                                         })[0]);
                                     } else {
                                         res.status(500).send({});
                                     }
-                                } else {
-                                    res.status(resp.statusCode).send({});
-                                }
-                            } else {
-                                res.status(500).send({});
-                            }
                         });
                     } else {
                         res.status(401).send({});
