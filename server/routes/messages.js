@@ -25,26 +25,18 @@ module.exports = (websockets, app, database, flake) => {
                             } else {
                                 messages = messages.slice(-101);
                             }
-                            require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
-                            headers: {
-                                'Authorization': req.headers.authorization
-                            }
-                        }, function (err, resp) {
-                            if (!err) {
-                                if (resp.statusCode == 200) {
+                            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                if (!err) {
                             messages = messages.map(message => {
                                 message.author = {
                                     id: message?.author,
-                                    username: resp.body.find(x => x.id == message?.author).username,
+                                    username: dbRes.rows.find(x => x.id == message?.author).username,
                                     nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
-                                    discriminator: resp.body.find(x => x.id == message?.author).discriminator
+                                    discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
                                 }
                                 return message;
                             })
                             res.send(messages);
-                                } else {
-                                    res.status(resp.statusCode).send({});
-                                }
                             } else {
                                 res.status(500).send({});
                             }
@@ -83,27 +75,19 @@ module.exports = (websockets, app, database, flake) => {
                             const messages = channel.messages;
                             const message = messages.find(x => x?.id == messageId);
                             if(message) {
-                                require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
-                            headers: {
-                                'Authorization': req.headers.authorization
-                            }
-                        }, function (err, resp) {
-                            if (!err) {
-                                if (resp.statusCode == 200) {
+                                database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                    if (!err) {
                                 message.author = {
                                     id: message?.author,
-                                    username: resp.body.find(x => x.id == message?.author).username,
+                                    username: dbRes.rows.find(x => x.id == message?.author).username,
                                     nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
-                                    discriminator: resp.body.find(x => x.id == message?.author).discriminator
+                                    discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
                                 }
                             
                             res.send(message);
                                 } else {
-                                    res.status(resp.statusCode).send({});
+                                    res.status(500).send({});
                                 }
-                            } else {
-                                res.status(500).send({});
-                            }
                         });
                             } else {
                                res.status(404).send({}); 
@@ -152,18 +136,13 @@ module.exports = (websockets, app, database, flake) => {
                             channels[channels.findIndex(x => x?.id == channelId)] = channel;
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
-                                    require('needle').get(`${config.ws.host}:${config.ws.port}/users/all`, {
-                            headers: {
-                                'Authorization': req.headers.authorization
-                            }
-                        }, function (err, resp) {
-                            if (!err) {
-                                if (resp.statusCode == 200) {
-                                    message.author = {
+                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        if (!err) {
+                                        message.author = {
                                         id: message?.author,
-                                        username: resp.body.find(x => x.id == message?.author).username,
+                                        username: dbRes.rows.find(x => x.id == message?.author).username,
                                         nickname: JSON.parse(guild.members).find(x => x.id == message.author).nickname,
-                                        discriminator: resp.body.find(x => x.id == message?.author).discriminator
+                                        discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
                                     }
                                         JSON.parse(guild.members).forEach(member => {
                                             if(member.roles.map(x => channel.roles.find(y => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
@@ -174,12 +153,9 @@ module.exports = (websockets, app, database, flake) => {
                                         });
                                         res.status(200).send(message);
                                     } else {
-                                        res.status(resp.statusCode).send({});
+                                        res.status(500).send({});
                                     }
-                                } else {
-                                    res.status(500).send({});
-                                }
-                            });
+                                });
                                 } else {
                                     res.status(500).send({});
                                 }

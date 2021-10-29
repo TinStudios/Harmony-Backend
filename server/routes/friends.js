@@ -5,7 +5,7 @@ module.exports = (websockets, app, database) => {
     app.get('/friends', async (req, res) => {
         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
             if (!err) {
-                const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user)).friends;
+                const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user) ?? JSON.stringify({ friends: [] })).friends;
                 if (friends.length > 0) {
                     res.send(friends.friends);
                 } else {
@@ -47,13 +47,9 @@ module.exports = (websockets, app, database) => {
                 return x != '';
             })[0];
         if (friendId && (req.body.type == 'friend' || req.body.type == 'blocked')) {
-            require('needle').get(`${config.ws.host}:${config.ws.port}/users/` + friendId, {
-                headers: {
-                    'Authorization': req.headers.authorization
-                }
-            }, function (err, resp) {
+            database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    if (resp.statusCode == 200) {
+                    if(dbRes.find(x => x.id == friendId)) {
                         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                             if (!err) {
                                 const dbEntry = dbRes.rows.find(x => x?.id == res.locals.user);
@@ -86,7 +82,7 @@ module.exports = (websockets, app, database) => {
                             }
                         });
                     } else {
-                        res.status(resp.statusCode).send({});
+                        res.stauts(404).send({})
                     }
                 } else {
                     res.status(500).send({});
