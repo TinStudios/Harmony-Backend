@@ -41,6 +41,7 @@ const server = createServer(app);
 const websockets = new Map();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const storage = new NFTStorage({ token: config.storage.apiKey })
 
 ws(wss, websockets, server as unknown as Server, database);
@@ -52,6 +53,9 @@ server.listen(config.server.port, async () => {
 
 =======
 require('./utils/ws')(wss, websockets, server, database, config);
+=======
+require('./utils/ws')(wss, websockets, server, database);
+>>>>>>> b730c3e (Tiny change)
 
 require('./routes')(websockets, app, database);
 
