@@ -20,7 +20,7 @@ const server = createServer(app);
 
 const websockets = new Map();
 
-require('./utils/ws')(wss, websockets, server, database, config);
+require('./utils/ws')(wss, websockets, server, database);
 
 require('./routes')(websockets, app, database);
 
