@@ -16,5 +16,9 @@ app.use(xss());
 app.use(compression());
 
 app.use(cors());
+<<<<<<< HEAD
+=======
+app.options('*', cors);
+>>>>>>> 0718f96 (Changed to TypeScript)
 
 export default app;

@@ -10,9 +10,12 @@ export interface User {
     username: string;
     discriminator: string;
     creation: number;
+<<<<<<< HEAD
     verified: boolean;
     verificator: string;
     otp: string;
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
 };
 
 export interface Friend {
@@ -25,7 +28,10 @@ export interface ReturnedUser {
     username: string;
     discriminator: string;
     creation: number;
+<<<<<<< HEAD
     tfa: boolean;
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
 };
 
 export interface Member {
@@ -55,7 +61,10 @@ export interface Message {
     id: string;
     author: string | Author;
     content: string;
+<<<<<<< HEAD
     attachment?: string;
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
     creation: number;
 };
 
@@ -69,6 +78,7 @@ export interface Channel {
     pins: string[];
 };
 
+<<<<<<< HEAD
 export interface Invite {
     code: string;
     author: string | Author;
@@ -77,6 +87,8 @@ export interface Invite {
     uses: number;
 }
 
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
 export interface Guild {
     id: string;
     name: string,
@@ -86,6 +98,7 @@ export interface Guild {
     roles: Role[],
     members: Member[],
     bans: string[];
+<<<<<<< HEAD
     invites: Invite[];
 };
 
@@ -94,3 +107,6 @@ export interface FileI {
     url: string;
     type: string;
 }; 
+=======
+};
+>>>>>>> 0718f96 (Changed to TypeScript)

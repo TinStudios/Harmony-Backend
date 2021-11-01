@@ -1,4 +1,5 @@
 import express from 'express';
+<<<<<<< HEAD
 import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
 
 import argon2 from 'argon2';
@@ -35,6 +36,28 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+=======
+import { User, ReturnedUser, Info } from '../interfaces';
+
+import argon2 from 'argon2';
+    import { SignJWT } from 'jose/jwt/sign';
+    import { importPKCS8 } from 'jose/key/import';
+import { Client } from 'pg';
+
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+    app.get('/users/@me', async (req: express.Request, res: express.Response) => {
+            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                if (!err) {
+                    const user = dbRes.rows.find(x => x.token == req.headers.authorization);
+                    let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
+                    res.send(returnedUser);
+                } else {
+                    res.status(500).send({});
+                }
+            });
+>>>>>>> 0718f96 (Changed to TypeScript)
     });
 
     app.get('/users/*', async (req: express.Request, res: express.Response) => {
@@ -44,6 +67,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
+<<<<<<< HEAD
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === userId);
@@ -59,11 +83,29 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+=======
+            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                if (!err) {
+                    const user = dbRes.rows.find(x => x.id == userId);
+                    if (user) {
+                        let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
+                        res.send(returnedUser);
+                    } else {
+                        res.status(404).send({});
+                    }
+                } else {
+                    res.status(500).send({});
+                }
+            });
+>>>>>>> 0718f96 (Changed to TypeScript)
     });
 
     app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
+<<<<<<< HEAD
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
                     database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
@@ -309,6 +351,58 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." })
             }
         });
+=======
+                const user = dbRes.rows.find(x => x.id == res.locals.user);
+            database.query(`DELETE FROM users WHERE token = '${req.headers.authorization}'`, async (err, dbRes) => {
+                if (!err) {
+                    let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
+                         websockets.get(user.id)?.forEach(websocket => {
+                        websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
+                    });
+                    res.send(returnedUser);
+                } else {
+                    res.status(500).send({});
+                }
+            });
+        } else {
+            res.status(500).send({});
+        }
+    });
+    });
+
+    app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
+            if ((req.body.username && req.body.username.length < 31) || req.body.password) {
+                database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                    if (!err) {
+                        const user = dbRes.rows.find(x => x.id == res.locals.user);
+                        const discriminator = dbRes.rows.find(x => x.username == req.body.username && x.discriminator == user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username)) : user.discriminator;
+                        const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
+                        database.query(`UPDATE users SET username = $1, discriminator = $2, password = $3, token = $4 WHERE id = $5`, [req.body.username ?? user.username, discriminator, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
+                            if (!err) {
+                                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                preReturnedUser.username = req.body.username;
+                                preReturnedUser.discriminator = discriminator;
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
+        
+                                     websockets.get(user.id)?.forEach(websocket => {
+                                    websocket.send(JSON.stringify({ event: 'userEdited', user: returnedUser }));
+                                });
+                                res.send(returnedUser);
+                            } else {
+                                res.status(500).send({});
+                            }
+                        });
+                    } else {
+                        res.status(500).send({});
+                    }
+                });
+            } else {
+                res.status(400).send({});
+            }
+>>>>>>> 0718f96 (Changed to TypeScript)
     });
 
     function generateDiscriminator(excluded: string[]): string {

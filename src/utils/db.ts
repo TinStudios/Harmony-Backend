@@ -1,8 +1,13 @@
 import { Client } from "pg";
+<<<<<<< HEAD
 import { NFTStorage, File } from 'nft.storage'
 import fs from 'fs';
 
 export default async (database: Client, logger: any, storage: NFTStorage) => {
+=======
+
+module.exports = async (database: Client, logger: any) => {
+>>>>>>> 0718f96 (Changed to TypeScript)
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (
@@ -13,9 +18,12 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         username text NOT NULL,
         discriminator text NOT NULL,
         creation text NOT NULL,
+<<<<<<< HEAD
         verified boolean NOT NULL,
         verificator text NOT NULL,
         otp text NOT NULL,
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
@@ -28,12 +36,19 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         id text NOT NULL,
         name text NOT NULL,
         description TEXT,
+<<<<<<< HEAD
         public boolean NOT NULL,
+=======
+        public TEXT NOT NULL,
+>>>>>>> 0718f96 (Changed to TypeScript)
         channels text NOT NULL,
         roles text NOT NULL,
         members text NOT NULL,
         bans text NOT NULL,
+<<<<<<< HEAD
         invites text NOT NULL,
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
@@ -65,6 +80,7 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         }
     });
 
+<<<<<<< HEAD
     database.query(`CREATE TABLE IF NOT EXISTS meta (
         url text NOT NULL,
         creation text NOT NULL,
@@ -130,4 +146,6 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
 
 }
     });
+=======
+>>>>>>> 0718f96 (Changed to TypeScript)
 };
