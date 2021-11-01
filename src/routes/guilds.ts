@@ -1,6 +1,11 @@
-module.exports = (websockets, app, database, flake) => {
+import express from 'express';
+import { Client } from 'pg';
+import FlakeId from 'flake-idgen';
+const intformat = require('biguint-format');
+import { Guild } from '../interfaces';
 
-    app.get('/guilds', (req, res) => {
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+    app.get('/guilds', (req: express.Request, res: express.Response) => {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
                     const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
@@ -11,8 +16,9 @@ module.exports = (websockets, app, database, flake) => {
             });
     });
 
-    app.get('/guilds/*', (req, res) => {
-        const guildId = Object.values(req.params)
+    app.get('/guilds/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -39,14 +45,14 @@ module.exports = (websockets, app, database, flake) => {
         }
     });
 
-    app.post('/guilds', (req, res) => {
+    app.post('/guilds', (req: express.Request, res: express.Response) => {
         if (req.body.name && req.body.name.length < 31) {
             const guild = {
-                id: flake.gen().toString(),
+                id: intformat(flake.next(), 'dec').toString(),
                 name: req.body.name,
                 description: req.body.description ?? null,
                 public: false,
-                channels: [{ id: flake.gen().toString(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }], messages: [], pins: [] }],
+                channels: [{ id: intformat(flake.next(), 'dec').toString(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }], messages: [], pins: [] }],
                 roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: 1, name: 'Members', permissions: 513, color: null, hoist: false }],
                 members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
                 creation: Date.now(),
@@ -68,8 +74,9 @@ module.exports = (websockets, app, database, flake) => {
         }
     });
 
-    app.patch('/guilds/*/icons', (req, res) => {
-        const guildId = Object.values(req.params)
+    app.patch('/guilds/*/icons', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -79,8 +86,8 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     if (preGuild) {
-                    const guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {});
-                        if (guild.members.find(x => x?.id == res.locals.user).roles.find(x => (guild.roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
+                    const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
+                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.find(x => ((guild.roles.find(y => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
                             if(req.body.image?.startsWith('data:image/png')) {    
                                require('fs').writeFileSync(__dirname + '/../../icons/' + guildId + '.png', req.body.image.replace(/^data:image\/png;base64,/, ""), 'base64');   
                                guild.members.forEach(member => {
@@ -110,8 +117,9 @@ module.exports = (websockets, app, database, flake) => {
         }
     });
 
-    app.patch('/guilds/*', (req, res) => {
-        const guildId = Object.values(req.params)
+    app.patch('/guilds/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -121,8 +129,8 @@ module.exports = (websockets, app, database, flake) => {
                 if (!err) {
                     const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     if (preGuild) {
-                    const guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {});
-                        if (guild.members.find(x => x?.id == res.locals.user).roles.find(x => (guild.roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
+                    const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
+                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.find(x => ((guild.roles.find(y => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -140,7 +148,7 @@ module.exports = (websockets, app, database, flake) => {
                                 changesWereMade = true;
                             }
 
-                            if (req.body.owner && guild.members.find(x => x?.id == res.locals.user).roles.includes('0') && guild.members.find(x => x?.id == req.body.owner)) {
+                            if (req.body.owner && guild.members.find(x => x?.id == res.locals.user)?.roles.includes('0') && guild.members.find(x => x?.id == req.body.owner)) {
                                 guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.splice(guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.indexOf('0'), 1);
                                 guild.members[guild.members.findIndex(x => x?.id == req.body.owner)].roles.push('0');
                                 changesWereMade = true;
@@ -177,8 +185,9 @@ module.exports = (websockets, app, database, flake) => {
         }
     });
 
-    app.delete('/guilds/*', (req, res) => {
-        const guildId = Object.values(req.params)
+    app.delete('/guilds/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -187,9 +196,9 @@ module.exports = (websockets, app, database, flake) => {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
                     const preGuild = dbRes.rows.find(x => x?.id == guildId);
-                    const guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {});
+                    const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
                     if (guild) {
-                        if (guild.members.find(x => x?.id == res.locals.user).roles.includes('0')) {
+                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.includes('0')) {
 
                             database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
                                 if (!err) {

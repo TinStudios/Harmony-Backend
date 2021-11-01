@@ -1,9 +1,15 @@
-    const argon2 = require('argon2');
-    const { SignJWT } = require('jose/jwt/sign');
-    const { importPKCS8 } = require('jose/key/import');
+import { Info } from '../interfaces';
 
-module.exports = (websockets, app, database, flake) => {
-    app.post('/login', (req, res) => {
+import express from "express";
+    import argon2 from 'argon2';
+    import { SignJWT } from 'jose/jwt/sign';
+    import { importPKCS8 } from 'jose/key/import';
+import { Client } from 'pg';
+import FlakeId from 'flake-idgen';
+const intformat = require('biguint-format');
+
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+    app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.email == req.body.email);
@@ -36,12 +42,12 @@ module.exports = (websockets, app, database, flake) => {
         });
     });
 
-    app.post('/register', (req, res) => {
+    app.post('/register', (req: express.Request, res: express.Response) => {
         if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
                     if (!dbRes.rows.find(x => x.email == req.body.email)) {
-                        const id = flake.gen().toString();
+                        const id = intformat(flake.next(), 'dec').toString();
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' +  await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username).map(x => x.discriminator) ?? []);
@@ -65,7 +71,7 @@ module.exports = (websockets, app, database, flake) => {
         }
     });
 
-    function generateDiscriminator(excluded) {
+    function generateDiscriminator(excluded: string[]): string {
         const pre = Math.floor(Math.random() * (9999 - 1 + 1) + 1);
         const final = pre.toString().padStart(4, '0');
         if (excluded.includes(final)) {
@@ -75,7 +81,7 @@ module.exports = (websockets, app, database, flake) => {
         }
     }
 
-    async function generateToken(info) {
+    async function generateToken(info: Info) {
         const privateKey = await importPKCS8(require('fs').readFileSync(__dirname + '/../../private.key').toString(), 'ES256');
         return await new SignJWT({ info })
             .setProtectedHeader({ alg: 'ES256' })

@@ -13,4 +13,4 @@ function createLogger(debug = false) {
     })
 }
 
-module.exports = { createLogger };
+export { createLogger };

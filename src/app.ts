@@ -1,7 +1,7 @@
-const compression = require('compression');
-const cors = require('cors');
-const express = require('express');
-const helmet = require('helmet');
+import compression from 'compression';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
 const xss = require('xss-clean');
 
 const app = express();
@@ -16,6 +16,6 @@ app.use(xss());
 app.use(compression());
 
 app.use(cors());
-app.options('*', cors());
+app.options('*', cors);
 
-module.exports = app;
+export default app;

@@ -120,6 +120,9 @@ dist
 # Keys
 *.key
 
+# JS files
+src/**/*.js
+
 # Other
 .DS_Store
 icons/*

@@ -1,15 +1,18 @@
-const FlakeId = require('flakeid');
-const flake = new FlakeId();
-const config = require('../utils/config');
+import express from 'express';
+import { Client } from 'pg';
+import { User } from '../interfaces';
 
-module.exports = (websockets, app, database) => {
+import FlakeId from 'flake-idgen';
+const flake = new FlakeId();
+
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
     require('./account')(websockets, app, database, flake);
 
-    app.use(async (req, res, next) => {
-        const user = await checkLogin(req.headers.authorization);
-       if(user) {
+    app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const user: User = await checkLogin(req.headers.authorization ?? "");
+       if(user.creation != 0) {
                     res.locals.user = user.id;
                     next();
        } else {
@@ -31,16 +34,25 @@ module.exports = (websockets, app, database) => {
 
     require('./friends')(websockets, app, database);
 
-    app.use((req, res, next) => {
+    app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(404).send({});
     });
 
-    app.use((err, req, res, next) => {
+    app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(500).send({});
     });
 
-    async function checkLogin(token) {
+    async function checkLogin(token: string): Promise<User> {
         return await new Promise(resolve => {
+            const emptyUser: User = {
+                id: "",
+                token: "",
+                email: "",
+                password: "",
+                username: "",
+                discriminator: "",
+                creation: 0
+            };
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {
                     if (res.rows.map(x => x.token == token).includes(true)) {
@@ -57,13 +69,13 @@ module.exports = (websockets, app, database) => {
                             resolve(res.rows.find(x => x.token == token));
 
                         } catch {
-                            resolve(false);
+                            resolve(emptyUser);
                         }
                     } else {
-                        resolve(false);
+                        resolve(emptyUser);
                     }
                 } else {
-                    resolve(false);
+                    resolve(emptyUser);
                 }
             });
         });

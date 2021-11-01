@@ -1,15 +1,19 @@
-const argon2 = require('argon2');
-    const { SignJWT } = require('jose/jwt/sign');
-    const { importPKCS8 } = require('jose/key/import');
+import express from 'express';
+import { User, ReturnedUser, Info } from '../interfaces';
 
-module.exports = (websockets, app, database) => {
-    app.get('/users/@me', async (req, res) => {
+import argon2 from 'argon2';
+    import { SignJWT } from 'jose/jwt/sign';
+    import { importPKCS8 } from 'jose/key/import';
+import { Client } from 'pg';
+
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+    app.get('/users/@me', async (req: express.Request, res: express.Response) => {
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.token == req.headers.authorization);
-                    let returnedUser = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {});
-                    delete returnedUser['token'];
-                    delete returnedUser['password'];
+                    let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
                     res.send(returnedUser);
                 } else {
                     res.status(500).send({});
@@ -17,8 +21,9 @@ module.exports = (websockets, app, database) => {
             });
     });
 
-    app.get('/users/*', async (req, res) => {
-        const userId = Object.values(req.params)
+    app.get('/users/*', async (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const userId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -27,9 +32,9 @@ module.exports = (websockets, app, database) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id == userId);
                     if (user) {
-                        let returnedUser = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {});
-                        delete returnedUser['token'];
-                        delete returnedUser['password'];
+                        let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
                         res.send(returnedUser);
                     } else {
                         res.status(404).send({});
@@ -40,15 +45,15 @@ module.exports = (websockets, app, database) => {
             });
     });
 
-    app.delete('/users/@me', async (req, res) => {
+    app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id == res.locals.user);
             database.query(`DELETE FROM users WHERE token = '${req.headers.authorization}'`, async (err, dbRes) => {
                 if (!err) {
-                    let returnedUser = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {});
-                    delete returnedUser['token'];
-                    delete returnedUser['password'];
+                    let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
                          websockets.get(user.id)?.forEach(websocket => {
                         websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
                     });
@@ -63,20 +68,20 @@ module.exports = (websockets, app, database) => {
     });
     });
 
-    app.patch('/users/@me', async (req, res) => {
+    app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
             if ((req.body.username && req.body.username.length < 31) || req.body.password) {
                 database.query(`SELECT * FROM users`, async (err, dbRes) => {
                     if (!err) {
+                        const user = dbRes.rows.find(x => x.id == res.locals.user);
                         const discriminator = dbRes.rows.find(x => x.username == req.body.username && x.discriminator == user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username)) : user.discriminator;
                         const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
                         database.query(`UPDATE users SET username = $1, discriminator = $2, password = $3, token = $4 WHERE id = $5`, [req.body.username ?? user.username, discriminator, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
                             if (!err) {
-                                const user = dbRes.rows.find(x => x.id == res.locals.user);
-                                let returnedUser = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {});
-                                delete returnedUser['token'];
-                                delete returnedUser['password'];
-                                returnedUser.username = req.body.username;
-                                returnedUser.discriminator = discriminator;
+                                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                preReturnedUser.username = req.body.username;
+                                preReturnedUser.discriminator = discriminator;
+                                const { token, email, password, ...rest } = preReturnedUser;
+                                const returnedUser: ReturnedUser = rest;
         
                                      websockets.get(user.id)?.forEach(websocket => {
                                     websocket.send(JSON.stringify({ event: 'userEdited', user: returnedUser }));
@@ -95,7 +100,7 @@ module.exports = (websockets, app, database) => {
             }
     });
 
-    function generateDiscriminator(excluded) {
+    function generateDiscriminator(excluded: string[]): string {
         const pre = Math.floor(Math.random() * (9999 - 1 + 1) + 1);
         const final = pre.toString().padStart(4, '0');
         if (excluded.includes(final)) {
@@ -105,8 +110,8 @@ module.exports = (websockets, app, database) => {
         }
     }
 
-    async function generateToken(info) {
-        const privateKey = await importPKCS8(require('fs').readFileSync(__dirname + '/../../../private.key').toString(), 'ES256');
+    async function generateToken(info: Info) {
+        const privateKey = await importPKCS8(require('fs').readFileSync(__dirname + '/../../private.key').toString(), 'ES256');
         return await new SignJWT({ info })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()

@@ -1,7 +1,14 @@
-module.exports = (websockets, app, database) => {
+import { Role, Member } from "../interfaces";
+import express from "express";
+import { Client } from "pg";
+import FlakeId from 'flake-idgen';
+const intformat = require('biguint-format');
 
-    app.get('/guilds/*/roles', (req, res) => {
-        const guildId = Object.values(req.params)
+module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+
+    app.get('/guilds/*/roles', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -12,7 +19,7 @@ module.exports = (websockets, app, database) => {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         const roles = JSON.parse(guild.roles);
-                        if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
                             res.send(roles);
                         } else {
                             res.status(401).send({});
@@ -29,8 +36,9 @@ module.exports = (websockets, app, database) => {
         }
     });
 
-    app.get('/guilds/*/roles/*', (req, res) => {
-        const urlParams = Object.values(req.params)
+    app.get('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const urlParams = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -42,9 +50,9 @@ module.exports = (websockets, app, database) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     const roles = JSON.parse(guild?.roles ?? "[]");
-                    if (roles.find(x => x?.id == roleId)) {
-                        if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
-                            res.send(roles.find(x => x?.id == roleId));
+                    if (roles.find((x: Role) => x?.id == roleId)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                            res.send(roles.find((x: Role) => x?.id == roleId));
                         } else {
                             res.status(401).send({});
                         }
@@ -60,8 +68,9 @@ module.exports = (websockets, app, database) => {
         }
     });
 
-    app.post('/guilds/*/roles', (req, res) => {
-        const guildId = Object.values(req.params)
+    app.post('/guilds/*/roles', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -73,55 +82,55 @@ module.exports = (websockets, app, database) => {
                         const guild = dbRes.rows.find(x => x?.id == guildId);
                         if (guild) {
                             const roles = JSON.parse(guild.roles);
-                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
                                 let permissions = 0;
-                                let permissionsCodes = [];
-                                req.body.permissions?.forEach(permission => {
+                                let permissionsCodes: number[] = [];
+                                req.body.permissions?.forEach((permission: string) => {
                                     switch (permission) {
                                         case 'CREATE_INSTANT_INVITE':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000001) == 0x0000000001)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000001) == 0x0000000001)) {
                                                 permissionsCodes.push(0x0000000001);
                                             }
                                             break;
 
                                         case 'KICK_MEMBERS':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000002) == 0x0000000002)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000002) == 0x0000000002)) {
                                                 permissionsCodes.push(0x0000000002);
                                             }
                                             break;
 
                                         case 'BAN_MEMBERS':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000004) == 0x0000000004)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000004) == 0x0000000004)) {
                                                 permissionsCodes.push(0x0000000004);
                                             }
                                             break;
 
                                         case 'MANAGE_GUILD':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
                                                 permissionsCodes.push(0x0000000010);
                                             }
                                             break;
 
                                         case 'VIEW_AUDIT_LOG':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000020) == 0x0000000020)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000020) == 0x0000000020)) {
                                                 permissionsCodes.push(0x0000000020);
                                             }
                                             break;
 
                                         case 'CHANGE_NICKNAME':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
                                                 permissionsCodes.push(0x0000000200);
                                             }
                                             break;
 
                                         case 'MANAGE_NICKNAMES':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
                                                 permissionsCodes.push(0x0000000400);
                                             }
                                             break;
 
                                         case 'MANAGE_ROLES':
-                                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
                                                 permissionsCodes.push(0x0000000800);
                                             }
                                             break;
@@ -133,7 +142,7 @@ module.exports = (websockets, app, database) => {
                                 permissions = permissionsCodes.reduce((x, y) => {
                                     return x | y;
                                 }, 0);
-                                const role = { id: flake.gen().toString(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist == true };
+                                const role = { id: intformat(flake.next(), 'dec').toString(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist == true };
                                 roles.push(role);
                                 database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
@@ -161,8 +170,9 @@ module.exports = (websockets, app, database) => {
         }
     });
 
-    app.patch('/guilds/*/roles/*', (req, res) => {
-        const urlParams = Object.values(req.params)
+    app.patch('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const urlParams = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -176,62 +186,62 @@ module.exports = (websockets, app, database) => {
                         const guild = dbRes.rows.find(x => x?.id == guildId);
                         if (guild) {
                             const roles = JSON.parse(guild.roles);
-                            const role = roles.find(x => x?.id == roleId);
+                            const role = roles.find((x: Role) => x?.id == roleId);
                             if (role) {
-                                if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                                if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
                                     let permissions = 0;
-                                    let permissionsCodes = [];
+                                    let permissionsCodes: number[] = [];
                                     if (req.body.permissions) {
-                                        req.body.permissions?.forEach(permission => {
+                                req.body.permissions?.forEach((permission: string) => {
                                             switch (permission) {
                                                 case 'CREATE_INSTANT_INVITE':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000001) == 0x0000000001)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000001) == 0x0000000001)) {
                                                         permissionsCodes.push(0x0000000001);
                                                     }
                                                     break;
-
+        
                                                 case 'KICK_MEMBERS':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000002) == 0x0000000002)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000002) == 0x0000000002)) {
                                                         permissionsCodes.push(0x0000000002);
                                                     }
                                                     break;
-
+        
                                                 case 'BAN_MEMBERS':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000004) == 0x0000000004)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000004) == 0x0000000004)) {
                                                         permissionsCodes.push(0x0000000004);
                                                     }
                                                     break;
-
+        
                                                 case 'MANAGE_GUILD':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000010) == 0x0000000010)) {
                                                         permissionsCodes.push(0x0000000010);
                                                     }
                                                     break;
-
+        
                                                 case 'VIEW_AUDIT_LOG':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000020) == 0x0000000020)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000020) == 0x0000000020)) {
                                                         permissionsCodes.push(0x0000000020);
                                                     }
                                                     break;
-
+        
                                                 case 'CHANGE_NICKNAME':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
                                                         permissionsCodes.push(0x0000000200);
                                                     }
                                                     break;
-
+        
                                                 case 'MANAGE_NICKNAMES':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
                                                         permissionsCodes.push(0x0000000400);
                                                     }
                                                     break;
-
+        
                                                 case 'MANAGE_ROLES':
-                                                    if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                                                    if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
                                                         permissionsCodes.push(0x0000000800);
                                                     }
                                                     break;
-
+        
                                                 default:
                                                     break;
                                             }
@@ -246,7 +256,7 @@ module.exports = (websockets, app, database) => {
                                     role.permissions = permissions;
                                     role.color = require('is-color')(req.body.color) ? req.body.color : req.body.color != false ? role.color : null;
                                     role.hoist = typeof req.body.hoist == 'boolean' ? req.body.hoist : role.hoist;
-                                    roles[roles.findIndex(x => x?.id == roleId)] = role;
+                                    roles[roles.findIndex((x: Role) => x?.id == roleId)] = role;
                                     database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
                                         if (!err) {
                                             res.status(200).send(role);
@@ -275,8 +285,9 @@ module.exports = (websockets, app, database) => {
         }
     });
 
-    app.delete('/guilds/*/roles/*', (req, res) => {
-        const urlParams = Object.values(req.params)
+    app.delete('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const urlParams = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -289,10 +300,10 @@ module.exports = (websockets, app, database) => {
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         const roles = JSON.parse(guild.roles);
-                        const role = roles.find(x => x?.id == roleId);
+                        const role = roles.find((x: Role) => x?.id == roleId);
                         if (role) {
-                            if (JSON.parse(guild.members).find(x => x?.id == res.locals.user).roles.find(x => (roles.find(y => y.id == x).permissions & 0x0000000800) == 0x0000000800) && roleId != 0 && roleId != 1) {
-                                const index = roles.findIndex(x => x?.id == roleId);
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
+                                const index = roles.findIndex((x: Role) => x?.id == roleId);
                                 delete roles[index];
 
                                 database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {

@@ -18,7 +18,7 @@ const { error, value } = schema.prefs({ errors: { label: 'key' } }).validate(pro
 
 if (error) console.error(error);
 
-module.exports = {
+export default {
   env: value.NODE_ENV,
   server: {
     port: value.SVR_PORT,

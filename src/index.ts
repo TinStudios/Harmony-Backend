@@ -1,10 +1,10 @@
-const { Client } = require('pg');
-const { createServer } = require('http');
-const { WebSocket, WebSocketServer } = require('ws');
+import { Client } from 'pg';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 
-const app = require('./app');
-const config = require('./utils/config');
-const { createLogger } = require('./utils/logger');
+import app from './app';
+import config from './utils/config';
+import { createLogger } from './utils/logger';
 
 const wss = new WebSocketServer({ noServer: true });
 const database = new Client({
@@ -20,7 +20,7 @@ const server = createServer(app);
 
 const websockets = new Map();
 
-require('./utils/ws')(wss, websockets, server, database);
+require('./utils/ws')(wss, websockets, server, database, config);
 
 require('./routes')(websockets, app, database);
 

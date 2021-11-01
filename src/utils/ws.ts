@@ -1,22 +1,34 @@
-const config = require('./config');
+import { WebSocketServer, Server } from 'ws';
+import { User } from '../interfaces';
+import { Client } from 'pg';
 
-module.exports = (wss, websockets, server, database) => {
+module.exports = (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
     server.on('upgrade', async (request, socket, head) => {
-        const pathname = request.url.split('?')[0];
-        const token = decodeURIComponent(request.url.split('token=')[request.url.split('token=').length - 1]);
-            if (pathname === '/socket' && await checkLogin(token)) {
+        const pathname = request.url?.split('?')[0];
+        const token = decodeURIComponent(request.url?.split('token=')[request.url?.split('token=').length - 1] ?? "");
+        const user: User = await checkLogin(token);
+            if (pathname === '/socket' && user) {
                 wss.handleUpgrade(request, socket, head, (ws) => {
-                    var websocketForThis = websockets.get(resp.body.id) ?? [];
-                    websocketForThis.push(ws);
-                    websockets.set(resp.body.id, websocketForThis);
+                    var websocketForThis = websockets.get(user.id) ?? [];
+                    websocketForThis.push(ws as unknown as WebSocket);
+                    websockets.set(user.id, websocketForThis);
                 });
             } else {
                 socket.destroy();
             }
     });
 
-    async function checkLogin(token) {
+    async function checkLogin(token: string): Promise<User> {
         return await new Promise(resolve => {
+            const emptyUser: User = {
+                id: "",
+                token: "",
+                email: "",
+                password: "",
+                username: "",
+                discriminator: "",
+                creation: 0
+            };
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {
                     if (res.rows.map(x => x.token == token).includes(true)) {
@@ -33,13 +45,13 @@ module.exports = (wss, websockets, server, database) => {
                             resolve(res.rows.find(x => x.token == token));
 
                         } catch {
-                            resolve(false);
+                            resolve(emptyUser);
                         }
                     } else {
-                        resolve(false);
+                        resolve(emptyUser);
                     }
                 } else {
-                    resolve(false);
+                    resolve(emptyUser);
                 }
             });
         });
