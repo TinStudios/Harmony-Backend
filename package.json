@@ -12,8 +12,8 @@
     "type": "git",
     "url": "git+https://github.com/Seltorn/Seltorn.git"
   },
-  "author": "Dot Studios",
-  "license": "GPL-3.0",
+  "author": "Seltorn Team",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Seltorn/Seltorn/issues"
   },
