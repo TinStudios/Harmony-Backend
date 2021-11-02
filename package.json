@@ -10,7 +10,11 @@
     "type": "git",
     "url": "git+https://github.com/Seltorn/Seltorn.git"
   },
+<<<<<<< HEAD
   "author": "Dot Studios",
+=======
+  "author": "Seltorn Team",
+>>>>>>> 15ca3a2 (Oops)
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Seltorn/Seltorn/issues"
