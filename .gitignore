@@ -123,6 +123,10 @@ dist
 # JS files
 src/**/*.js
 
+# PostgreSQL folder (Docker)
+postgres/*
+!postgres/.gitkeep
+
 # Other
 .DS_Store
 icons/*
