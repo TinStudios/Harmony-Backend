@@ -25,6 +25,7 @@
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/flake-idgen": "^0.1.31",
+    "@types/pg": "^8.6.1",
     "@types/ws": "^8.2.0",
     "argon2": "^0.28.2",
     "biguint-format": "^1.0.2",
