@@ -3,10 +3,14 @@ import express from "express";
 import { Client } from "pg";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 =======
 module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+>>>>>>> 2aecc42 (Changed to import)
 
     app.get('/guilds/*/members', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);

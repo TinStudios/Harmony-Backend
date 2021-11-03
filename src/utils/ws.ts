@@ -3,14 +3,19 @@ import { User } from '../interfaces';
 import { Client } from 'pg';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
 =======
 module.exports = (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
+>>>>>>> 2aecc42 (Changed to import)
     server.on('upgrade', async (request, socket, head) => {
         const pathname = request.url?.split('?')[0];
         const token = decodeURIComponent(request.url?.split('token=')[request.url?.split('token=').length - 1] ?? "");
         const user: User = await checkLogin(token);
+<<<<<<< HEAD
 <<<<<<< HEAD
         if (pathname === '/socket' && user.creation != 0) {
             wss.handleUpgrade(request, socket, head, (ws) => {
@@ -23,6 +28,9 @@ module.exports = (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, se
         }
 =======
             if (pathname === '/socket' && user) {
+=======
+            if (pathname === '/socket' && user.creation != 0) {
+>>>>>>> 2aecc42 (Changed to import)
                 wss.handleUpgrade(request, socket, head, (ws) => {
                     var websocketForThis = websockets.get(user.id) ?? [];
                     websocketForThis.push(ws as unknown as WebSocket);

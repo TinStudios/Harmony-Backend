@@ -13,8 +13,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 
+<<<<<<< HEAD
 module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+>>>>>>> 2aecc42 (Changed to import)
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);

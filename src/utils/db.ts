@@ -6,8 +6,12 @@ import fs from 'fs';
 export default async (database: Client, logger: any, storage: NFTStorage) => {
 =======
 
+<<<<<<< HEAD
 module.exports = async (database: Client, logger: any) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+export default async (database: Client, logger: any) => {
+>>>>>>> 2aecc42 (Changed to import)
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (

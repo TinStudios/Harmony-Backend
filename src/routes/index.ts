@@ -151,10 +151,26 @@ import { User } from '../interfaces';
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+import account from './account';
+
+import users from './users';
+
+    import messages from './messages';
+
+    import channels from './channels';
+
+    import roles from './roles';
+
+    import members from './members';
+
+    import guilds from './guilds';
+
+    import friends from './friends';
+
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
-    require('./account')(websockets, app, database, flake);
+    account(websockets, app, database, flake);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const user: User = await checkLogin(req.headers.authorization ?? "");
@@ -165,20 +181,19 @@ module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application
            res.status(401).send({});
        }
     });
+    users(websockets, app, database);
 
-    require('./users')(websockets, app, database);
+    messages(websockets, app, database, flake);
 
-    require('./messages')(websockets, app, database, flake);
+   channels(websockets, app, database, flake);
 
-    require('./channels')(websockets, app, database, flake);
+    roles(websockets, app, database, flake);
 
-    require('./roles')(websockets, app, database, flake);
+    members(websockets, app, database);
 
-    require('./members')(websockets, app, database);
+    guilds(websockets, app, database, flake);
 
-    require('./guilds')(websockets, app, database, flake);
-
-    require('./friends')(websockets, app, database);
+    friends(websockets, app, database);
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(404).send({});

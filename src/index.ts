@@ -1,22 +1,30 @@
 import { Client } from 'pg';
 import { createServer } from 'http';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { WebSocketServer, Server } from 'ws';
 =======
 import { WebSocketServer } from 'ws';
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+import { WebSocketServer, Server } from 'ws';
+>>>>>>> 2aecc42 (Changed to import)
 
 import app from './app';
 import config from './utils/config';
 import { createLogger } from './utils/logger';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage } from 'nft.storage';
 
+=======
+>>>>>>> 2aecc42 (Changed to import)
 import ws from './utils/ws';
 import routes from './routes';
 import db from './utils/db';
 
+<<<<<<< HEAD
 const wss = new WebSocketServer({ noServer: true });
 const database = new Client({
   user: config.db.user,
@@ -25,6 +33,8 @@ const database = new Client({
   password: config.db.password,
   port: config.db.port,
 =======
+=======
+>>>>>>> 2aecc42 (Changed to import)
 const wss = new WebSocketServer({ noServer: true });
 const database = new Client({
     user: config.db.user,
@@ -40,6 +50,7 @@ const server = createServer(app);
 
 const websockets = new Map();
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -60,11 +71,14 @@ require('./utils/ws')(wss, websockets, server, database);
 =======
 require('./utils/ws')(wss, websockets, server, database);
 >>>>>>> ace536b (?)
+=======
+ws(wss, websockets, server as unknown as Server, database);
+>>>>>>> 2aecc42 (Changed to import)
 
-require('./routes')(websockets, app, database);
+routes(websockets, app, database);
 
 server.listen(config.server.port, async () => {
-    require('./utils/db')(database, logger);
+    db(database, logger);
     
 >>>>>>> 0718f96 (Changed to TypeScript)
   logger.info(`Listening on port ${config.server.port}`);

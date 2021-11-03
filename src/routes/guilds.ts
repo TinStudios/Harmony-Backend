@@ -14,7 +14,7 @@ import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import { Guild } from '../interfaces';
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
     app.get('/guilds', (req: express.Request, res: express.Response) => {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {

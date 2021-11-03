@@ -3,10 +3,14 @@ import express from "express";
 import { Client } from "pg";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 =======
 module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+>>>>>>> 2aecc42 (Changed to import)
 
     app.get('/friends', async (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
