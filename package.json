@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Seltorn's backend",
   "scripts": {
-    "start": "tsc && cross-env NODE_ENV=production && node ./build/index.js",
+    "start": "tsc && cross-env NODE_ENV=production node ./build/index.js",
     "start:dev": "cross-env NODE_ENV=development nodemon ./src/index.ts"
   },
   "repository": {
