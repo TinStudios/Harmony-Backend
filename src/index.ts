@@ -42,6 +42,7 @@ const websockets = new Map();
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 const storage = new NFTStorage({ token: config.storage.apiKey })
 
 ws(wss, websockets, server as unknown as Server, database);
@@ -56,6 +57,9 @@ require('./utils/ws')(wss, websockets, server, database, config);
 =======
 require('./utils/ws')(wss, websockets, server, database);
 >>>>>>> b730c3e (Tiny change)
+=======
+require('./utils/ws')(wss, websockets, server, database);
+>>>>>>> ace536b (?)
 
 require('./routes')(websockets, app, database);
 
