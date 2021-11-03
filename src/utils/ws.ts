@@ -2,12 +2,12 @@ import { WebSocketServer, Server } from 'ws';
 import { User } from '../interfaces';
 import { Client } from 'pg';
 
-module.exports = (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
+export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, server: Server, database: Client) => {
     server.on('upgrade', async (request, socket, head) => {
         const pathname = request.url?.split('?')[0];
         const token = decodeURIComponent(request.url?.split('token=')[request.url?.split('token=').length - 1] ?? "");
         const user: User = await checkLogin(token);
-            if (pathname === '/socket' && user) {
+            if (pathname === '/socket' && user.creation != 0) {
                 wss.handleUpgrade(request, socket, head, (ws) => {
                     var websocketForThis = websockets.get(user.id) ?? [];
                     websocketForThis.push(ws as unknown as WebSocket);

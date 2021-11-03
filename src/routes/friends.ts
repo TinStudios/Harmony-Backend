@@ -2,7 +2,7 @@ import { Friend } from '../interfaces';
 import express from "express";
 import { Client } from "pg";
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
     app.get('/friends', async (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM friends`, async (err, dbRes) => {

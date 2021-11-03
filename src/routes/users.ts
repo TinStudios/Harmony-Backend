@@ -6,7 +6,7 @@ import argon2 from 'argon2';
     import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
     app.get('/users/@me', async (req: express.Request, res: express.Response) => {
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
