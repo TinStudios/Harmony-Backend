@@ -1,6 +1,6 @@
 import { Client } from "pg";
 
-module.exports = async (database: Client, logger: any) => {
+export default async (database: Client, logger: any) => {
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (

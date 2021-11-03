@@ -8,7 +8,7 @@ import { Client } from 'pg';
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {

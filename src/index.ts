@@ -1,10 +1,14 @@
 import { Client } from 'pg';
 import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, Server } from 'ws';
 
 import app from './app';
 import config from './utils/config';
 import { createLogger } from './utils/logger';
+
+import ws from './utils/ws';
+import routes from './routes';
+import db from './utils/db';
 
 const wss = new WebSocketServer({ noServer: true });
 const database = new Client({
@@ -20,12 +24,12 @@ const server = createServer(app);
 
 const websockets = new Map();
 
-require('./utils/ws')(wss, websockets, server, database);
+ws(wss, websockets, server as unknown as Server, database);
 
-require('./routes')(websockets, app, database);
+routes(websockets, app, database);
 
 server.listen(config.server.port, async () => {
-    require('./utils/db')(database, logger);
+    db(database, logger);
     
   logger.info(`Listening on port ${config.server.port}`);
 });

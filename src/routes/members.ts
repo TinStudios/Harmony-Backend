@@ -2,7 +2,7 @@ import { Member, Role } from '../interfaces';
 import express from "express";
 import { Client } from "pg";
 
-module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
     app.get('/guilds/*/members', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
