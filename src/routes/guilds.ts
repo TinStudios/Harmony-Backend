@@ -219,7 +219,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     if (preGuild) {
                     const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
-                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.find(x => ((guild.roles.find(y => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
+                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.find(x => ((guild?.roles.find(y => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
                             if(req.body.image?.startsWith('data:image/png')) {    
                                require('fs').writeFileSync(__dirname + '/../../icons/' + guildId + '.png', req.body.image.replace(/^data:image\/png;base64,/, ""), 'base64');   
                                guild.members.forEach(member => {

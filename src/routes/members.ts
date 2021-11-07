@@ -195,7 +195,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y.id == x).permissions & 0x0000000200) == 0x0000000200)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000200) == 0x0000000200)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
                                 const user = members.find((x: Member) => x?.id == res.locals.user);
@@ -319,7 +319,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y.id == x).permissions & 0x0000000400) == 0x0000000400)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000400) == 0x0000000400)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
                                 const user = members.find((x: Member) => x?.id == userId);
@@ -434,7 +434,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x).permissions & 0x0000000002) == 0x0000000002)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000002) == 0x0000000002)) {
                             if ((req.body.nickname && req.body.nickname.length < 31) || req.body.nickname == null) {
                                 const members = JSON.parse(guild.members);
                                 const user = members.find((x: Member) => x?.id == userId);

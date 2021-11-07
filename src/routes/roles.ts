@@ -44,7 +44,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         const roles = JSON.parse(guild.roles);
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
                             res.send(roles);
                         } else {
                             res.status(401).send({});
@@ -96,7 +96,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     const roles = JSON.parse(guild?.roles ?? "[]");
                     if (roles.find((x: Role) => x?.id == roleId)) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
                             res.send(roles.find((x: Role) => x?.id == roleId));
                         } else {
                             res.status(401).send({});
@@ -134,8 +134,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const guild = dbRes.rows.find(x => x?.id == guildId);
                         if (guild) {
                             const roles = JSON.parse(guild.roles);
+<<<<<<< HEAD
                             if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
+>>>>>>> efdc2b8 (The Question:tm:)
                                 let permissions = 0;
                                 let permissionsCodes: number[] = [];
                                 req.body.permissions?.forEach((permission: string) => {
@@ -361,7 +365,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             const roles = JSON.parse(guild.roles);
                             const role = roles.find((x: Role) => x?.id == roleId);
                             if (role) {
-                                if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800)) {
+                                if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
                                     let permissions = 0;
                                     let permissionsCodes: number[] = [];
                                     if (req.body.permissions) {
@@ -515,7 +519,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const roles = JSON.parse(guild.roles);
                         const role = roles.find((x: Role) => x?.id == roleId);
                         if (role) {
-                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id == x).permissions & 0x0000000800) == 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
                                 const index = roles.findIndex((x: Role) => x?.id == roleId);
 >>>>>>> 0718f96 (Changed to TypeScript)
                                 delete roles[index];

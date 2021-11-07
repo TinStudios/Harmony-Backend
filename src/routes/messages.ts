@@ -92,6 +92,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id == channelId);
+                        if(channel) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000040) == 0x0000000040).includes(true)) {
                             let messages = channel.messages;
                             const before = messages.findIndex((x: Message) => x?.id == beforeId);
@@ -103,13 +104,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                                 if (!err) {
                             messages = messages.map((message: Message) => {
+                                if(message) {
                                 message.author = {
                                     id: message?.author as string,
-                                    username: dbRes.rows.find(x => x.id == message?.author).username,
-                                    nickname: JSON.parse(guild.members).find((x: Member) => x.id == message.author).nickname,
-                                    discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
+                                    username: dbRes.rows.find(x => x?.id == message?.author)?.username,
+                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id == message?.author)?.nickname,
+                                    discriminator: dbRes.rows.find(x => x?.id == message?.author)?.discriminator
                                 }
                                 return message;
+                            }
                             });
                             res.send(messages);
                             } else {
@@ -119,6 +122,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(404).send({});
                         }
+                    } else {
+                        res.status(404).send({});
+                    }
                     } else {
                         res.status(404).send({});
                     }
@@ -203,6 +209,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id == channelId);
+                        if(channel) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000040) == 0x0000000040).includes(true)) {
                             const messages = channel.messages;
                             const message = messages.find((x: Message) => x?.id == messageId);
@@ -212,8 +219,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 message.author = {
                                     id: message?.author,
                                     username: dbRes.rows.find(x => x.id == message?.author).username,
-                                    nickname: JSON.parse(guild.members).find((x: Member) => x.id == message.author).nickname,
-                                    discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
+                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id == message?.author).nickname,
+                                    discriminator: dbRes.rows.find(x => x?.id == message?.author).discriminator
                                 }
                             
                             res.send(message);
@@ -227,6 +234,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(404).send({});
                         }
+                    } else {
+                        res.status(404).send({});
+                    }
                     } else {
                         res.status(404).send({});
                     }
@@ -342,6 +352,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id == channelId);
+                        if(channel) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
                             let messages = channel.messages;
 
@@ -383,6 +394,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(404).send({});
                         }
+                    } else {
+                        res.status(404).send({});
+                    }
                     } else {
                         res.status(404).send({});
                     }
@@ -478,6 +492,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id == channelId);
+                        if(channel) {
                         let messages = channel.messages;
                         let message = messages.find((x: Message) => x?.id == messageId);
                         if (message.author == res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
@@ -506,6 +521,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(404).send({});
                     }
+                } else {
+                    res.status(404).send({});
+                }
                 } else {
                     res.status(500).send({});
                 }
@@ -608,6 +626,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id == channelId);
+                        if(channel) {
                         let messages = channel.messages;
                         let message = messages.find((x: Message) => x?.id == messageId);
                         if (message?.author == res.locals.user || JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
@@ -635,6 +654,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(404).send({});
                     }
+                } else {
+                    res.status(404).send({});
+                }
                 } else {
                     res.status(500).send({});
                 }
