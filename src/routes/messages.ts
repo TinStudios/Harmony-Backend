@@ -610,7 +610,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         let channel = channels.find((x: Channel) => x?.id == channelId);
                         let messages = channel.messages;
                         let message = messages.find((x: Message) => x?.id == messageId);
-                        if (message?.author == res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
+                        if (message?.author == res.locals.user || JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
                             
                             delete messages[messages.findIndex((x: Message) => x?.id == messageId)];
                             channel.messages = messages;
@@ -630,7 +630,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             });
                         } else {
-                            res.status(404).send({});
+                            res.status(401).send({});
                         }
                     } else {
                         res.status(404).send({});
