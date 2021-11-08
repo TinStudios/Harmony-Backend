@@ -503,6 +503,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             channels[channels.findIndex((x: Channel) => x?.id == channelId)] = channel;
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
+                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        if (!err) {
+                                    message.author = {
+                                        id: message?.author,
+                                        username: dbRes.rows.find(x => x.id == message?.author).username,
+                                        nickname: JSON.parse(guild.members).find((x: Member) => x.id == message.author).nickname,
+                                        discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
+                                    }
                                         JSON.parse(guild.members).forEach((member: Member) => {
                                             if(member.roles.map(x => channel.roles.find((y: Role) => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
                                             websockets.get(member.id)?.forEach(websocket => {
@@ -511,6 +519,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         }
                                         });
                                         res.status(200).send(message);
+                                    } else {
+                                        res.status(500).send({});
+                                    }
+                                    });
                                 } else {
                                     res.status(500).send({});
                                 }
@@ -635,15 +647,27 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             channel.messages = messages;
                             channels[channels.findIndex((x: Channel) => x?.id == channelId)] = channel;
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
+                                if (!err) { 
+                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                    if (!err) {
+                                    message.author = {
+                                    id: message?.author,
+                                    username: dbRes.rows.find(x => x.id == message?.author).username,
+                                    nickname: JSON.parse(guild.members).find((x: Member) => x.id == message.author).nickname,
+                                    discriminator: dbRes.rows.find(x => x.id == message?.author).discriminator
+                                }
                                         JSON.parse(guild.members).forEach((member: Member) => {
                                             if(member.roles.map(x => channel.roles.find((y: Role) => y.id == x)).map(x => (x.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
                                             websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'messageEdited', guild: guildId, channel: channelId, message: message }));
+                                                websocket.send(JSON.stringify({ event: 'messageDeleted', guild: guildId, channel: channelId, message: message }));
                                             });
                                         }
                                         });
                                         res.status(200).send(message);
+                                    } else {
+                                        res.status(500).send({});
+                                    }
+                                });
                                 } else {
                                     res.status(500).send({});
                                 }
