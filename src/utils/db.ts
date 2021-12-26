@@ -41,10 +41,14 @@ export default async (database: Client, logger: any) => {
         name text NOT NULL,
         description TEXT,
 <<<<<<< HEAD
+<<<<<<< HEAD
         public boolean NOT NULL,
 =======
         public TEXT NOT NULL,
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+        public boolean NOT NULL,
+>>>>>>> e27e080 (Fixes)
         channels text NOT NULL,
         roles text NOT NULL,
         members text NOT NULL,
