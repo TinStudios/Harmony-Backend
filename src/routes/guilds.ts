@@ -57,7 +57,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (guild) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)) {
-                            res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {}));
+                            res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
+                                let channels = JSON.parse(guild[x]);
+                                const newChannels = channels.map((channel: any) => {
+                                delete channel.messages;
+                                delete channel.pins;
+                                return channel;
+                            });
+                                return newChannels;
+                            })() : guild[x])[index] }), {}));
                         } else {
                             res.status(401).send({});
                         }

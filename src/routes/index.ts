@@ -157,6 +157,8 @@ import users from './users';
 
     import messages from './messages';
 
+    import pins from './pins';
+
     import channels from './channels';
 
     import roles from './roles';
@@ -188,6 +190,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     users(websockets, app, database);
 
     messages(websockets, app, database, flake);
+
+    pins(websockets, app, database, flake);
 
    channels(websockets, app, database, flake);
 
