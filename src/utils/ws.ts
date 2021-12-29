@@ -42,7 +42,7 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
 >>>>>>> 0718f96 (Changed to TypeScript)
     });
 
-    async function checkLogin(token: string): Promise<User> {
+    async function checkLogin(token: string, verify?: boolean): Promise<User> {
         return await new Promise(resolve => {
             const emptyUser: User = {
                 id: "",
@@ -51,6 +51,7 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                 password: "",
                 username: "",
                 discriminator: "",
+<<<<<<< HEAD
 <<<<<<< HEAD
                 creation: 0,
                 verified: false,
@@ -67,6 +68,15 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                 if (!err) {
                     if (res.rows.map(x => x.token == token).includes(true)) {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                creation: 0,
+                verified: false,
+                verificator: ''
+            };
+            database.query(`SELECT * FROM users`, async (err, res) => {
+                if (!err) {
+                    if (res.rows.find(x => x.token == token) && (!verify || res.rows.find(x => x.token == token).verified)) {
+>>>>>>> f899d83 (Some changes (like adding email verification))
                         try {
                             const { importSPKI } = require('jose/key/import');
                             const { jwtVerify } = require('jose/jwt/verify');

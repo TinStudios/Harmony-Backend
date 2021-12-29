@@ -132,12 +132,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                                 } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     res.status(403).send({ error: "You can't friend this person." });
                                 }
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
 =======
                                     res.status(401).send({});
+=======
+                                    res.status(403).send({});
+>>>>>>> f899d83 (Some changes (like adding email verification))
                                 }
                             } else {
                                 res.status(500).send({});
@@ -184,7 +188,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(401).send({});
+                        res.status(403).send({});
                     }
                 } else {
                     res.status(500).send({});
@@ -240,7 +244,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(401).send({});
+                        res.status(403).send({});
                     }
                 } else {
                     res.status(500).send({});

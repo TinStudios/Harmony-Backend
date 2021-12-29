@@ -1,4 +1,4 @@
-import { Info } from '../interfaces';
+import { Info, User } from '../interfaces';
 
 import express from "express";
 <<<<<<< HEAD
@@ -56,8 +56,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 import { Client } from 'pg';
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, email: any, checkLogin: any) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
@@ -65,17 +66,23 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (user) {
                     try {
                         if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
+                            if(user.verified) {
+                            const correct = (await checkLogin(user.token)).id !== '';
+                            if(!correct) {
                             const token = 'Bearer ' +  await generateToken({ id: user.id });
-                            database.query(`UPDATE users SET token = '${token}' WHERE id = '${user.id}'`, err => {
+                            database.query('UPDATE users SET token = $1 WHERE id = $2', [token, user.id], err => {
                                 if (!err) {
-                                    websockets.get(user.id)?.forEach(websocket => {
-                                        websocket.send(JSON.stringify({ event: 'tokenChange', newToken: token }));
-                                    });
                                     res.send({ token: token });
                                 } else {
                                     res.status(500).send({});
                                 }
                             });
+                        } else {
+                            res.send({ token: user.token });
+                        }
+                    } else {
+                        res.status(403).send({});
+                    }
                         } else {
                             res.status(401).send({});
                         }
@@ -144,14 +151,35 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    if (!dbRes.rows.find(x => x.email == req.body.email)) {
+                    const badAccount = dbRes.rows.find(x => x.email == req.body.email);
+                    if (!badAccount?.verified) {
+                        let canContinue = false;
+
+                        if(badAccount) {
+                            database.query('DELETE FROM users WHERE id = $1', [badAccount.id], async (err, dbRes) => {
+                                if (!err) {
+                                    canContinue = true;
+                                }
+                            });
+                        } else {
+                            canContinue = true;
+                        }
+
                         const id = intformat(flake.next(), 'dec').toString();
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' +  await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username).map(x => x.discriminator) ?? []);
-                        database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now()], (err, dbRes) => {
+                        const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
+                        database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
                             if (!err) {
-                                res.status(200).send({ token: token });
+                                email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                'Subject: Verify your Seltorn account!\n',
+                                'From: seltornteam@gmail.com\n',
+                                'To: seltornteam@gmail.com\n\n',
+                                'Thank you for registering to Seltorn!\n',
+                                'To start using it, we need to verify your email address.\n',
+                                'Click here to verify: http://localhost:3001/verify/' + verificator + '\n\n'].join('')).toString('base64url'));
+                                res.status(200).send({});
                             } else {
                                 res.status(500).send({});
                             }

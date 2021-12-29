@@ -1,6 +1,7 @@
 import express from 'express';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
 
 import argon2 from 'argon2';
@@ -42,6 +43,9 @@ import { User, ReturnedUser, Info } from '../interfaces';
 =======
 import { User, Member, ReturnedUser, Info } from '../interfaces';
 >>>>>>> 38384fc (Some changes I forgot to commit)
+=======
+import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
+>>>>>>> f899d83 (Some changes (like adding email verification))
 
 import argon2 from 'argon2';
     import { SignJWT } from 'jose/jwt/sign';
@@ -49,6 +53,38 @@ import argon2 from 'argon2';
 import { Client } from 'pg';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+
+    app.post('/verify/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const verificator = urlParamsValues
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            })[0];
+        if (verificator) {
+        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                if (!err) {
+                    const user = dbRes.rows.find(x => x.id === res.locals.user);
+                    if(user.verificator === verificator) {
+                        database.query(`UPDATE users SET verified = $1, verificator = $2`, [true, ''], err => {
+                            if (!err) {
+                                res.send({ token: user.token });
+                            } else {
+                                res.status(500).send({});
+                            }
+                        });
+                    } else {
+                        res.status(401).send({});
+                    }
+                } else {
+                    res.status(500).send({});
+                }
+            });
+
+        } else {
+            res.status(400).send({});
+        }
+    });
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM guilds`, (err, dbRes) => {
             if (!err) {
@@ -58,6 +94,54 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({});
             }
         });
+});
+
+app.patch('/users/@me/guilds/*', (req: express.Request, res: express.Response) => {
+    const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            })[0];
+        if (guildId) {
+            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
+                    if (guild) {
+                        const members = JSON.parse(guild.members);
+                        if ((req.body.nickname === null || (req.body.nickname.length > 0 && req.body.nickname.length < 31)) && members.find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000200) == 0x0000000200)) {
+                            let member = members.find((x: Member) => x.id === res.locals.user);
+                            member.nickname = req.body.nickname;
+                            members[members.findIndex((x: Member) => x.id === res.locals.user)] = member;
+                            guild.members = members;
+                            database.query(`UPDATE guilds SET members = $1`, [JSON.stringify(members)], (err, dbRes) => {
+                                if (!err) {
+                                    res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
+                                        let channels = JSON.parse(guild[x]);
+                                        const newChannels = channels.map((channel: any) => {
+                                        delete channel.messages;
+                                        delete channel.pins;
+                                        return channel;
+                                    });
+                                        return newChannels;
+                                    })() : guild[x])[index] }), {}));
+                                    } else {
+                                        res.status(500).send({});
+                                    }
+                            });
+                        } else {
+                            res.status(403).send({});
+                        }
+                    } else {
+                        res.status(404).send({});
+                    }
+                } else {
+                    res.status(500).send({});
+                }
+            });
+        } else {
+            res.status(404).send({});
+        }
 });
 
 app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) => {
@@ -74,16 +158,25 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id == res.locals.user) && !members.find((x: Member) => x?.id == res.locals.user)?.roles.includes("0")) {
-                            members.splice(members.indexOf(res.locals.user), 1);
+                            members.splice(members.findIndex((x: Member) => x.id === res.locals.user), 1);
+                            guild.members = members;
                             database.query(`UPDATE guilds SET members = $1`, [JSON.stringify(members)], (err, dbRes) => {
                                 if (!err) {
-                                        res.status(200).send(guild);
+                                    res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
+                                        let channels = JSON.parse(guild[x]);
+                                        const newChannels = channels.map((channel: any) => {
+                                        delete channel.messages;
+                                        delete channel.pins;
+                                        return channel;
+                                    });
+                                        return newChannels;
+                                    })() : guild[x])[index] }), {}));
                                     } else {
                                         res.status(500).send({});
                                     }
                             });
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -405,7 +498,7 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
         });
 =======
                 const user = dbRes.rows.find(x => x.id == res.locals.user);
-            database.query(`DELETE FROM users WHERE token = '${req.headers.authorization}'`, async (err, dbRes) => {
+            database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
                 if (!err) {
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
                                 const { token, email, password, ...rest } = preReturnedUser;

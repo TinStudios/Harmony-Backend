@@ -11,11 +11,16 @@ export interface User {
     discriminator: string;
     creation: number;
 <<<<<<< HEAD
+<<<<<<< HEAD
     verified: boolean;
     verificator: string;
     otp: string;
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    verified: boolean;
+    verificator: string;
+>>>>>>> f899d83 (Some changes (like adding email verification))
 };
 
 export interface Friend {

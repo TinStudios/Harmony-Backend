@@ -23,11 +23,16 @@ export default async (database: Client, logger: any) => {
         discriminator text NOT NULL,
         creation text NOT NULL,
 <<<<<<< HEAD
+<<<<<<< HEAD
         verified boolean NOT NULL,
         verificator text NOT NULL,
         otp text NOT NULL,
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+        verified boolean NOT NULL,
+        verificator text NOT NULL,
+>>>>>>> f899d83 (Some changes (like adding email verification))
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {

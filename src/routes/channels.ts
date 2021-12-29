@@ -133,8 +133,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 name: req.body.name,
                                 topic: null,
                                 creation: Date.now(),
+<<<<<<< HEAD
                                 roles: [{ id: 0, permissions: 456 }, { id: 1, permissions: 192 }],
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                                roles: [{ id: "0", permissions: 456 }, { id: "1", permissions: 192 }],
+>>>>>>> f899d83 (Some changes (like adding email verification))
                                 messages: [],
                                 pins: []
                             };
@@ -174,7 +178,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(404).send({});
                         }
                     } else {
-                        res.status(401).send({})
+                        res.status(403).send({})
                     }
                 } else {
                     res.status(500).send({});
@@ -341,7 +345,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(400).send({});
                         }
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -454,7 +458,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             });
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -532,7 +536,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             });
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});

@@ -151,6 +151,8 @@ import { User } from '../interfaces';
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
 
+import * as email from '../utils/email';
+
 import account from './account';
 
 import users from './users';
@@ -172,10 +174,12 @@ import users from './users';
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
-    account(websockets, app, database, flake);
+    email.authorize();
+
+    account(websockets, app, database, flake, email, checkLogin);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if(!req.url.startsWith('/icons')) {
+        if(!req.url.startsWith('/icons') && !req.url.startsWith('/verify')) {
         const user: User = await checkLogin(req.headers.authorization ?? "");
        if(user.creation != 0) {
                     res.locals.user = user.id;
@@ -184,9 +188,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
            res.status(401).send({});
        }
     } else {
+        if(req.url.startsWith('/verify')) {
+            const user: User = await checkLogin(req.headers.authorization ?? "", true);
+            if(user.creation != 0) {
+                         res.locals.user = user.id;
+                         next();
+            } else {
+                res.status(401).send({});
+            }
+        } else {
         next();
+        }
     }
     });
+
     users(websockets, app, database);
 
     messages(websockets, app, database, flake);
@@ -216,7 +231,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 0718f96 (Changed to TypeScript)
     });
 
-    async function checkLogin(token: string): Promise<User> {
+    async function checkLogin(token: string, verify?: boolean): Promise<User> {
         return await new Promise(resolve => {
             const emptyUser: User = {
                 id: "",
@@ -225,6 +240,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 password: "",
                 username: "",
                 discriminator: "",
+<<<<<<< HEAD
 <<<<<<< HEAD
                 creation: 0,
                 verified: false,
@@ -241,6 +257,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
                     if (res.rows.map(x => x.token == token).includes(true)) {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                creation: 0,
+                verified: false,
+                verificator: ''
+            };
+            database.query(`SELECT * FROM users`, async (err, res) => {
+                if (!err) {
+                    if (res.rows.find(x => x.token == token) && (!verify || res.rows.find(x => x.token == token).verified)) {
+>>>>>>> f899d83 (Some changes (like adding email verification))
                         try {
                             const { importSPKI } = require('jose/key/import');
                             const { jwtVerify } = require('jose/jwt/verify');

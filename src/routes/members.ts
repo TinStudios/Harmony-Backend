@@ -99,7 +99,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(401).send({});
+                        res.status(403).send({});
                     }
                 } else {
                     res.status(500).send({});
@@ -161,7 +161,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                         });
                     } else {
-                        res.status(401).send({});
+                        res.status(403).send({});
                     }
                 } else {
                     res.status(500).send({});
@@ -280,7 +280,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(400).send({});
                             }
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -364,7 +364,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(400).send({});
                             }
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -459,7 +459,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(400).send({});
                             }
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});

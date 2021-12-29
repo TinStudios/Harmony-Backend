@@ -47,7 +47,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
                             res.send(roles);
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -99,7 +99,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id == x)?.permissions & 0x0000000800) == 0x0000000800)) {
                             res.send(roles.find((x: Role) => x?.id == roleId));
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -253,6 +253,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 res.status(403).send({ error: "Missing permission." });
                             }
                         } else {
@@ -269,6 +270,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing." });
 =======
                                 res.status(401).send({});
+=======
+                                res.status(403).send({});
+>>>>>>> f899d83 (Some changes (like adding email verification))
                             }
                         } else {
                             res.status(404).send({});
@@ -472,7 +476,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         }
                                     });
                                 } else {
-                                    res.status(401).send({});
+                                    res.status(403).send({});
                                 }
                             } else {
                                 res.status(404).send({})
@@ -541,8 +545,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                                 });
                             } else {
+<<<<<<< HEAD
                                 res.status(401).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                                res.status(403).send({});
+>>>>>>> f899d83 (Some changes (like adding email verification))
                             }
                         } else {
                             res.status(404).send({})

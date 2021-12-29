@@ -67,7 +67,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 return newChannels;
                             })() : guild[x])[index] }), {}));
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -145,6 +145,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
+<<<<<<< HEAD
     app.patch('/guilds/*/icons', (req: express.Request, res: express.Response) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
         const urlParamsValues: string[] = Object.values(req.params);
@@ -258,6 +259,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 0718f96 (Changed to TypeScript)
     });
 
+=======
+>>>>>>> f899d83 (Some changes (like adding email verification))
     app.patch('/guilds/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
@@ -367,7 +370,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             });
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
@@ -445,7 +448,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             });
                         } else {
-                            res.status(401).send({});
+                            res.status(403).send({});
                         }
                     } else {
                         res.status(404).send({});
