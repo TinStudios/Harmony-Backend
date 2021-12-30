@@ -188,17 +188,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
            res.status(401).send({});
        }
     } else {
-        if(req.url.startsWith('/verify')) {
-            const user: User = await checkLogin(req.headers.authorization ?? "", true);
-            if(user.creation != 0) {
-                         res.locals.user = user.id;
-                         next();
-            } else {
-                res.status(401).send({});
-            }
-        } else {
         next();
-        }
     }
     });
 
@@ -231,7 +221,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 0718f96 (Changed to TypeScript)
     });
 
-    async function checkLogin(token: string, verify?: boolean): Promise<User> {
+    async function checkLogin(token: string): Promise<User> {
         return await new Promise(resolve => {
             const emptyUser: User = {
                 id: "",
@@ -264,8 +254,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             };
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {
+<<<<<<< HEAD
                     if (res.rows.find(x => x.token == token) && (!verify || res.rows.find(x => x.token == token).verified)) {
 >>>>>>> f899d83 (Some changes (like adding email verification))
+=======
+                    if (res.rows.find(x => x.token == token) && res.rows.find(x => x.token == token).verified) {
+>>>>>>> 2fdf302 (Not tested but my common sense says I broke everything)
                         try {
                             const { importSPKI } = require('jose/key/import');
                             const { jwtVerify } = require('jose/jwt/verify');

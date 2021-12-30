@@ -64,9 +64,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         if (verificator) {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    const user = dbRes.rows.find(x => x.id === res.locals.user);
-                    if(user.verificator === verificator) {
-                        database.query(`UPDATE users SET verified = $1, verificator = $2`, [true, ''], err => {
+                    const user = dbRes.rows.find(x => x.verificator === verificator);
+                    if(user) {
+                        database.query(`UPDATE users SET verified = $1, verificator = $2 WHERE verificator = $3`, [true, '', verificator], err => {
                             if (!err) {
                                 res.send({ token: user.token });
                             } else {
@@ -114,7 +114,7 @@ app.patch('/users/@me/guilds/*', (req: express.Request, res: express.Response) =
                             member.nickname = req.body.nickname;
                             members[members.findIndex((x: Member) => x.id === res.locals.user)] = member;
                             guild.members = members;
-                            database.query(`UPDATE guilds SET members = $1`, [JSON.stringify(members)], (err, dbRes) => {
+                            database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
                                         let channels = JSON.parse(guild[x]);
@@ -160,7 +160,7 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                         if (members.find((x: Member) => x?.id == res.locals.user) && !members.find((x: Member) => x?.id == res.locals.user)?.roles.includes("0")) {
                             members.splice(members.findIndex((x: Member) => x.id === res.locals.user), 1);
                             guild.members = members;
-                            database.query(`UPDATE guilds SET members = $1`, [JSON.stringify(members)], (err, dbRes) => {
+                            database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
                                         let channels = JSON.parse(guild[x]);
