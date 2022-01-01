@@ -12,7 +12,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
-import { Guild, Member } from '../interfaces';
+import { Member, Role } from '../interfaces';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 <<<<<<< HEAD
@@ -67,18 +67,22 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 return newChannels;
                             })() : guild[x])[index] }), {}));
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "You aren't in this guild." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(404).send({ error: "Not found." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -127,21 +131,22 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: '1', name: 'Members', permissions: 513, color: null, hoist: false }],
                 members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
                 creation: Date.now(),
-                bans: []
+                bans: [],
+                invites: []
             }
-            database.query(`INSERT INTO guilds (id, name, description, public, channels, roles, members, bans) VALUES($1, $2, $3, $4, $5, $6, $7, $8)`, [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans)], (err, dbRes) => {
+            database.query(`INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
                     websockets.get(res.locals.user)?.forEach(websocket => {
                         websocket.send(JSON.stringify({ event: 'guildCreated', guild: guild }));
                     });
-                    res.status(200).send(guild);
+                    res.send(guild);
                 } else {
                     console.log(err);
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({});
+            res.status(400).send({ error: "Something is missing." });
         }
     });
 
@@ -272,6 +277,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
@@ -282,6 +288,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
                         if (guild.members.find(x => x?.id == res.locals.user)?.roles.find(x => ((guild.roles.find(y => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
+                    if (guild) {
+                        const members = JSON.parse(guild.members);
+                        Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
+                        if (members.find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => ((guild.roles.find((y: Role) => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
+>>>>>>> 51556ba (Some changes)
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -307,6 +320,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 changesWereMade = true;
                             }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
                             if (req.body.owner && members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0') && members.find((x: Member) => x?.id === req.body.owner)) {
                                 members[members.findIndex((x: Member) => x?.id === res.locals.user)].roles.splice(members[members.findIndex((x: Member) => x?.id === res.locals.user)].roles.indexOf('0'), 1);
@@ -350,38 +364,47 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (req.body.owner && guild.members.find(x => x?.id == res.locals.user)?.roles.includes('0') && guild.members.find(x => x?.id == req.body.owner)) {
                                 guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.splice(guild.members[guild.members.findIndex(x => x?.id == res.locals.user)].roles.indexOf('0'), 1);
                                 guild.members[guild.members.findIndex(x => x?.id == req.body.owner)].roles.push('0');
+=======
+                            if (req.body.owner && members.find((x: Member) => x?.id == res.locals.user)?.roles.includes('0') && members.find((x: Member) => x?.id == req.body.owner)) {
+                                members[members.findIndex((x: Member) => x?.id == res.locals.user)].roles.splice(members[members.findIndex((x: Member) => x?.id == res.locals.user)].roles.indexOf('0'), 1);
+                                members[members.findIndex((x: Member) => x?.id == req.body.owner)].roles.push('0');
+>>>>>>> 51556ba (Some changes)
                                 changesWereMade = true;
                             }
 
-                            database.query(`UPDATE guilds SET name = $1, members = $2 WHERE id = $3`, [guild.name, JSON.stringify(guild.members), guildId], (err, dbRes) => {
+                            database.query(`UPDATE guilds SET name = $1, members = $2 WHERE id = $3`, [guild.name, JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     if (changesWereMade) {
-                                        guild.members.forEach(member => {
+                                       members.forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'guildEdited', guild: guild }));
                                             });
                                         });
-                                        res.status(200).send(guild);
+                                        res.send(guild);
                                     } else {
-                                        res.status(400).send({});
+                                        res.status(400).send({ error: "Something is missing." });
                                     }
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -395,6 +418,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         if (guildId) {
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -432,34 +456,43 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const preGuild = dbRes.rows.find(x => x?.id == guildId);
                     const guild: Guild = Object.keys(preGuild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(preGuild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(preGuild[x]) : preGuild[x])[index] }), {}) as Guild;
+=======
+                    const guild = dbRes.rows.find(x => x?.id == guildId);
+>>>>>>> 51556ba (Some changes)
                     if (guild) {
-                        if (guild.members.find(x => x?.id == res.locals.user)?.roles.includes('0')) {
-
+                        const members = JSON.parse(guild.members);
+                        if (members.find((x: Member) => x?.id == res.locals.user)?.roles.includes('0')) {
+                            const parsedGuild = Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
+                    
                             database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
                                 if (!err) {
-                                    guild.members.forEach(member => {
+                                    members.forEach((member: Member) => {
                                         websockets.get(member.id)?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: 'guildDelete', guild: guild }));
                                         });
                                     });
-                                    res.status(200).send(guild);
+                                    res.send(parsedGuild);
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "You don't own this guild." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 };

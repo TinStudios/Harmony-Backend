@@ -59,9 +59,13 @@ export default async (database: Client, logger: any) => {
         members text NOT NULL,
         bans text NOT NULL,
 <<<<<<< HEAD
+<<<<<<< HEAD
         invites text NOT NULL,
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+        invites text NOT NULL,
+>>>>>>> 51556ba (Some changes)
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {

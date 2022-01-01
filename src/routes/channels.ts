@@ -75,6 +75,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.send(channel);
                         } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
                             res.status(404).send({ error: "Channel not found." });
                         }
                     } else {
@@ -88,17 +89,24 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing." });
 =======
                             res.status(404).send({});
+=======
+                            res.status(404).send({ error: "Channel not found." });
+>>>>>>> 51556ba (Some changes)
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -169,24 +177,28 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                         websocket.send(JSON.stringify({ event: 'channelCreated', channel: channel }));
                                     });
-                                    res.status(200).send(channel);
+                                    res.send(channel);
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(404).send({});
+                            res.status(404).send({ error: "Guild not found." });
                         }
                     } else {
-                        res.status(403).send({})
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(400).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -220,8 +232,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000008) == 0x0000000008).includes(true)) {
                             
                             if(JSON.parse(guild.roles).find((x: Role) => x.id == roleId) && req.body.permissions) {
-                                const roles = JSON.parse(guild.roles);
-
                                 let role = channel.roles.find((x: Role) => x?.id == roleId) ?? {};
 >>>>>>> 0718f96 (Changed to TypeScript)
 
@@ -336,27 +346,31 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', channel: channel }));
                                             });
                                         });
-                                        res.status(200).send(channel);
+                                        res.send(channel);
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(400).send({});
+                            res.status(400).send({ error: "Something is missing." });
                         }
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Channel not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -449,27 +463,31 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', channel: channel }));
                                             });
                                         });
-                                        res.status(200).send(channel);
+                                        res.send(channel);
                                     } else {
-                                        res.status(400).send({});
+                                        res.status(400).send({ error: "Something is missing." });
                                     }
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Channel not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -530,24 +548,28 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     websockets.get(res.locals.user)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'channelDeleted', channel: channel }));
                                     });
-                                    res.status(200).send(channel);
+                                    res.send(channel);
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(404).send({});
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 };

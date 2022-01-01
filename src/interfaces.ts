@@ -84,6 +84,9 @@ export interface Channel {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 51556ba (Some changes)
 export interface Invite {
     code: string;
     author: string | Author;
@@ -92,8 +95,11 @@ export interface Invite {
     uses: number;
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+>>>>>>> 51556ba (Some changes)
 export interface Guild {
     id: string;
     name: string,
@@ -103,6 +109,7 @@ export interface Guild {
     roles: Role[],
     members: Member[],
     bans: string[];
+<<<<<<< HEAD
 <<<<<<< HEAD
     invites: Invite[];
 };
@@ -115,3 +122,7 @@ export interface FileI {
 =======
 };
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    invites: Invite[];
+};
+>>>>>>> 51556ba (Some changes)

@@ -105,25 +105,29 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             });
                             res.send(messages);
                             } else {
-                                res.status(500).send({});
+                                res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
                         } else {
-                            res.status(404).send({});
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Channel not found." });
                     }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(400).send({});
 >>>>>>> 7e30e9e (Some changes)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -283,34 +287,38 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             });
                                         }
                                         });
-                                        res.status(200).send(message);
+                                        res.send(message);
                                     } else {
-                                        res.status(500).send({});
+                                        res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                                     });
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Message already pinned." });
                         }
                         } else {
-                            res.status(404).send({});
+                            res.status(404).send({ error: "Message not found." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
-                    res.status(404).send({});
+                    res.status(404).send({ error: "Guild not found." });
                 }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(400).send({});
 >>>>>>> 7e30e9e (Some changes)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 
@@ -395,31 +403,35 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             });
                                         }
                                         });
-                                        res.status(200).send(message);
+                                        res.send(message);
                                     } else {
-                                        res.status(500).send({});
+                                        res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                                     });
                                 } else {
-                                    res.status(500).send({});
+                                    res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(404).send({});
+                            res.status(404).send({ error: "Message not pinned." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Missing permission." });
                     }
                 } else {
-                    res.status(404).send({});
+                    res.status(404).send({ error: "Guild not found." });
                 }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
+<<<<<<< HEAD
             res.status(400).send({});
 >>>>>>> 7e30e9e (Some changes)
+=======
+            res.status(400).send({ error: "Something is missing." });
+>>>>>>> 51556ba (Some changes)
         }
     });
 };

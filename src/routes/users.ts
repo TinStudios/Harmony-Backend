@@ -70,19 +70,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (!err) {
                                 res.send({ token: user.token });
                             } else {
-                                res.status(500).send({});
+                                res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
                     } else {
-                        res.status(401).send({});
+                        res.status(401).send({ error: "Invalid verification code." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
 
         } else {
-            res.status(400).send({});
+            res.status(400).send({ error: "Something is missing." });
         }
     });
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
@@ -91,57 +91,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
                         res.send(guilds.map(guild => Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {})));
             } else {
-                res.status(500).send({});
+                res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
-});
-
-app.patch('/users/@me/guilds/*', (req: express.Request, res: express.Response) => {
-    const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
-            .map((x) => x.replace(/\//g, ''))
-            .filter((x) => {
-                return x != '';
-            })[0];
-        if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id == guildId);
-                    if (guild) {
-                        const members = JSON.parse(guild.members);
-                        if ((req.body.nickname === null || (req.body.nickname.length > 0 && req.body.nickname.length < 31)) && members.find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000200) == 0x0000000200)) {
-                            let member = members.find((x: Member) => x.id === res.locals.user);
-                            member.nickname = req.body.nickname;
-                            members[members.findIndex((x: Member) => x.id === res.locals.user)] = member;
-                            guild.members = members;
-                            database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
-                                        let channels = JSON.parse(guild[x]);
-                                        const newChannels = channels.map((channel: any) => {
-                                        delete channel.messages;
-                                        delete channel.pins;
-                                        return channel;
-                                    });
-                                        return newChannels;
-                                    })() : guild[x])[index] }), {}));
-                                    } else {
-                                        res.status(500).send({});
-                                    }
-                            });
-                        } else {
-                            res.status(403).send({});
-                        }
-                    } else {
-                        res.status(404).send({});
-                    }
-                } else {
-                    res.status(500).send({});
-                }
-            });
-        } else {
-            res.status(404).send({});
-        }
 });
 
 app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) => {
@@ -172,21 +124,21 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                                         return newChannels;
                                     })() : guild[x])[index] }), {}));
                                     } else {
-                                        res.status(500).send({});
+                                        res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                             });
                         } else {
-                            res.status(403).send({});
+                            res.status(403).send({ error: "Not authorized." });
                         }
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(404).send({});
+            res.status(404).send({ error: "Not found." });
         }
 });
 
@@ -199,7 +151,7 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                                 const returnedUser: ReturnedUser = rest;
                     res.send(returnedUser);
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
 >>>>>>> 0718f96 (Changed to TypeScript)
@@ -238,10 +190,10 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                                 const returnedUser: ReturnedUser = rest;
                         res.send(returnedUser);
                     } else {
-                        res.status(404).send({});
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
 >>>>>>> 0718f96 (Changed to TypeScript)
@@ -508,11 +460,11 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                     });
                     res.send(returnedUser);
                 } else {
-                    res.status(500).send({});
+                    res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(500).send({});
+            res.status(500).send({ error: "Something went wrong with our server." });
         }
     });
     });
@@ -537,15 +489,15 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
                                 });
                                 res.send(returnedUser);
                             } else {
-                                res.status(500).send({});
+                                res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
                     } else {
-                        res.status(500).send({});
+                        res.status(500).send({ error: "Something went wrong with our server." });
                     }
                 });
             } else {
-                res.status(400).send({});
+                res.status(400).send({ error: "Something is missing." });
             }
 >>>>>>> 0718f96 (Changed to TypeScript)
     });
