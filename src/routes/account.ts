@@ -58,7 +58,7 @@ import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, email: any, checkLogin: any) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
@@ -179,10 +179,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                 'Subject: Verify your Seltorn account!\n',
                                 'From: seltornteam@gmail.com\n',
-                                'To: seltornteam@gmail.com\n\n',
+                                'To: ' + req.body.email + '\n\n',
                                 'Thank you for registering to Seltorn!\n',
                                 'To start using it, we need to verify your email address.\n',
-                                'Click here to verify: http://localhost:3001/verify/' + verificator + '\n\n'].join('')).toString('base64url'));
+                                'Click here to verify: ' + clientDomain +'/verify/' + verificator + '\n\n'].join('')).toString('base64url'));
                                 res.send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });

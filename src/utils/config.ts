@@ -24,6 +24,7 @@ const schema = Joi.object({
     DB_PASSWORD: Joi.string().default(''),
     DB_DATABASE: Joi.string().default('postgres'),
     DB_PORT: Joi.number().default(5433),
+    CLIENT_DOMAIN: Joi.string().default('http://localhost:3001')
   })
 >>>>>>> 0718f96 (Changed to TypeScript)
   .unknown();
@@ -38,11 +39,17 @@ export default {
     port: value.SVR_PORT,
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
   client: {
     domain: value.CLIENT_DOMAIN
   },
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+  client: {
+    domain: value.CLIENT_DOMAIN
+  },
+>>>>>>> b2c0254 (some fixes)
   db: {
     user: value.DB_USER,
     host: value.DB_HOST,

@@ -75,7 +75,7 @@ require('./utils/ws')(wss, websockets, server, database);
 ws(wss, websockets, server as unknown as Server, database);
 >>>>>>> 2aecc42 (Changed to import)
 
-routes(websockets, app, database);
+routes(websockets, app, database, config.client.domain);
 
 server.listen(config.server.port, async () => {
     db(database, logger);
