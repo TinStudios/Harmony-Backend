@@ -299,6 +299,46 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
+    app.get('/invites/*', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const code = urlParamsValues
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            })[0];
+        if (code) {
+            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
+                    if (guild) {
+                        let invites = JSON.parse(guild.invites);
+                        let invite = invites.find((x: Invite) => x.code === code);
+
+                        if(invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses)) {
+                                    res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
+                                        let channels = JSON.parse(guild[x]);
+                                        const newChannels = channels.map((channel: any) => {
+                                        delete channel.messages;
+                                        delete channel.pins;
+                                        return channel;
+                                    });
+                                        return newChannels;
+                                    })() : guild[x])[index] }), {}));
+                        } else {
+                            res.status(403).send({ error: "Invite expired." });
+                        }
+                    } else {
+                        res.status(404).send({ error: "Invite not found." });
+                    }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
+        } else {
+            res.status(400).send({ error: "Something is missing." });
+        }
+    });
+
     app.post('/invites/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const code = urlParamsValues
@@ -346,6 +386,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                         if(invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses)) {
                         const members = JSON.parse(guild.members);
+                        members.push({ id: res.locals.user, nickname: null, roles: ['1'] });
                         invite.uses++;
                         invites[invites.findIndex((x: Invite) => x.code === code)] = invite;
                         
