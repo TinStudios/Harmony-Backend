@@ -89,65 +89,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         database.query(`SELECT * FROM guilds`, (err, dbRes) => {
             if (!err) {
                 const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
-                        res.send(guilds.map(guild => Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {})));
+                        res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {})));
             } else {
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
 });
 
-app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) => {
-    const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
-            .map((x) => x.replace(/\//g, ''))
-            .filter((x) => {
-                return x != '';
-            })[0];
-        if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id == guildId);
-                    if (guild) {
-                        const members = JSON.parse(guild.members);
-                        if (members.find((x: Member) => x?.id == res.locals.user) && !members.find((x: Member) => x?.id == res.locals.user)?.roles.includes("0")) {
-                            members.splice(members.findIndex((x: Member) => x.id === res.locals.user), 1);
-                            guild.members = members;
-                            database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
-                                        let channels = JSON.parse(guild[x]);
-                                        const newChannels = channels.map((channel: any) => {
-                                        delete channel.messages;
-                                        delete channel.pins;
-                                        return channel;
-                                    });
-                                        return newChannels;
-                                    })() : guild[x])[index] }), {}));
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
-                            });
-                        } else {
-                            res.status(403).send({ error: "You can't leave this guild." });
-                        }
-                    } else {
-                        res.status(404).send({ error: "Guild not found." });
-                    }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
-            });
-        } else {
-            res.status(400).send({ error: "Something is missing." });
-        }
-});
-
     app.get('/users/@me', async (req: express.Request, res: express.Response) => {
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    const user = dbRes.rows.find(x => x.token == req.headers.authorization);
+                    const user = dbRes.rows.find(x => x.token === req.headers.authorization);
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
-                                const { token, email, password, ...rest } = preReturnedUser;
+                                const { token, email, password, verificator, ...rest } = preReturnedUser;
                                 const returnedUser: ReturnedUser = rest;
                     res.send(returnedUser);
                 } else {
@@ -183,10 +137,10 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
 =======
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    const user = dbRes.rows.find(x => x.id == userId);
+                    const user = dbRes.rows.find(x => x.id === userId);
                     if (user) {
                         let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
-                                const { token, email, password, ...rest } = preReturnedUser;
+                                const { token, email, password, verificator, ...rest } = preReturnedUser;
                                 const returnedUser: ReturnedUser = rest;
                         res.send(returnedUser);
                     } else {
@@ -202,6 +156,7 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
     app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
@@ -450,10 +405,13 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
         });
 =======
                 const user = dbRes.rows.find(x => x.id == res.locals.user);
+=======
+                const user = dbRes.rows.find(x => x.id === res.locals.user);
+>>>>>>> f8e172d (asi ri ma na)
             database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
                 if (!err) {
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
-                                const { token, email, password, ...rest } = preReturnedUser;
+                                const { token, email, password, verificator, ...rest } = preReturnedUser;
                                 const returnedUser: ReturnedUser = rest;
                          websockets.get(user.id)?.forEach(websocket => {
                         websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
@@ -473,15 +431,15 @@ app.delete('/users/@me/guilds/*', (req: express.Request, res: express.Response) 
             if ((req.body.username && req.body.username.length < 31) || req.body.password) {
                 database.query(`SELECT * FROM users`, async (err, dbRes) => {
                     if (!err) {
-                        const user = dbRes.rows.find(x => x.id == res.locals.user);
-                        const discriminator = dbRes.rows.find(x => x.username == req.body.username && x.discriminator == user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username)) : user.discriminator;
+                        const user = dbRes.rows.find(x => x.id === res.locals.user);
+                        const discriminator = dbRes.rows.find(x => x.username === req.body.username && x.discriminator === user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username)) : user.discriminator;
                         const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
                         database.query(`UPDATE users SET username = $1, discriminator = $2, password = $3, token = $4 WHERE id = $5`, [req.body.username ?? user.username, discriminator, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
                             if (!err) {
                                 let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
                                 preReturnedUser.username = req.body.username;
                                 preReturnedUser.discriminator = discriminator;
-                                const { token, email, password, ...rest } = preReturnedUser;
+                                const { token, email, password, verificator, ...rest } = preReturnedUser;
                                 const returnedUser: ReturnedUser = rest;
         
                                      websockets.get(user.id)?.forEach(websocket => {

@@ -62,7 +62,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
-                const user = dbRes.rows.find(x => x.email == req.body.email);
+                const user = dbRes.rows.find(x => x.email === req.body.email);
                 if (user) {
                     try {
                         if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
@@ -155,7 +155,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    const badAccount = dbRes.rows.find(x => x.email == req.body.email);
+                    const badAccount = dbRes.rows.find(x => x.email === req.body.email);
                     if (!badAccount?.verified) {
                         let canContinue = false;
 
@@ -172,7 +172,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const id = intformat(flake.next(), 'dec').toString();
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' +  await generateToken({ id: id });
-                        const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username == req.body.username).map(x => x.discriminator) ?? []);
+                        const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                         const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
                         database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
                             if (!err) {

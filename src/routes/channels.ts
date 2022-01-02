@@ -46,6 +46,36 @@ module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 >>>>>>> 2aecc42 (Changed to import)
 
+    app.get('/guilds/*/channels/', (req: express.Request, res: express.Response) => {
+        const urlParamsValues: string[] = Object.values(req.params);
+        const guildId = urlParamsValues
+            .map((x: string) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            })[0];
+        if (guildId) {
+            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild) {
+                        const channels = JSON.parse(guild.channels);
+                            res.send(channels.map((channel: any) => {
+                                delete channel.messages;
+                            delete channel.pins;
+                            return channel;
+                            }));
+                    } else {
+                        res.status(404).send({ error: "Guild not found." });
+                    }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
+        } else {
+            res.status(400).send({ error: "Something is missing." });
+        }
+    });
+
     app.get('/guilds/*/channels/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const urlParams = urlParamsValues
@@ -59,6 +89,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const channels = JSON.parse(guild.channels);
@@ -69,6 +100,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id == channelId);
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild) {
+                        const channels = JSON.parse(guild.channels);
+                        let channel = channels.find((x: Channel) => x?.id === channelId);
+>>>>>>> f8e172d (asi ri ma na)
                         if (channel) {
                             delete channel.messages;
                             delete channel.pins;
@@ -121,6 +158,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
@@ -134,6 +172,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
                     if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000010) == 0x0000000010)) {
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
+>>>>>>> f8e172d (asi ri ma na)
                         if (guild) {
                             let channels = JSON.parse(guild.channels);
                             const channel = {
@@ -216,6 +258,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     let channels = JSON.parse(guild.channels);
                     let channel = channels.find((x: Channel) => x?.id === channelId);
@@ -226,20 +269,29 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 let role = channel.roles.find((x: Role) => x?.id === roleId) ?? {};
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+>>>>>>> f8e172d (asi ri ma na)
                     let channels = JSON.parse(guild.channels);
-                    let channel = channels.find((x: Channel) => x?.id == channelId);
+                    let channel = channels.find((x: Channel) => x?.id === channelId);
                     if (channel) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000008) == 0x0000000008).includes(true)) {
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008).includes(true)) {
                             
+<<<<<<< HEAD
                             if(JSON.parse(guild.roles).find((x: Role) => x.id == roleId) && req.body.permissions) {
                                 let role = channel.roles.find((x: Role) => x?.id == roleId) ?? {};
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                            if(JSON.parse(guild.roles).find((x: Role) => x.id === roleId) && req.body.permissions) {
+                                let role = channel.roles.find((x: Role) => x?.id === roleId) ?? {};
+>>>>>>> f8e172d (asi ri ma na)
 
                                 let permissions = 0;
                                 let permissionsCodes: number[] = [];
                                 req.body.permissions?.forEach((permission: string) => {
                                     switch (permission) {
                                         case 'VIEW_CHANNEL':
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000040) === 0x0000000040)) {
@@ -249,11 +301,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000040) == 0x0000000040).includes(true)) {
 >>>>>>> efdc2b8 (The Question:tm:)
+=======
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x?.permissions & 0x0000000040) === 0x0000000040).includes(true)) {
+>>>>>>> f8e172d (asi ri ma na)
                                                 permissionsCodes.push(0x0000000040);
                                             }
                                             break;
 
                                         case 'SEND_MESSAGES':
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000080) === 0x0000000080)) {
@@ -263,11 +319,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000080) == 0x0000000080).includes(true)) {
 >>>>>>> efdc2b8 (The Question:tm:)
+=======
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x?.permissions & 0x0000000080) === 0x0000000080).includes(true)) {
+>>>>>>> f8e172d (asi ri ma na)
                                                 permissionsCodes.push(0x0000000080);
                                             }
                                             break;
 
                                         case 'MANAGE_MESSAGES':
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000100) === 0x0000000100)) {
@@ -277,6 +337,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                             if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000100) == 0x0000000100).includes(true)) {
 >>>>>>> efdc2b8 (The Question:tm:)
+=======
+                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x?.permissions & 0x0000000100) === 0x0000000100).includes(true)) {
+>>>>>>> f8e172d (asi ri ma na)
                                                 permissionsCodes.push(0x0000000100);
                                             }
                                             break;
@@ -335,9 +398,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing." });
 =======
                                 
-                                channel.roles[channel.roles.findIndex((x: Channel) => x?.id == roleId)] = role;
+                                channel.roles[channel.roles.findIndex((x: Channel) => x?.id === roleId)] = role;
 
-                            channels[channels.findIndex((x: Channel) => x?.id == channelId)] = channel;
+                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
 
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
@@ -387,6 +450,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     let channels = JSON.parse(guild.channels);
                     let channel = channels.find((x: Channel) => x?.id === channelId);
@@ -394,15 +458,22 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+>>>>>>> f8e172d (asi ri ma na)
                     let channels = JSON.parse(guild.channels);
-                    let channel = channels.find((x: Channel) => x?.id == channelId);
+                    let channel = channels.find((x: Channel) => x?.id === channelId);
                     if (channel) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id == x)).map((x: Role) => (x.permissions & 0x0000000008) == 0x0000000008).includes(true)) {
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
                         if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x?.permissions & 0x0000000008) == 0x0000000008).includes(true)) {
 >>>>>>> efdc2b8 (The Question:tm:)
+=======
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008).includes(true)) {
+>>>>>>> f8e172d (asi ri ma na)
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -422,8 +493,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                             }
 
+<<<<<<< HEAD
                             channels[channels.findIndex((x: Channel) => x?.id == channelId)] = channel;
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+>>>>>>> f8e172d (asi ri ma na)
 
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
@@ -504,6 +579,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
@@ -538,11 +614,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing." });
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+>>>>>>> f8e172d (asi ri ma na)
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
-                        const channel = channels.find((x: Channel) => x?.id == channelId);
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id == x)).map((x: Role) => (x.permissions & 0x0000000008) == 0x0000000008).includes(true)) {
-                            channels.splice(channels.findIndex((x: Channel) => x?.id == channelId), 1)
+                        const channel = channels.find((x: Channel) => x?.id === channelId);
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).map((x: Role) => (x.permissions & 0x0000000008) === 0x0000000008).includes(true)) {
+                            channels.splice(channels.findIndex((x: Channel) => x?.id === channelId), 1)
                             database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
                                     websockets.get(res.locals.user)?.forEach(websocket => {

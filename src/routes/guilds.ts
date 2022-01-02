@@ -41,6 +41,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                         if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                             res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
@@ -55,17 +56,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(404).send({ error: "Not found." });
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+>>>>>>> f8e172d (asi ri ma na)
                     if (guild) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user)) {
-                            res.send(Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'bans' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : x == 'channels' ? (() => {
-                                let channels = JSON.parse(guild[x]);
-                                const newChannels = channels.map((channel: any) => {
-                                delete channel.messages;
-                                delete channel.pins;
-                                return channel;
-                            });
-                                return newChannels;
-                            })() : guild[x])[index] }), {}));
+                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                            res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
                         } else {
                             res.status(403).send({ error: "You aren't in this guild." });
                         }
@@ -137,7 +133,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
                     websockets.get(res.locals.user)?.forEach(websocket => {
-                        websocket.send(JSON.stringify({ event: 'guildCreated', guild: guild }));
+                        websocket.send(JSON.stringify({ event: 'guildJoined', guild: guild }));
                     });
                     res.send(guild);
                 } else {
@@ -278,6 +274,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
@@ -295,6 +292,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
                         if (members.find((x: Member) => x?.id == res.locals.user)?.roles.find((x: string) => ((guild.roles.find((y: Role) => y?.id == x)?.permissions ?? 0) & 0x0000000010) == 0x0000000010)) {
 >>>>>>> 51556ba (Some changes)
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild) {
+                        const members = JSON.parse(guild.members);
+                        Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x === 'channels' || x === 'members' || x === 'roles' || x === 'invites' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
+                        if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((guild.roles.find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
+>>>>>>> f8e172d (asi ri ma na)
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -314,12 +318,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                             }
 
+<<<<<<< HEAD
                             if (typeof req.body.public == 'boolean') {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                            if (typeof req.body.public === 'boolean') {
+>>>>>>> f8e172d (asi ri ma na)
                                 guild.public = req.body.public;
                                 changesWereMade = true;
                             }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                             if (req.body.owner && members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0') && members.find((x: Member) => x?.id === req.body.owner)) {
@@ -369,6 +378,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 members[members.findIndex((x: Member) => x?.id == res.locals.user)].roles.splice(members[members.findIndex((x: Member) => x?.id == res.locals.user)].roles.indexOf('0'), 1);
                                 members[members.findIndex((x: Member) => x?.id == req.body.owner)].roles.push('0');
 >>>>>>> 51556ba (Some changes)
+=======
+                            if (req.body.owner && members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0') && members.find((x: Member) => x?.id === req.body.owner)) {
+                                members[members.findIndex((x: Member) => x?.id === res.locals.user)].roles.splice(members[members.findIndex((x: Member) => x?.id === res.locals.user)].roles.indexOf('0'), 1);
+                                members[members.findIndex((x: Member) => x?.id === req.body.owner)].roles.push('0');
+>>>>>>> f8e172d (asi ri ma na)
                                 changesWereMade = true;
                             }
 
@@ -420,6 +434,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
@@ -459,16 +474,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                     const guild = dbRes.rows.find(x => x?.id == guildId);
 >>>>>>> 51556ba (Some changes)
+=======
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+>>>>>>> f8e172d (asi ri ma na)
                     if (guild) {
                         const members = JSON.parse(guild.members);
-                        if (members.find((x: Member) => x?.id == res.locals.user)?.roles.includes('0')) {
-                            const parsedGuild = Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x == 'channels' || x == 'members' || x == 'roles' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
+                        if (members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0')) {
+                            const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
                     
                             database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
                                 if (!err) {
                                     members.forEach((member: Member) => {
                                         websockets.get(member.id)?.forEach(websocket => {
-                                            websocket.send(JSON.stringify({ event: 'guildDelete', guild: guild }));
+                                            websocket.send(JSON.stringify({ event: 'guildDeleted', guild: guild }));
                                         });
                                     });
                                     res.send(parsedGuild);

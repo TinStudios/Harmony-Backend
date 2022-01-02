@@ -76,11 +76,15 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     if (res.rows.find(x => x.token == token) && (!verify || res.rows.find(x => x.token == token).verified)) {
 >>>>>>> f899d83 (Some changes (like adding email verification))
 =======
                     if (res.rows.find(x => x.token == token) && res.rows.find(x => x.token == token).verified) {
 >>>>>>> 2fdf302 (Not tested but my common sense says I broke everything)
+=======
+                    if (res.rows.find(x => x.token === token) && res.rows.find(x => x.token === token).verified) {
+>>>>>>> f8e172d (asi ri ma na)
                         try {
                             const { importSPKI } = require('jose/key/import');
                             const { jwtVerify } = require('jose/jwt/verify');
@@ -92,10 +96,14 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                                 audience: 'seltorn'
                             });
 <<<<<<< HEAD
+<<<<<<< HEAD
                             resolve(res.rows.find(x => x.token === token));
 =======
                             resolve(res.rows.find(x => x.token == token));
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+                            resolve(res.rows.find(x => x.token === token));
+>>>>>>> f8e172d (asi ri ma na)
 
                         } catch {
                             resolve(emptyUser);
