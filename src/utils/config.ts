@@ -23,7 +23,7 @@ const schema = Joi.object({
     DB_HOST: Joi.string().default('localhost'),
     DB_PASSWORD: Joi.string().default(''),
     DB_DATABASE: Joi.string().default('postgres'),
-    DB_PORT: Joi.number().default(5433),
+    DB_PORT: Joi.number().default(5432),
     CLIENT_DOMAIN: Joi.string().default('http://localhost:3001')
   })
 >>>>>>> 0718f96 (Changed to TypeScript)

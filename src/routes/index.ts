@@ -173,12 +173,12 @@ import invites from './invites';
 
     import friends from './friends';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, clientDomain: string) => {
     app.use('/icons', require('express').static(__dirname + '/../../icons'));
 
     email.authorize();
 
-    account(websockets, app, database, flake, email, checkLogin, clientDomain);
+    account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if(!req.url.startsWith('/icons') && !req.url.startsWith('/verify')) {
@@ -194,7 +194,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     }
     });
 
-    users(websockets, app, database);
+    users(websockets, app, database, logger, email);
 
     invites(websockets, app, database);
 

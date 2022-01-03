@@ -1,4 +1,4 @@
-import { Info, User } from '../interfaces';
+import { Info } from '../interfaces';
 
 import express from "express";
 <<<<<<< HEAD
@@ -58,7 +58,7 @@ import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
@@ -176,13 +176,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
                         database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
                             if (!err) {
+                                try {
                                 email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                 'Subject: Verify your Seltorn account!\n',
                                 'From: seltornteam@gmail.com\n',
                                 'To: ' + req.body.email + '\n\n',
                                 'Thank you for registering to Seltorn!\n',
-                                'To start using it, we need to verify your email address.\n',
-                                'Click here to verify: ' + clientDomain +'/verify/' + verificator + '\n\n'].join('')).toString('base64url'));
+                                'To start chatting, we need to verify your email address.\n',
+                                'Use this link to verify: ' + clientDomain + '/verify/' + verificator + '\n',
+                                'Best regards,\n',
+                                'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                } catch {
+                                    logger.error("Error emailing " + req.body.email);
+                                }
                                 res.send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
