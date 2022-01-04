@@ -25,8 +25,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 const friends = JSON.parse(dbRes.rows.find(x => x?.id == res.locals.user) ?? JSON.stringify({ friends: [] })).friends;
 =======
                 const friends = JSON.parse(dbRes.rows.find(x => x?.id === res.locals.user) ?? JSON.stringify({ friends: [] })).friends;
+<<<<<<< HEAD
 >>>>>>> f8e172d (asi ri ma na)
                     res.send(friends.friends);
+=======
+                res.send(friends.friends);
+>>>>>>> 332c1ca (owo)
             } else {
 <<<<<<< HEAD
                 res.status(500).send({});
@@ -109,7 +113,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> f8e172d (asi ri ma na)
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
-                    if(dbRes.rows.find(x => x.id === friendId)) {
+                    if (dbRes.rows.find(x => x.id === friendId)) {
                         database.query(`SELECT * FROM friends`, async (err, dbRes) => {
                             if (!err) {
                                 const dbEntry = dbRes.rows.find(x => x?.id === res.locals.user);
@@ -128,6 +132,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             if (!err) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                                 res.status(201).send(friend);
                                             } else {
                                                 res.status(500).send({ error: "Something went wrong with our server." });
@@ -138,6 +143,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
                                                 res.send(friend);
+=======
+                                                res.status(201).send(friend);
+>>>>>>> 332c1ca (owo)
                                             } else {
                                                 res.status(500).send({ error: "Something went wrong with our server." });
 >>>>>>> 51556ba (Some changes)
@@ -292,7 +300,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         delete friends[friends.findIndex((x: Friend) => x?.id === friendId)];
                         database.query(`UPDATE friends SET friends = $1`, [JSON.stringify(friends)], (err, dbRes) => {
                             if (!err) {
-                                res.send(exFriend);
+                                res.send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }

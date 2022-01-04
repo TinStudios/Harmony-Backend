@@ -37,12 +37,20 @@ const database = new Client({
 >>>>>>> 2aecc42 (Changed to import)
 const wss = new WebSocketServer({ noServer: true });
 const database = new Client({
+<<<<<<< HEAD
     user: config.db.user,
     host: config.db.host,
     database: config.db.database,
     password: config.db.password,
     port: config.db.port,
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+  user: config.db.user,
+  host: config.db.host,
+  database: config.db.database,
+  password: config.db.password,
+  port: config.db.port,
+>>>>>>> 332c1ca (owo)
 });
 
 const logger = createLogger(config.env === 'development');
@@ -78,8 +86,13 @@ ws(wss, websockets, server as unknown as Server, database);
 routes(websockets, app, database, logger, config.client.domain);
 
 server.listen(config.server.port, async () => {
+<<<<<<< HEAD
     db(database, logger);
     
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+  db(database, logger);
+
+>>>>>>> 332c1ca (owo)
   logger.info(`Listening on port ${config.server.port}`);
 });

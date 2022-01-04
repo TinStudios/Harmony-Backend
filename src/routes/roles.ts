@@ -32,6 +32,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         const roles = JSON.parse(guild.roles);
                         res.send(roles);
+<<<<<<< HEAD
                     } else {
                         res.status(404).send({ error: "Guild not found." });
                     }
@@ -49,6 +50,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         const roles = JSON.parse(guild.roles);
                          res.send(roles);
+=======
+>>>>>>> 332c1ca (owo)
                     } else {
                         res.status(404).send({ error: "Guild not found." });
                     }
@@ -88,6 +91,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(404).send({ error: "Role not found." });
                         }
+<<<<<<< HEAD
                     } else {
                         res.status(404).send({ error: "Guild not found" });
                     }
@@ -106,12 +110,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const roles = JSON.parse(guild?.roles);
                     if (roles.find((x: Role) => x?.id === roleId)) {
                         res.send(roles.find((x: Role) => x?.id === roleId));
+=======
+>>>>>>> 332c1ca (owo)
                     } else {
-                        res.status(404).send({ error: "Role not found." });
+                        res.status(404).send({ error: "Guild not found" });
                     }
-                } else {
-                    res.status(404).send({ error: "Guild not found" });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -299,7 +302,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 roles.push(role);
                                 database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        res.send(role);
+                                        res.status(201).send(role);
                                     } else {
 <<<<<<< HEAD
                                         res.status(500).send({});
@@ -444,57 +447,61 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     let permissions = 0;
                                     let permissionsCodes: number[] = [];
                                     if (req.body.permissions) {
-                                req.body.permissions?.forEach((permission: string) => {
+                                        req.body.permissions?.forEach((permission: string) => {
                                             switch (permission) {
                                                 case 'CREATE_INSTANT_INVITE':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000001) === 0x0000000001)) {
                                                         permissionsCodes.push(0x0000000001);
                                                     }
                                                     break;
-        
+
                                                 case 'KICK_MEMBERS':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000002) === 0x0000000002)) {
                                                         permissionsCodes.push(0x0000000002);
                                                     }
                                                     break;
-        
+
                                                 case 'BAN_MEMBERS':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000004) === 0x0000000004)) {
                                                         permissionsCodes.push(0x0000000004);
                                                     }
                                                     break;
-        
+
                                                 case 'MANAGE_GUILD':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000010) === 0x0000000010)) {
                                                         permissionsCodes.push(0x0000000010);
                                                     }
                                                     break;
-        
+
                                                 case 'VIEW_AUDIT_LOG':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000020) === 0x0000000020)) {
                                                         permissionsCodes.push(0x0000000020);
                                                     }
                                                     break;
-        
+
                                                 case 'CHANGE_NICKNAME':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000200) === 0x0000000200)) {
                                                         permissionsCodes.push(0x0000000200);
                                                     }
                                                     break;
-        
+
                                                 case 'MANAGE_NICKNAMES':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000400) === 0x0000000400)) {
                                                         permissionsCodes.push(0x0000000400);
                                                     }
                                                     break;
-        
+
                                                 case 'MANAGE_ROLES':
                                                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000800) === 0x0000000800)) {
                                                         permissionsCodes.push(0x0000000800);
                                                     }
                                                     break;
+<<<<<<< HEAD
         
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+
+>>>>>>> 332c1ca (owo)
                                                 default:
                                                     break;
                                             }
@@ -621,6 +628,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     if (!err) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                         res.send({});
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
@@ -633,6 +641,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                         res.send(role);
 >>>>>>> 51556ba (Some changes)
+=======
+                                        res.send({});
+>>>>>>> 332c1ca (owo)
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }

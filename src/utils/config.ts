@@ -4,6 +4,9 @@ const Joi = require('joi');
 
 const schema = Joi.object({
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 332c1ca (owo)
   // NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
   NODE_ENV: Joi.string().valid('production', 'development').required(),
   SVR_PORT: Joi.number().default(3001),
@@ -12,6 +15,7 @@ const schema = Joi.object({
   DB_PASSWORD: Joi.string().default(''),
   DB_DATABASE: Joi.string().default('postgres'),
   DB_PORT: Joi.number().default(5432),
+<<<<<<< HEAD
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3001'),
   STORAGE_API_KEY: Joi.string().required()
 })
@@ -27,6 +31,10 @@ const schema = Joi.object({
     CLIENT_DOMAIN: Joi.string().default('http://localhost:3001')
   })
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+  CLIENT_DOMAIN: Joi.string().default('http://localhost:3001')
+})
+>>>>>>> 332c1ca (owo)
   .unknown();
 
 const { error, value } = schema.prefs({ errors: { label: 'key' } }).validate(process.env);

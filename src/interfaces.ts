@@ -67,9 +67,13 @@ export interface Message {
     author: string | Author;
     content: string;
 <<<<<<< HEAD
+<<<<<<< HEAD
     attachment?: string;
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    attachment?: string;
+>>>>>>> 332c1ca (owo)
     creation: number;
 };
 

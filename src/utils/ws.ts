@@ -17,6 +17,9 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
         const user: User = await checkLogin(token);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 332c1ca (owo)
         if (pathname === '/socket' && user.creation != 0) {
             wss.handleUpgrade(request, socket, head, (ws) => {
                 var websocketForThis = websockets.get(user.id) ?? [];
@@ -26,6 +29,7 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
         } else {
             socket.destroy();
         }
+<<<<<<< HEAD
 =======
             if (pathname === '/socket' && user) {
 =======
@@ -40,6 +44,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                 socket.destroy();
             }
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+>>>>>>> 332c1ca (owo)
     });
 
     async function checkLogin(token: string): Promise<User> {

@@ -131,6 +131,10 @@ postgres/*
 credentials.json
 token.json
 
+# Files
+files/*/*
+!files/*/.gitkeep
+
 # Other
 .DS_Store
 icons/*

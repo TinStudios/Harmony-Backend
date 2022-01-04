@@ -54,12 +54,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 return message;
                                             }
                                         });
+<<<<<<< HEAD
                                         messages.reverse();
+=======
+>>>>>>> 332c1ca (owo)
                                         res.send(messages);
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                                 });
+<<<<<<< HEAD
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
                             }
@@ -108,16 +112,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                             });
                             res.send(messages);
+=======
+>>>>>>> 332c1ca (owo)
                             } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
+                                res.status(403).send({ error: "Missing permission." });
                             }
-                        });
                         } else {
-                            res.status(403).send({ error: "Missing permission." });
+                            res.status(404).send({ error: "Channel not found." });
                         }
-                    } else {
-                        res.status(404).send({ error: "Channel not found." });
-                    }
                     } else {
                         res.status(404).send({ error: "Guild not found." });
                     }
@@ -242,80 +244,80 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if(channel && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).map((x: Role) => (x.permissions & 0x0000000100) === 0x0000000100).includes(true)) {
-                        let messages = channel.messages;
-                        let message = messages.find((x: Message) => x?.id === messageId);
-                        if (message) {
-                            if(!channel.pins.includes(messageId)) {
-                            channel.pins = [...channel.pins, messageId];
+                        if (channel && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000100) === 0x0000000100)) {
+                            let messages = channel.messages;
+                            let message = messages.find((x: Message) => x?.id === messageId);
+                            if (message) {
+                                if (!channel.pins.includes(messageId)) {
+                                    channel.pins = [...channel.pins, messageId];
 
-                            const systemMessage: any = {
-                                id: intformat(flake.next(), 'dec').toString(),
-                                author: '0',
-                                content: 'Message pinned!',
-                                creation: Date.now()
-                            };
+                                    const systemMessage: any = {
+                                        id: intformat(flake.next(), 'dec').toString(),
+                                        author: '0',
+                                        content: 'Message pinned!',
+                                        creation: Date.now()
+                                    };
 
-                            messages.push(systemMessage);
-                            channel.messages = messages;
+                                    messages.push(systemMessage);
+                                    channel.messages = messages;
 
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                            database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                    channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                    database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
                                         if (!err) {
-                                            systemMessage.author = {
-                                                id: systemMessage?.author as string,
-                                                username: 'System',
-                                                nickname: undefined,
-                                                discriminator: '0000'
-                                            };
+                                            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                                if (!err) {
+                                                    systemMessage.author = {
+                                                        id: systemMessage?.author as string,
+                                                        username: 'System',
+                                                        nickname: undefined,
+                                                        discriminator: '0000'
+                                                    };
 
-                                            if(message?.author !== '0') {
-                                                message.author = {
-                                                    id: message?.author,
-                                                    username: dbRes.rows.find(x => x?.id === message?.author)?.username,
-                                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator
-                                                };
-                                            } else {
-                                                message.author = {
-                                                    id: message?.author,
-                                                    username: 'System',
-                                                    nickname: undefined,
-                                                    discriminator: '0000'
-                                                };
-                                            }
+                                                    if (message?.author !== '0') {
+                                                        message.author = {
+                                                            id: message?.author,
+                                                            username: dbRes.rows.find(x => x?.id === message?.author)?.username,
+                                                            nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
+                                                            discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator
+                                                        };
+                                                    } else {
+                                                        message.author = {
+                                                            id: message?.author,
+                                                            username: 'System',
+                                                            nickname: undefined,
+                                                            discriminator: '0000'
+                                                        };
+                                                    }
 
-                                        JSON.parse(guild.members).forEach((member: Member) => {
-                                            if(member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080).includes(true)) {
-                                            websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'messagePinned', guild: guildId, channel: channelId, message: message }));
-                                                websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: systemMessage }));
+                                                    JSON.parse(guild.members).forEach((member: Member) => {
+                                                        if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                            websockets.get(member.id)?.forEach(websocket => {
+                                                                websocket.send(JSON.stringify({ event: 'messagePinned', guild: guildId, channel: channelId, message: message }));
+                                                                websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: systemMessage }));
+                                                            });
+                                                        }
+                                                    });
+                                                    res.send(message);
+                                                } else {
+                                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                                }
                                             });
+                                        } else {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
                                         }
-                                        });
-                                        res.send(message);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
                                     });
                                 } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                    res.status(403).send({ error: "Message already pinned." });
                                 }
-                            });
+                            } else {
+                                res.status(404).send({ error: "Message not found." });
+                            }
                         } else {
-                            res.status(403).send({ error: "Message already pinned." });
-                        }
-                        } else {
-                            res.status(404).send({ error: "Message not found." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(403).send({ error: "Missing permission." });
+                        res.status(404).send({ error: "Guild not found." });
                     }
-                } else {
-                    res.status(404).send({ error: "Guild not found." });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -398,41 +400,41 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if(channel && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).map((x: Role) => (x.permissions & 0x0000000100) === 0x0000000100).includes(true)) {
-                        let messages = channel.messages;
-                        let message = messages.find((x: Message) => x?.id === messageId);
-                        if (channel.pins.includes(messageId)) {
-                            channel.pins.splice(channel.pins.indexOf(messageId), 1);
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                            database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
-                                        if (!err) {
-                                        JSON.parse(guild.members).forEach((member: Member) => {
-                                            if(member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080).includes(true)) {
-                                            websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'messageUnpinned', guild: guildId, channel: channelId, message: message }));
-                                            });
-                                        }
+                        if (channel && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000100) === 0x0000000100)) {
+                            let messages = channel.messages;
+                            let message = messages.find((x: Message) => x?.id === messageId);
+                            if (channel.pins.includes(messageId)) {
+                                channel.pins.splice(channel.pins.indexOf(messageId), 1);
+                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                    if (!err) {
+                                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                            if (!err) {
+                                                JSON.parse(guild.members).forEach((member: Member) => {
+                                                    if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                        websockets.get(member.id)?.forEach(websocket => {
+                                                            websocket.send(JSON.stringify({ event: 'messageUnpinned', guild: guildId, channel: channelId, message: messageId }));
+                                                        });
+                                                    }
+                                                });
+                                                res.send({});
+                                            } else {
+                                                res.status(500).send({ error: "Something went wrong with our server." });
+                                            }
                                         });
-                                        res.send(message);
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
-                                    });
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
+                                });
+                            } else {
+                                res.status(404).send({ error: "Message not pinned." });
+                            }
                         } else {
-                            res.status(404).send({ error: "Message not pinned." });
+                            res.status(404).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Missing permission." });
+                        res.status(404).send({ error: "Guild not found." });
                     }
-                } else {
-                    res.status(404).send({ error: "Guild not found." });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }

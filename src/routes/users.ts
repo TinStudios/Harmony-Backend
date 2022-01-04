@@ -7,6 +7,7 @@ import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
 import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
 import { importPKCS8 } from 'jose/key/import';
+<<<<<<< HEAD
 import { Client } from 'pg';
 import mime from 'mime-types';
 import multer from "multer";
@@ -50,6 +51,8 @@ import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
 import argon2 from 'argon2';
     import { SignJWT } from 'jose/jwt/sign';
     import { importPKCS8 } from 'jose/key/import';
+=======
+>>>>>>> 332c1ca (owo)
 import { Client } from 'pg';
 import fs from 'fs';
 import mime from 'mime-types';
@@ -57,50 +60,19 @@ import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() })
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any) => {
-
-    app.post('/verify/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const verificator = urlParamsValues
-            .map((x) => x.replace(/\//g, ''))
-            .filter((x) => {
-                return x != '';
-            })[0];
-        if (verificator) {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
-                if (!err) {
-                    const user = dbRes.rows.find(x => x.verificator === verificator);
-                    if(user) {
-                        database.query(`UPDATE users SET verified = $1, verificator = $2 WHERE verificator = $3`, [true, '', verificator], err => {
-                            if (!err) {
-                                res.send({ token: user.token });
-                            } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
-                            }
-                        });
-                    } else {
-                        res.status(401).send({ error: "Invalid verification code." });
-                    }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
-            });
-
-        } else {
-            res.status(400).send({ error: "Something is missing." });
-        }
-    });
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM guilds`, (err, dbRes) => {
             if (!err) {
                 const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
-                        res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {})));
+                res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {})));
             } else {
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
-});
+    });
 
     app.get('/users/@me', async (req: express.Request, res: express.Response) => {
+<<<<<<< HEAD
             database.query(`SELECT * FROM users`, async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.token === req.headers.authorization);
@@ -113,6 +85,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 }
             });
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            if (!err) {
+                const user = dbRes.rows.find(x => x.token === req.headers.authorization);
+                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
+                const { token, password, verificator, ...rest } = preReturnedUser;
+                const returnedUser: ReturnedUser = rest;
+                res.send(returnedUser);
+            } else {
+                res.status(500).send({ error: "Something went wrong with our server." });
+            }
+        });
+>>>>>>> 332c1ca (owo)
     });
 
     app.get('/users/*', async (req: express.Request, res: express.Response) => {
@@ -123,11 +108,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 332c1ca (owo)
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === userId);
                 if (user) {
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
+<<<<<<< HEAD
                     const { token, email, password, otp, verificator, ...rest } = preReturnedUser;
                     const returnedUser: ReturnedUser = {...rest, tfa: !!user.otp };
                     res.send(returnedUser);
@@ -150,11 +139,23 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(404).send({ error: "User not found." });
                     }
+=======
+                    const { token, email, password, verificator, ...rest } = preReturnedUser;
+                    const returnedUser: ReturnedUser = rest;
+                    res.send(returnedUser);
+>>>>>>> 332c1ca (owo)
                 } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
+                    res.status(404).send({ error: "User not found." });
                 }
+<<<<<<< HEAD
             });
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+            } else {
+                res.status(500).send({ error: "Something went wrong with our server." });
+            }
+        });
+>>>>>>> 332c1ca (owo)
     });
 
     app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
@@ -412,6 +413,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> f8e172d (asi ri ma na)
 =======
                 if(req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
@@ -423,53 +425,62 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const returnedUser: ReturnedUser = rest;
                          websockets.get(user.id)?.forEach(websocket => {
                         websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
+=======
+                if (req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
+                    database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
+                        if (!err) {
+                            let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
+                            const { token, password, verificator, ...rest } = preReturnedUser;
+                            const returnedUser: ReturnedUser = rest;
+                            websockets.get(user.id)?.forEach(websocket => {
+                                websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
+                            });
+                            res.send({});
+                        } else {
+                            res.status(500).send({ error: "Something went wrong with our server." });
+                        }
+>>>>>>> 332c1ca (owo)
                     });
-                    res.send(returnedUser);
                 } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
+                    res.status(401).send({ error: "Incorrect password." });
                 }
-            });
-        } else {
-            res.status(401).send({ error: "Incorrect password." });
-        }
-        } else {
-            res.status(500).send({ error: "Something went wrong with our server." });
-        }
-    });
+            } else {
+                res.status(500).send({ error: "Something went wrong with our server." });
+            }
+        });
     });
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
-            if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
-                database.query(`SELECT * FROM users`, async (err, dbRes) => {
-                    if (!err) {
-                        const user = dbRes.rows.find(x => x.id === res.locals.user);
-                        if(req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
+        if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
+            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                if (!err) {
+                    const user = dbRes.rows.find(x => x.id === res.locals.user);
+                    if (req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
                         const discriminator = dbRes.rows.find(x => x.username === req.body.username && x.discriminator === user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username)) : user.discriminator;
-                        console.log(req.body.password);
                         const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
                         database.query(`UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6`, [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
                             if (!err) {
-                                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
+                                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
                                 preReturnedUser.username = req.body.username;
                                 preReturnedUser.discriminator = discriminator;
                                 const { token, password, verificator, ...rest } = preReturnedUser;
                                 const returnedUser: ReturnedUser = rest;
-        
-                                     websockets.get(user.id)?.forEach(websocket => {
+
+                                websockets.get(user.id)?.forEach(websocket => {
                                     websocket.send(JSON.stringify({ event: 'userEdited', user: returnedUser }));
                                     websocket.send(JSON.stringify({ event: 'tokenSwitch', token: token }));
                                 });
-                                if(req.body.email) {
+                                if (req.body.email) {
                                     try {
-                                    email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
-                                'Subject: Important changes to your account\n',
-                                'From: seltornteam@gmail.com\n',
-                                'To: ' + user.email + '\n\n',
-                                'Dear ' + returnedUser.username + '#' + returnedUser.discriminator + ':\n',
-                                (req.body.email && !req.body.password ? 'We received and processed a request to change your account\'s email.' : req.body.password && !req.body.email ? 'We received and processed a request to change your account\'s password.' : 'We received and processed a request to change your account\'s email and password.') + '\n',
-                                'If you didn\'t request this, please contact our support team as soon as possible.\n',
-                                'Best regards,\n',
-                                'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                        email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                            'Subject: Important changes to your account\n',
+                                            'From: seltornteam@gmail.com\n',
+                                            'To: ' + user.email + '\n\n',
+                                            'Dear ' + returnedUser.username + '#' + returnedUser.discriminator + ':\n',
+                                            (req.body.email && !req.body.password ? 'We received and processed a request to change your account\'s email.' : req.body.password && !req.body.email ? 'We received and processed a request to change your account\'s password.' : 'We received and processed a request to change your account\'s email and password.') + '\n',
+                                            'If you didn\'t request this, please contact our support team as soon as possible.\n',
+                                            'Best regards,\n',
+                                            'Seltorn Team\n\n'].join('')).toString('base64url'));
                                     } catch {
                                         logger.error("Error emailing " + user.email);
                                     }
@@ -482,6 +493,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(401).send({ error: "Incorrect password." });
                     }
+<<<<<<< HEAD
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
@@ -490,55 +502,64 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(400).send({ error: "Something is missing." });
             }
 >>>>>>> 0718f96 (Changed to TypeScript)
-    });
-
-    app.patch('/users/@me/icon', upload.single('upload'), (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === res.locals.user);
-                if(req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
-                    
-                let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User; 
-                        const { token, password, verificator, ...rest } = preReturnedUser;
-                        const returnedUser: ReturnedUser = rest;
-        const fileName = res.locals.user + '.png';
-        if(req.file) {
-            if(mime.extension(req.file?.mimetype ?? '') === 'png') {
-            if(fs.existsSync(__dirname + '/../../icons/users/' + fileName)) {
-                fs.unlinkSync(__dirname + '/../../icons/users/' + fileName);
-            }
-        fs.writeFile(__dirname + '/../../icons/users/' + fileName, req.file.buffer, "binary", (err => {
-            if (!err) {
-        
-                                     websockets.get(user.id)?.forEach(websocket => {
-                                    websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
-                                });
-                res.send(returnedUser);
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
-        }));
-    } else {
-        res.status(403).send({ error: "We only accept PNG." });
-    }
-    } else {
-        if(fs.existsSync(__dirname + '/../../icons/users/' + fileName)) {
-            fs.unlinkSync(__dirname + '/../../icons/users/' + fileName);
-            websockets.get(user.id)?.forEach(websocket => {
-                websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
+=======
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
             });
-            res.send(returnedUser);
         } else {
             res.status(400).send({ error: "Something is missing." });
         }
-    }
-} else {
-    res.status(401).send({ error: "Incorrect password." });
-}
-} else {
-    res.status(500).send({ error: "Something went wrong with our server." })
-}
-});
+>>>>>>> 332c1ca (owo)
+    });
+
+    app.patch('/users/@me/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
+        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            if (!err) {
+                const user = dbRes.rows.find(x => x.id === res.locals.user);
+                if (req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
+
+                    let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
+                    const { token, password, verificator, ...rest } = preReturnedUser;
+                    const returnedUser: ReturnedUser = rest;
+                    const fileName = res.locals.user + '.png';
+                    if (req.file) {
+                        if (mime.extension(req.file?.mimetype ?? '') === 'png') {
+                            if (fs.existsSync(__dirname + '/../../files/users/' + fileName)) {
+                                fs.unlinkSync(__dirname + '/../../files/users/' + fileName);
+                            }
+                            fs.writeFile(__dirname + '/../../files/users/' + fileName, req.file.buffer, "binary", (err => {
+                                if (!err) {
+
+                                    websockets.get(user.id)?.forEach(websocket => {
+                                        websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
+                                    });
+                                    res.send(returnedUser);
+                                } else {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                }
+                            }));
+                        } else {
+                            res.status(400).send({ error: "We only accept PNG." });
+                        }
+                    } else {
+                        if (fs.existsSync(__dirname + '/../../files/users/' + fileName)) {
+                            fs.unlinkSync(__dirname + '/../../files/users/' + fileName);
+                            websockets.get(user.id)?.forEach(websocket => {
+                                websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
+                            });
+                            res.send(returnedUser);
+                        } else {
+                            res.status(400).send({ error: "Something is missing." });
+                        }
+                    }
+                } else {
+                    res.status(401).send({ error: "Incorrect password." });
+                }
+            } else {
+                res.status(500).send({ error: "Something went wrong with our server." })
+            }
+        });
     });
 
     function generateDiscriminator(excluded: string[]): string {

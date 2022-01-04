@@ -159,39 +159,45 @@ import users from './users';
 
 import invites from './invites';
 
-    import messages from './messages';
+import messages from './messages';
 
-    import pins from './pins';
+import pins from './pins';
 
-    import channels from './channels';
+import channels from './channels';
 
-    import roles from './roles';
+import roles from './roles';
 
-    import members from './members';
+import members from './members';
 
-    import guilds from './guilds';
+import guilds from './guilds';
 
-    import friends from './friends';
+import friends from './friends';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, clientDomain: string) => {
-    app.use('/icons', require('express').static(__dirname + '/../../icons'));
+    app.use('/files', require('express').static(__dirname + '/../../files', {
+        setHeaders: (res: express.Response) => {
+            if (res.req.query.name) {
+                res.set('Content-Disposition', `attachment; filename="${res.req.query.name}"`)
+            }
+        }
+    }));
 
     email.authorize();
 
     account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if(!req.url.startsWith('/icons') && !req.url.startsWith('/verify')) {
-        const user: User = await checkLogin(req.headers.authorization ?? "");
-       if(user.creation != 0) {
-                    res.locals.user = user.id;
-                    next();
-       } else {
-           res.status(401).send({});
-       }
-    } else {
-        next();
-    }
+        if (!req.url.startsWith('/files')) {
+            const user: User = await checkLogin(req.headers.authorization ?? "");
+            if (user.creation != 0) {
+                res.locals.user = user.id;
+                next();
+            } else {
+                res.status(401).send({ error: "Incorrect information." });
+            }
+        } else {
+            next();
+        }
     });
 
     users(websockets, app, database, logger, email);
@@ -202,7 +208,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     pins(websockets, app, database, flake);
 
-   channels(websockets, app, database, flake);
+    channels(websockets, app, database, flake);
 
     roles(websockets, app, database, flake);
 
@@ -213,10 +219,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     friends(websockets, app, database);
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if(req.url.startsWith('/icons/users/')) {
-            res.redirect('/icons/user.png');
+        if (req.url.startsWith('/files/users/')) {
+            res.redirect('/files/user.png');
         } else {
-        res.status(404).send({ error: "Not found." });
+            res.status(404).send({ error: "Not found." });
         }
     });
 

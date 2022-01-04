@@ -12,6 +12,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+import fs from 'fs';
+import mime from 'mime-types';
+import multer from "multer";
+const upload = multer({ storage: multer.memoryStorage() })
 import { Member, Role } from '../interfaces';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
@@ -132,10 +136,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             }
             database.query(`INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
+                    const parsedGuild: any = { ...guild };
+                    delete parsedGuild.channels;
+                    delete parsedGuild.invites;
+                    delete parsedGuild.bans;
                     websockets.get(res.locals.user)?.forEach(websocket => {
-                        websocket.send(JSON.stringify({ event: 'guildJoined', guild: guild }));
+                        websocket.send(JSON.stringify({ event: 'guildJoined', guild: parsedGuild }));
                     });
-                    res.send(guild);
+                    res.status(201).send(parsedGuild);
                 } else {
                     console.log(err);
                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -147,8 +155,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     app.patch('/guilds/*/icons', (req: express.Request, res: express.Response) => {
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    app.patch('/guilds/*/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
+>>>>>>> 332c1ca (owo)
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
@@ -157,7 +169,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             })[0];
         if (guildId) {
 <<<<<<< HEAD
+<<<<<<< HEAD
             database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+=======
+            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+>>>>>>> 332c1ca (owo)
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -166,12 +182,19 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             if (req.file) {
                                 if (mime.extension(req.file?.mimetype ?? '') === 'png') {
+<<<<<<< HEAD
                                     const icon = await storage.store({
                                         name: guildId + '\'s icon',
                                         description: 'Seltorn\'s ' + guildId + ' icon',
                                         image: new File([req.file.buffer], guildId + '.png', { type: 'image/png' })
                                       });
                                     database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3`, [guildId, 'guilds', icon.url], (err, dbRes) => {
+=======
+                                    if (fs.existsSync(__dirname + '/../../files/guilds/' + guild.id + '.png')) {
+                                        fs.unlinkSync(__dirname + '/../../files/guilds/' + guild.id + '.png');
+                                    }
+                                    fs.writeFile(__dirname + '/../../files/guilds/' + guild.id + '.png', req.file.buffer, "binary", (err => {
+>>>>>>> 332c1ca (owo)
                                         if (!err) {
                                             const parsedGuild: any = { ...guild };
                                             delete parsedGuild.channels;
@@ -186,11 +209,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                         }
+<<<<<<< HEAD
                                     });
+=======
+                                    }));
+>>>>>>> 332c1ca (owo)
                                 } else {
                                     res.status(400).send({ error: "We only accept PNG." });
                                 }
                             } else {
+<<<<<<< HEAD
                                 database.query('SELECT * FROM files', (err, dbRes) => {
                                     if (!err) {
                                 if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
@@ -208,6 +236,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
+=======
+                                if (fs.existsSync(__dirname + '/../../files/guilds/' + guild.id + '.png')) {
+                                    fs.unlinkSync(__dirname + '/../../files/guilds/' + guild.id + '.png');
+                                    res.send({});
+                                } else {
+                                    res.status(400).send({ error: "Something is missing." });
+                                }
+>>>>>>> 332c1ca (owo)
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
@@ -223,6 +259,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing." });
         }
 
+<<<<<<< HEAD
 =======
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
@@ -262,6 +299,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
 =======
 >>>>>>> f899d83 (Some changes (like adding email verification))
+=======
+    });
+
+>>>>>>> 332c1ca (owo)
     app.patch('/guilds/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
@@ -296,9 +337,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
+<<<<<<< HEAD
                         Object.keys(guild).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).map(x => x === 'channels' || x === 'members' || x === 'roles' || x === 'invites' ? JSON.parse(guild[x]) : guild[x])[index] }), {});
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((guild.roles.find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
 >>>>>>> f8e172d (asi ri ma na)
+=======
+                        if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
+>>>>>>> 332c1ca (owo)
                             let changesWereMade = false;
 
                             if (req.body.name && req.body.name.length < 31) {
@@ -310,6 +355,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 guild.description = req.body.description;
                                 changesWereMade = true;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 332c1ca (owo)
                             } else if (guild.description !== null && req.body.description === null) {
                                 guild.description = null;
                             }
@@ -338,6 +386,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
 
                             database.query(`UPDATE guilds SET name = $1, description = $2, public = $3, members = $4 WHERE id = $5`, [guild.name, guild.description, guild.public, JSON.stringify(members), guildId], (err, dbRes) => {
+<<<<<<< HEAD
                                 if (!err) {
                                     if (changesWereMade) {
                                         const parsedGuild: any = { ...guild };
@@ -387,14 +436,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
 
                             database.query(`UPDATE guilds SET name = $1, members = $2 WHERE id = $3`, [guild.name, JSON.stringify(members), guildId], (err, dbRes) => {
+=======
+>>>>>>> 332c1ca (owo)
                                 if (!err) {
                                     if (changesWereMade) {
-                                       members.forEach((member: Member) => {
+                                        const parsedGuild: any = { ...guild };
+                                        delete parsedGuild.channels;
+                                        delete parsedGuild.invites;
+                                        delete parsedGuild.bans;
+                                        members.forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'guildEdited', guild: guild }));
+                                                websocket.send(JSON.stringify({ event: 'guildEdited', guild: parsedGuild }));
                                             });
                                         });
-                                        res.send(guild);
+                                        res.send(parsedGuild);
                                     } else {
                                         res.status(400).send({ error: "Something is missing." });
                                     }
@@ -480,20 +535,23 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0')) {
-                            const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
-                    
-                            database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
-                                if (!err) {
-                                    members.forEach((member: Member) => {
-                                        websockets.get(member.id)?.forEach(websocket => {
-                                            websocket.send(JSON.stringify({ event: 'guildDeleted', guild: guild }));
+                            if (guild.name === req.body.name) {
+
+                                database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
+                                    if (!err) {
+                                        members.forEach((member: Member) => {
+                                            websockets.get(member.id)?.forEach(websocket => {
+                                                websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));
+                                            });
                                         });
-                                    });
-                                    res.send(parsedGuild);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
+                                        res.send({});
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                            } else {
+                                res.status(400).send({ error: "Incorrect guild name." });
+                            }
                         } else {
                             res.status(403).send({ error: "You don't own this guild." });
                         }
