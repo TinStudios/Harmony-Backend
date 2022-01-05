@@ -78,17 +78,6 @@ export default async (database: Client, logger: any, google: any) => {
         }
     });
 
-    database.query(`CREATE TABLE IF NOT EXISTS invites (
-        code text NOT NULL,
-        guild text NOT NULL,
-        channels text NOT NULL,
-        PRIMARY KEY (code)
-    )`, (err, dbRes) => {
-        if (err) {
-            error();
-        }
-    });
-
     database.query(`CREATE TABLE IF NOT EXISTS friends (
         id text NOT NULL,
         friends text NOT NULL,
