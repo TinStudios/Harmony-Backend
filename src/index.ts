@@ -13,6 +13,7 @@ import { WebSocketServer, Server } from 'ws';
 import app from './app';
 import config from './utils/config';
 import { createLogger } from './utils/logger';
+import * as google from './utils/google';
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -62,6 +63,7 @@ const websockets = new Map();
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 const storage = new NFTStorage({ token: config.storage.apiKey })
 
 ws(wss, websockets, server as unknown as Server, database);
@@ -80,18 +82,26 @@ require('./utils/ws')(wss, websockets, server, database);
 require('./utils/ws')(wss, websockets, server, database);
 >>>>>>> ace536b (?)
 =======
+=======
+google.authorize();
+
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 ws(wss, websockets, server as unknown as Server, database);
 >>>>>>> 2aecc42 (Changed to import)
 
-routes(websockets, app, database, logger, config.client.domain);
+routes(websockets, app, database, logger, config.client.domain, google);
 
 server.listen(config.server.port, async () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
     db(database, logger);
     
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
   db(database, logger);
+=======
+  db(database, logger, google);
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 
 >>>>>>> 332c1ca (owo)
   logger.info(`Listening on port ${config.server.port}`);

@@ -2,7 +2,11 @@ import express from 'express';
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
+=======
+import { User, ReturnedUser, Info, FileI } from '../interfaces';
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 
 import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
@@ -54,12 +58,12 @@ import argon2 from 'argon2';
 =======
 >>>>>>> 332c1ca (owo)
 import { Client } from 'pg';
-import fs from 'fs';
 import mime from 'mime-types';
 import multer from "multer";
-const upload = multer({ storage: multer.memoryStorage() })
+const upload = multer({ storage: multer.memoryStorage() });
+import { Readable } from 'stream';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, google: any) => {
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM guilds`, (err, dbRes) => {
             if (!err) {
@@ -472,7 +476,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 });
                                 if (req.body.email) {
                                     try {
-                                        email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                        google.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                             'Subject: Important changes to your account\n',
                                             'From: seltornteam@gmail.com\n',
                                             'To: ' + user.email + '\n\n',
@@ -518,41 +522,45 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (req.body.currentPassword && (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id }))) {
-
+                    database.query(`SELECT * FROM files`, async (err, dbRes) => {
+                        if(!err) {
+                            const file = dbRes.rows.find((x: FileI) => x.id === user.id);
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
                     const { token, password, verificator, ...rest } = preReturnedUser;
                     const returnedUser: ReturnedUser = rest;
-                    const fileName = res.locals.user + '.png';
                     if (req.file) {
                         if (mime.extension(req.file?.mimetype ?? '') === 'png') {
-                            if (fs.existsSync(__dirname + '/../../files/users/' + fileName)) {
-                                fs.unlinkSync(__dirname + '/../../files/users/' + fileName);
-                            }
-                            fs.writeFile(__dirname + '/../../files/users/' + fileName, req.file.buffer, "binary", (err => {
-                                if (!err) {
-
-                                    websockets.get(user.id)?.forEach(websocket => {
-                                        websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
-                                    });
-                                    res.send(returnedUser);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            }));
-                        } else {
-                            res.status(400).send({ error: "We only accept PNG." });
-                        }
-                    } else {
-                        if (fs.existsSync(__dirname + '/../../files/users/' + fileName)) {
-                            fs.unlinkSync(__dirname + '/../../files/users/' + fileName);
+                            google.uploadFile(user.id, Readable.from(req.file.buffer), 'users', req.file.mimetype, database, file).then(() => {
                             websockets.get(user.id)?.forEach(websocket => {
                                 websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
                             });
                             res.send(returnedUser);
+                        }).catch(() => {
+                            res.status(500).send({ error: "Something went wrong with our server." })
+                        });
                         } else {
-                            res.status(400).send({ error: "Something is missing." });
+                            res.status(400).send({ error: "We only accept PNG." });
                         }
-                    }
+                    } else {
+                        if(file) {
+                            database.query('DELETE FROM files WHERE id = $1', [user.id], (err, dbRes) => {
+                                if(!err) {
+                                    websockets.get(user.id)?.forEach(websocket => {
+                                        websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
+                                    });
+                                    res.send(returnedUser);
+                        }   else {
+                            res.status(500).send({ error: "Something went wrong with our server." })
+                        }
+                    });
+                } else {
+                    res.status(400).send({ error: "Something is missing." });
+                }
+    }
+} else {
+    res.status(500).send({ error: "Something went wrong with our server." })
+}
+                    });
                 } else {
                     res.status(401).send({ error: "Incorrect password." });
                 }

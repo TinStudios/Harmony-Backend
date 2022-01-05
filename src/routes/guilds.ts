@@ -12,12 +12,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
-import fs from 'fs';
 import mime from 'mime-types';
 import multer from "multer";
-const upload = multer({ storage: multer.memoryStorage() })
-import { Member, Role } from '../interfaces';
+const upload = multer({ storage: multer.memoryStorage() });
+import { Readable } from 'stream';
+import { Member, Role, FileI } from '../interfaces';
 
+<<<<<<< HEAD
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 <<<<<<< HEAD
     app.get('/guilds', (req: express.Request, res: express.Response) => {
@@ -34,6 +35,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
 >>>>>>> 38384fc (Some changes I forgot to commit)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, google: any) => {
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
@@ -179,9 +183,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
+                            const parsedGuild: any = { ...guild };
+                            delete parsedGuild.channels;
+                            delete parsedGuild.invites;
+                            delete parsedGuild.bans;
 
+                            database.query(`SELECT * FROM files`, async (err, dbRes) => {
+                                if(!err) {
+                                    const file = dbRes.rows.find((x: FileI) => x.id === guildId);
                             if (req.file) {
                                 if (mime.extension(req.file?.mimetype ?? '') === 'png') {
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     const icon = await storage.store({
                                         name: guildId + '\'s icon',
@@ -200,15 +212,36 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             delete parsedGuild.channels;
                                             delete parsedGuild.invites;
                                             delete parsedGuild.bans;
+=======
+                                    google.uploadFile(guildId, Readable.from(req.file.buffer), 'guilds', req.file.mimetype, database, file).then(() => {       
+                                    members.forEach((member: Member) => {
+                                        websockets.get(member.id)?.forEach(websocket => {
+                                            websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild }));
+                                        });
+                                    });        
+                                    res.send(parsedGuild);
+                                }).catch(() => {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                });
+                                } else {
+                                    res.status(400).send({ error: "We only accept PNG." });
+                                }
+                            } else {
+                                if (file) {
+                                    database.query('DELETE FROM files WHERE id = $1', [guildId], (err, dbRes) => {
+                                        if(!err) {
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
                                             members.forEach((member: Member) => {
                                                 websockets.get(member.id)?.forEach(websocket => {
                                                     websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild }));
                                                 });
                                             });
+
                                             res.send(parsedGuild);
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                         }
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     });
 =======
@@ -240,11 +273,18 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (fs.existsSync(__dirname + '/../../files/guilds/' + guild.id + '.png')) {
                                     fs.unlinkSync(__dirname + '/../../files/guilds/' + guild.id + '.png');
                                     res.send({});
+=======
+                                    });
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
                                 } else {
                                     res.status(400).send({ error: "Something is missing." });
                                 }
 >>>>>>> 332c1ca (owo)
                             }
+                        } else {
+                            res.status(500).send({ error: "Something went wrong with our server." });
+                        }
+                    });
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }

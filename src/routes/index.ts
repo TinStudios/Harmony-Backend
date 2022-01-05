@@ -1,6 +1,7 @@
 import express from 'express';
 import { Client } from 'pg';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage } from 'nft.storage';
 import fetch from 'node-fetch';
 import UserAgent from 'user-agents';
@@ -147,11 +148,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         res.status(500).send({ error: "Something went wrong with our server." });
 =======
 import { User } from '../interfaces';
+=======
+import { User, FileI } from '../interfaces';
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
-
-import * as email from '../utils/email';
 
 import account from './account';
 
@@ -173,18 +175,8 @@ import guilds from './guilds';
 
 import friends from './friends';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, clientDomain: string) => {
-    app.use('/files', require('express').static(__dirname + '/../../files', {
-        setHeaders: (res: express.Response) => {
-            if (res.req.query.name) {
-                res.set('Content-Disposition', `attachment; filename="${res.req.query.name}"`)
-            }
-        }
-    }));
-
-    email.authorize();
-
-    account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, clientDomain: string, google: any) => {
+    account(websockets, app, database, logger, flake, google, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!req.url.startsWith('/files')) {
@@ -200,11 +192,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    users(websockets, app, database, logger, email);
+    users(websockets, app, database, logger, google);
 
     invites(websockets, app, database);
 
-    messages(websockets, app, database, flake);
+    messages(websockets, app, database, flake, google);
 
     pins(websockets, app, database, flake);
 
@@ -214,13 +206,28 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     members(websockets, app, database);
 
-    guilds(websockets, app, database, flake);
+    guilds(websockets, app, database, flake, google);
 
     friends(websockets, app, database);
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if (req.url.startsWith('/files/users/')) {
-            res.redirect('/files/user.png');
+        const urlSplitted = req.url.split('/');
+        if (req.url.startsWith('/files') && urlSplitted.length > 3) {
+            database.query(`SELECT * FROM files`, async (err, dbRes) => {
+                if(!err) {
+                    const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
+                    const file = dbRes.rows.find((x: FileI) => x.id === extensionLess && x.type === urlSplitted[2]);
+                    if(urlSplitted[2] === 'users' && !file) {
+                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url);
+                    } else if(file) {
+                        res.redirect(file.url);
+                        } else {
+                        res.status(404).send({ error: "Not found." });
+                        }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
         } else {
             res.status(404).send({ error: "Not found." });
         }

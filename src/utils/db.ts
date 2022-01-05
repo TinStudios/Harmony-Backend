@@ -1,5 +1,6 @@
 import { Client } from "pg";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage, File } from 'nft.storage'
 import fs from 'fs';
 
@@ -12,6 +13,11 @@ module.exports = async (database: Client, logger: any) => {
 =======
 export default async (database: Client, logger: any) => {
 >>>>>>> 2aecc42 (Changed to import)
+=======
+import fs from 'fs';
+
+export default async (database: Client, logger: any, google: any) => {
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (
@@ -36,8 +42,7 @@ export default async (database: Client, logger: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
+            error();
         }
     });
 
@@ -69,8 +74,7 @@ export default async (database: Client, logger: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
+            error();
         }
     });
 
@@ -81,8 +85,7 @@ export default async (database: Client, logger: any) => {
         PRIMARY KEY (code)
     )`, (err, dbRes) => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
+            error();
         }
     });
 
@@ -92,11 +95,11 @@ export default async (database: Client, logger: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
+            error();
         }
     });
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     database.query(`CREATE TABLE IF NOT EXISTS meta (
         url text NOT NULL,
@@ -165,4 +168,34 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
     });
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    database.query(`CREATE TABLE IF NOT EXISTS files (
+        id text NOT NULL,
+        url text NOT NULL,
+        type text NOT NULL,
+        PRIMARY KEY (id)
+    )`, (err, dbRes) => {
+        if (!err) {
+            database.query(`SELECT * FROM files`, async (err, dbRes) => {
+                if(!err) {
+                    if(!dbRes.rows.find(x => x.id === '0')) {
+                        google.uploadFile('0', fs.createReadStream(__dirname + '/../../files/system.png'), 'users', 'image/png', database, false);
+                    }
+                    if(!dbRes.rows.find(x => x.id === 'default')) {
+                        google.uploadFile('default', fs.createReadStream(__dirname + '/../../files/user.png'), 'users', 'image/png', database, false);
+                    }
+                } else {
+                    error();
+                }
+            });
+        } else {
+            error();
+        }
+    });
+
+    function error() {
+        logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
+    }
+>>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 };

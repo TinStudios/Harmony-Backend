@@ -2,6 +2,7 @@ import fs from 'fs';
 import readline from 'readline';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import { Client } from 'pg';
 
 let authorization: OAuth2Client;
 
@@ -30,7 +31,7 @@ function authorizeF(credentials: any) {
 function getNewToken(oAuth2Client: any) {
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/gmail.send'],
+        scope: ['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/drive.file'],
     });
     console.log('Authorize this app by visiting this url:', authUrl);
     const rl = readline.createInterface({
@@ -62,4 +63,54 @@ function sendMessage(message: string) {
     });
 }
 
-export { authorize, sendMessage };
+function uploadFile(id: string, file: fs.ReadStream, type: string, mimeType: string, database: Client, replace: boolean) {
+    return new Promise<void>((resolve, reject) => {
+    const drive = google.drive({ version: 'v3', auth: authorization });
+    drive.files.create({
+        media: {
+            mimeType: mimeType,
+            body: file
+        },
+        fields: 'id, webContentLink'
+    }, (err, file) => {
+        if(!err) {
+            drive.permissions.create({
+                fileId: file?.data.id,
+                requestBody: {
+                    role: 'reader',
+                    type: 'anyone'
+                }
+            }, (err => {
+                if(!err) {
+
+        if(!replace) {
+            database.query('INSERT INTO files (id, url, type) VALUES ($1, $2, $3)', [id, file?.data.webContentLink, type], err => {
+                if(!err) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            }); 
+            } else {
+                database.query(`UPDATE files SET url = $1 WHERE id = $2`, [id, file?.data.webContentLink], err => {
+                    if(!err) {
+                        resolve();
+                    } else {
+                        reject();
+                    }
+                });
+            }
+                } else {
+                    console.log(err);
+                    reject();
+                }
+            }));
+    } else {
+        console.log(err);
+        reject();
+    }
+    });
+});
+}
+
+export { authorize, sendMessage, uploadFile };

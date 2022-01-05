@@ -127,14 +127,9 @@ build/*
 postgres/*
 !postgres/.gitkeep
 
-# Gmail Credentials
+# Google Credentials
 credentials.json
 token.json
-
-# Files
-files/*/*
-!files/*/.gitkeep
-!files/users/0.png
 
 # Other
 .DS_Store
