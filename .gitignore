@@ -134,6 +134,7 @@ token.json
 # Files
 files/*/*
 !files/*/.gitkeep
+!files/users/0.png
 
 # Other
 .DS_Store
