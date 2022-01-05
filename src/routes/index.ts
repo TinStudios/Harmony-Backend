@@ -2,11 +2,15 @@ import express from 'express';
 import { Client } from 'pg';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage } from 'nft.storage';
 import fetch from 'node-fetch';
 import UserAgent from 'user-agents';
 import * as cheerio from 'cheerio';
 import { fromBuffer } from 'file-type';
+=======
+import needle from 'needle';
+>>>>>>> 400baab (proxy (google drive) uploaded files)
 import { User, FileI } from '../interfaces';
 
 import * as email from '../utils/email';
@@ -220,7 +224,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if(urlSplitted[2] === 'users' && !file) {
                         res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url);
                     } else if(file) {
-                        res.redirect(file.url);
+                        needle.get(file.url, {
+                            follow_max: Infinity
+                        }, (err, resp) => {
+                            if(!err) {
+                                res.set('Content-Type', resp.headers['content-type']).send(resp.body);
+                            } else {
+                        res.status(500).send({ error: "Something went wrong with our server." });
+                            }
+                        });
                         } else {
                         res.status(404).send({ error: "Not found." });
                         }
