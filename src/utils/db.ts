@@ -189,7 +189,7 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
         if (!err) {
             database.query('SELECT * FROM files', async (err, dbRes) => {
                 if (!err) {
-            if (dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
+            if (!dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
             const defaultPfp = await storage.store({
                 name: 'Default Avatar',
                 description: 'Seltorn\'s default avatar',
@@ -213,7 +213,7 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
 
 database.query('SELECT * FROM files', async (err, dbRes) => {
     if (!err) {
-if (dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
+if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
             const systemPfp = await storage.store({
                 name: 'System\'s Avatar',
                 description: 'Seltorn\'s system avatar',
