@@ -232,7 +232,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if(urlSplitted[2] === 'users' && !file) {
                         res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url);
                     } else if(file) {
-                        res.send(file.url);
+                        res.send(file.url.replace('ipfs://', 'https://ipfs.io/ipfs/'));
                         } else {
                         res.status(404).send({ error: "Not found." });
                         }
