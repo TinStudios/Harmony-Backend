@@ -13,7 +13,8 @@ import { WebSocketServer, Server } from 'ws';
 import app from './app';
 import config from './utils/config';
 import { createLogger } from './utils/logger';
-import * as google from './utils/google';
+
+import { NFTStorage } from 'nft.storage';
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -64,6 +65,7 @@ const websockets = new Map();
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 const storage = new NFTStorage({ token: config.storage.apiKey })
 
 ws(wss, websockets, server as unknown as Server, database);
@@ -84,14 +86,18 @@ require('./utils/ws')(wss, websockets, server, database);
 =======
 =======
 google.authorize();
+=======
+const storage = new NFTStorage({ token: config.storage.apiKey })
+>>>>>>> e058ffd (drive -> ipfs uploads)
 
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 ws(wss, websockets, server as unknown as Server, database);
 >>>>>>> 2aecc42 (Changed to import)
 
-routes(websockets, app, database, logger, config.client.domain, google);
+routes(websockets, app, database, logger, storage, config.client.domain);
 
 server.listen(config.server.port, async () => {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     db(database, logger);
@@ -102,6 +108,9 @@ server.listen(config.server.port, async () => {
 =======
   db(database, logger, google);
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+  db(database, logger, storage);
+>>>>>>> e058ffd (drive -> ipfs uploads)
 
 >>>>>>> 332c1ca (owo)
   logger.info(`Listening on port ${config.server.port}`);

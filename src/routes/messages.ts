@@ -13,9 +13,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import multer from "multer";
-const upload = multer({ storage: multer.memoryStorage() });
-import { Readable } from 'stream';
+import { NFTStorage, File } from 'nft.storage';
+import { lookup } from 'mime-types';
+const upload = multer({ storage: multer.memoryStorage() })
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
@@ -26,6 +28,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, google: any) => {
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, storage :NFTStorage) => {
+>>>>>>> e058ffd (drive -> ipfs uploads)
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
@@ -426,6 +431,18 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                 if (req.file) {
                                     message.attachment = req.body.attachmentName;
+                                    const extension = lookup(req.body.attachmentName);
+                                    const attachment = await storage.store({
+                                        name: req.body.attachmentName,
+                                        description: 'Seltorn\'s ' + message.id + ' attachment',
+                                        image: new File([req.file.buffer], req.body.attachmentName, { type: extension ? extension : '' })
+                                      });
+                                      database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, [message.id, 'messages', attachment.url], (err, dbRes) => {
+                                        if (err) {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                            return;
+                                        }
+                                    });
                                 }
 
                                 messages.push(message);
@@ -450,10 +467,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         discriminator: '0000'
                                                     };
                                                 }
-
-                                                if(req.file) {
-
-                                    google.uploadFile(message.id, Readable.from(req.file.buffer), 'messages', req.file.mimetype, database, false).then(() => {
                                                 JSON.parse(guild.members).forEach((member: Member) => {
                                                     if (member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
@@ -462,19 +475,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     }
                                                 });
                                                 res.status(201).send(message);
-                                            }).catch(() => {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            });
-                                            } else {
-                                                JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                                        websockets.get(member.id)?.forEach(websocket => {
-                                                            websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
-                                                        });
-                                                    }
-                                                });
-                                                res.status(201).send(message);
-                                            }
                                             } else {
                                                 res.status(500).send({ error: "Something went wrong with our server." });
                                             }

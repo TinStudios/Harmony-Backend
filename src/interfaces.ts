@@ -48,7 +48,7 @@ export interface Member {
 };
 
 export interface Role {
-    id: string;
+    id: string,
     name: string;
     permissions: number;
     color?: string;
@@ -106,12 +106,12 @@ export interface Invite {
 >>>>>>> 51556ba (Some changes)
 export interface Guild {
     id: string;
-    name: string;
-    description?: string;
-    public: boolean;
-    channels: Channel[];
-    roles: Role[];
-    members: Member[];
+    name: string,
+    description?: string,
+    public: boolean,
+    channels: Channel[],
+    roles: Role[],
+    members: Member[],
     bans: string[];
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -122,6 +122,7 @@ export interface FileI {
     id: string;
     url: string;
     type: string;
+<<<<<<< HEAD
 <<<<<<< HEAD
 }; 
 =======
@@ -134,3 +135,6 @@ export interface FileI {
 =======
 };
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+}; 
+>>>>>>> e058ffd (drive -> ipfs uploads)

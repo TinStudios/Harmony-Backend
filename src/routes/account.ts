@@ -64,7 +64,7 @@ import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, flake: FlakeId, google: any, checkLogin: any, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
@@ -187,7 +187,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
                             if (!err) {
                                 try {
-                                    google.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                    email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                         'Subject: Verify your Seltorn account!\n',
                                         'From: seltornteam@gmail.com\n',
                                         'To: ' + req.body.email + '\n\n',
@@ -393,7 +393,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 database.query('UPDATE users SET verificator = $1 WHERE id = $2', [verificator, user.id], (err, dbRes) => {
                     if (!err) {
                         try {
-                            google.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                            email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                 'Subject: Reset your password\n',
                                 'From: seltornteam@gmail.com\n',
                                 'To: ' + user.email + '\n\n',
@@ -453,7 +453,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     database.query('UPDATE users SET token = $1, password = $2, verificator = $3 WHERE id = $4', [token, await argon2.hash(req.body.password, { type: argon2.argon2id }), '', user.id], (err, dbRes) => {
                         if (!err) {
                             try {
-                                google.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                     'Subject: Important changes to your account\n',
                                     'From: seltornteam@gmail.com\n',
                                     'To: ' + user.email + '\n\n',

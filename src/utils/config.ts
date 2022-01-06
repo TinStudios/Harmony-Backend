@@ -16,6 +16,7 @@ const schema = Joi.object({
   DB_DATABASE: Joi.string().default('postgres'),
   DB_PORT: Joi.number().default(5432),
 <<<<<<< HEAD
+<<<<<<< HEAD
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3001'),
   STORAGE_API_KEY: Joi.string().required()
 })
@@ -33,6 +34,10 @@ const schema = Joi.object({
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3001')
+=======
+  CLIENT_DOMAIN: Joi.string().default('http://localhost:3001'),
+  STORAGE_API_KEY: Joi.string().required()
+>>>>>>> e058ffd (drive -> ipfs uploads)
 })
 >>>>>>> 332c1ca (owo)
   .unknown();
@@ -65,10 +70,16 @@ export default {
     database: value.DB_DATABASE,
     port: value.DB_PORT,
 <<<<<<< HEAD
+<<<<<<< HEAD
   },
   storage: {
     apiKey: value.STORAGE_API_KEY
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+  },
+  storage: {
+    apiKey: value.STORAGE_API_KEY
+>>>>>>> e058ffd (drive -> ipfs uploads)
   }
 };

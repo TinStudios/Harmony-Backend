@@ -12,12 +12,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+import fs from 'fs';
 import mime from 'mime-types';
 import multer from "multer";
-const upload = multer({ storage: multer.memoryStorage() });
-import { Readable } from 'stream';
-import { Member, Role, FileI } from '../interfaces';
+const upload = multer({ storage: multer.memoryStorage() })
+import { NFTStorage, File } from 'nft.storage';
+import { Member, Role } from '../interfaces';
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 <<<<<<< HEAD
@@ -38,6 +40,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, google: any) => {
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, storage: NFTStorage) => {
+>>>>>>> e058ffd (drive -> ipfs uploads)
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
@@ -174,44 +179,48 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         if (guildId) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
 =======
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
 >>>>>>> 332c1ca (owo)
+=======
+            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+>>>>>>> e058ffd (drive -> ipfs uploads)
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
-                            const parsedGuild: any = { ...guild };
-                            delete parsedGuild.channels;
-                            delete parsedGuild.invites;
-                            delete parsedGuild.bans;
 
-                            database.query(`SELECT * FROM files`, async (err, dbRes) => {
-                                if(!err) {
-                                    const file = dbRes.rows.find((x: FileI) => x.id === guildId);
                             if (req.file) {
                                 if (mime.extension(req.file?.mimetype ?? '') === 'png') {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e058ffd (drive -> ipfs uploads)
                                     const icon = await storage.store({
                                         name: guildId + '\'s icon',
                                         description: 'Seltorn\'s ' + guildId + ' icon',
                                         image: new File([req.file.buffer], guildId + '.png', { type: 'image/png' })
                                       });
                                     database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3`, [guildId, 'guilds', icon.url], (err, dbRes) => {
+<<<<<<< HEAD
 =======
                                     if (fs.existsSync(__dirname + '/../../files/guilds/' + guild.id + '.png')) {
                                         fs.unlinkSync(__dirname + '/../../files/guilds/' + guild.id + '.png');
                                     }
                                     fs.writeFile(__dirname + '/../../files/guilds/' + guild.id + '.png', req.file.buffer, "binary", (err => {
 >>>>>>> 332c1ca (owo)
+=======
+>>>>>>> e058ffd (drive -> ipfs uploads)
                                         if (!err) {
                                             const parsedGuild: any = { ...guild };
                                             delete parsedGuild.channels;
                                             delete parsedGuild.invites;
                                             delete parsedGuild.bans;
+<<<<<<< HEAD
 =======
                                     google.uploadFile(guildId, Readable.from(req.file.buffer), 'guilds', req.file.mimetype, database, file).then(() => {       
                                     members.forEach((member: Member) => {
@@ -231,12 +240,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     database.query('DELETE FROM files WHERE id = $1', [guildId], (err, dbRes) => {
                                         if(!err) {
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+>>>>>>> e058ffd (drive -> ipfs uploads)
                                             members.forEach((member: Member) => {
                                                 websockets.get(member.id)?.forEach(websocket => {
                                                     websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild }));
                                                 });
                                             });
-
                                             res.send(parsedGuild);
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
@@ -263,12 +273,27 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         }
                                     });
                                 } else {
+                                    res.status(400).send({ error: "We only accept PNG." });
+                                }
+                            } else {
+                                database.query('SELECT * FROM files', (err, dbRes) => {
+                                    if (!err) {
+                                if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
+                                    database.query(`DELETE FROM files WHERE id = $1`, [guildId], async (err, dbRes) => {
+                                        if (!err) {
+                                    res.send({});
+                                        } else {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                        }
+                                    });
+                                } else {
                                     res.status(400).send({ error: "Something is missing." });
                                 }
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
+<<<<<<< HEAD
 =======
                                 if (fs.existsSync(__dirname + '/../../files/guilds/' + guild.id + '.png')) {
                                     fs.unlinkSync(__dirname + '/../../files/guilds/' + guild.id + '.png');
@@ -280,11 +305,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     res.status(400).send({ error: "Something is missing." });
                                 }
 >>>>>>> 332c1ca (owo)
+=======
+>>>>>>> e058ffd (drive -> ipfs uploads)
                             }
-                        } else {
-                            res.status(500).send({ error: "Something went wrong with our server." });
-                        }
-                    });
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }

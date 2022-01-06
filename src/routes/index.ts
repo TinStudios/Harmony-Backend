@@ -3,6 +3,7 @@ import { Client } from 'pg';
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage } from 'nft.storage';
 import fetch from 'node-fetch';
 import UserAgent from 'user-agents';
@@ -11,7 +12,10 @@ import { fromBuffer } from 'file-type';
 =======
 import needle from 'needle';
 >>>>>>> 400baab (proxy (google drive) uploaded files)
+=======
+>>>>>>> e058ffd (drive -> ipfs uploads)
 import { User, FileI } from '../interfaces';
+import { NFTStorage } from 'nft.storage'
 
 import * as email from '../utils/email';
 
@@ -159,6 +163,8 @@ import { User, FileI } from '../interfaces';
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
 
+import * as email from '../utils/email';
+
 import account from './account';
 
 import users from './users';
@@ -179,8 +185,10 @@ import guilds from './guilds';
 
 import friends from './friends';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, clientDomain: string, google: any) => {
-    account(websockets, app, database, logger, flake, google, checkLogin, clientDomain);
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, clientDomain: string) => {
+    email.authorize();
+
+    account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!req.url.startsWith('/files')) {
@@ -196,11 +204,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    users(websockets, app, database, logger, google);
+    users(websockets, app, database, logger, email, storage);
 
     invites(websockets, app, database);
 
-    messages(websockets, app, database, flake, google);
+    messages(websockets, app, database, flake, storage);
 
     pins(websockets, app, database, flake);
 
@@ -210,7 +218,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     members(websockets, app, database);
 
-    guilds(websockets, app, database, flake, google);
+    guilds(websockets, app, database, flake, storage);
 
     friends(websockets, app, database);
 
@@ -224,15 +232,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if(urlSplitted[2] === 'users' && !file) {
                         res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url);
                     } else if(file) {
-                        needle.get(file.url, {
-                            follow_max: Infinity
-                        }, (err, resp) => {
-                            if(!err) {
-                                res.set('Content-Type', resp.headers['content-type']).send(resp.body);
-                            } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                            }
-                        });
+                        res.send(file.url);
                         } else {
                         res.status(404).send({ error: "Not found." });
                         }

@@ -127,7 +127,7 @@ build/*
 postgres/*
 !postgres/.gitkeep
 
-# Google Credentials
+# Gmail Credentials
 credentials.json
 token.json
 

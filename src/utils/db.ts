@@ -1,6 +1,7 @@
 import { Client } from "pg";
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage, File } from 'nft.storage'
 import fs from 'fs';
 
@@ -18,6 +19,12 @@ import fs from 'fs';
 
 export default async (database: Client, logger: any, google: any) => {
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+import { NFTStorage, File } from 'nft.storage'
+import fs from 'fs';
+
+export default async (database: Client, logger: any, storage: NFTStorage) => {
+>>>>>>> e058ffd (drive -> ipfs uploads)
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (
@@ -42,7 +49,8 @@ export default async (database: Client, logger: any, google: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            error();
+            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
         }
     });
 
@@ -74,7 +82,20 @@ export default async (database: Client, logger: any, google: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            error();
+            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
+        }
+    });
+
+    database.query(`CREATE TABLE IF NOT EXISTS invites (
+        code text NOT NULL,
+        guild text NOT NULL,
+        channels text NOT NULL,
+        PRIMARY KEY (code)
+    )`, (err, dbRes) => {
+        if (err) {
+            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
         }
     });
 
@@ -84,7 +105,8 @@ export default async (database: Client, logger: any, google: any) => {
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
-            error();
+            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
         }
     });
 
@@ -160,31 +182,57 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
 =======
     database.query(`CREATE TABLE IF NOT EXISTS files (
         id text NOT NULL,
-        url text NOT NULL,
         type text NOT NULL,
+        url text NOT NULL,
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (!err) {
-            database.query(`SELECT * FROM files`, async (err, dbRes) => {
-                if(!err) {
-                    if(!dbRes.rows.find(x => x.id === '0')) {
-                        google.uploadFile('0', fs.createReadStream(__dirname + '/../../files/system.png'), 'users', 'image/png', database, false);
-                    }
-                    if(!dbRes.rows.find(x => x.id === 'default')) {
-                        google.uploadFile('default', fs.createReadStream(__dirname + '/../../files/user.png'), 'users', 'image/png', database, false);
-                    }
-                } else {
-                    error();
+            database.query('SELECT * FROM files', async (err, dbRes) => {
+                if (!err) {
+            if (dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
+            const defaultPfp = await storage.store({
+                name: 'Default Avatar',
+                description: 'Seltorn\'s default avatar',
+                image: new File([fs.readFileSync(__dirname + '/../../files/default.png')], 'default.png', { type: 'image/png' })
+              });
+            database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['default', 'users', defaultPfp.url], (err, dbRes) => {
+                if (err) {
+                    logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
                 }
             });
-        } else {
-            error();
         }
-    });
-
-    function error() {
+    } else {
         logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
             process.exit(-1);
     }
+<<<<<<< HEAD
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
+=======
+});
+
+database.query('SELECT * FROM files', async (err, dbRes) => {
+    if (!err) {
+if (dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
+            const systemPfp = await storage.store({
+                name: 'System\'s Avatar',
+                description: 'Seltorn\'s system avatar',
+                image: new File([fs.readFileSync(__dirname + '/../../files/system.png')], 'system.png', { type: 'image/png' })
+              });
+            database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['0', 'users', systemPfp.url], (err, dbRes) => {
+                if (err) {
+                    logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+            process.exit(-1);
+                }
+            });
+        }
+    } else {
+        logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+        process.exit(-1);
+    }
+    });
+
+}
+    });
+>>>>>>> e058ffd (drive -> ipfs uploads)
 };
