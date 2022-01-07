@@ -230,9 +230,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
                     const file = dbRes.rows.find((x: FileI) => x.id === extensionLess && x.type === urlSplitted[2]);
                     if(urlSplitted[2] === 'users' && !file) {
-                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url);
+                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://ipfs.io/ipfs/'));
                     } else if(file) {
-                        res.redirect(file.url);
+                        res.redirect(file.url.replace('ipfs://', 'https://ipfs.io/ipfs/'));
                         } else {
                         res.status(404).send({ error: "Not found." });
                         }
