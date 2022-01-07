@@ -62,10 +62,9 @@ import argon2 from 'argon2';
 =======
 >>>>>>> 332c1ca (owo)
 import { Client } from 'pg';
-import fs from 'fs';
 import mime from 'mime-types';
 import multer from "multer";
-import { NFTStorage } from 'nft.storage';
+import { NFTStorage, File } from 'nft.storage';
 const upload = multer({ storage: multer.memoryStorage() })
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, storage: NFTStorage) => {

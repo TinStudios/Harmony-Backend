@@ -12,7 +12,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
-import fs from 'fs';
 import mime from 'mime-types';
 import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() })
