@@ -15,7 +15,7 @@ import needle from 'needle';
 =======
 >>>>>>> e058ffd (drive -> ipfs uploads)
 import { User, FileI } from '../interfaces';
-import { NFTStorage } from 'nft.storage'
+import { NFTStorage } from 'nft.storage';
 
 import * as email from '../utils/email';
 
@@ -224,15 +224,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         const urlSplitted = req.url.split('/');
-        if (req.url.startsWith('/files') && urlSplitted.length > 3) {
+            if(req.url.startsWith('/files') && urlSplitted.length > 3) {
             database.query(`SELECT * FROM files`, async (err, dbRes) => {
                 if(!err) {
                     const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
                     const file = dbRes.rows.find((x: FileI) => x.id === extensionLess && x.type === urlSplitted[2]);
                     if(urlSplitted[2] === 'users' && !file) {
-                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://ipfs.io/ipfs/'));
+                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
                     } else if(file) {
-                        res.redirect(file.url.replace('ipfs://', 'https://ipfs.io/ipfs/'));
+                        res.redirect(file.url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
                         } else {
                         res.status(404).send({ error: "Not found." });
                         }
@@ -240,6 +240,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
+        } else if(req.url.startsWith('/ipfs') && urlSplitted.length > 3) {
+             
         } else {
             res.status(404).send({ error: "Not found." });
         }
