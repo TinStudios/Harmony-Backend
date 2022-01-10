@@ -63,6 +63,7 @@ import { Client } from 'pg';
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
 import crypto from 'crypto';
+import * as twofactor from 'node-2fa';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
@@ -73,6 +74,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     try {
                         if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
                             if (user.verified) {
+                                if(user.otp === '' || twofactor.verifyToken(user.otp, req.body.otp)) {
                                 const correct = (await checkLogin(user.token)).id !== '';
                                 if (!correct) {
                                     const token = 'Bearer ' + await generateToken({ id: user.id });
@@ -86,6 +88,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 } else {
                                     res.send({ token: user.token });
                                 }
+                            } else {
+                                res.status(401).send({ error: "Invalid information." });
+                            }
                             } else {
                                 res.status(403).send({ error: "Account not verified." });
                             }

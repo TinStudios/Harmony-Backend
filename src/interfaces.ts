@@ -15,12 +15,15 @@ export interface User {
     verified: boolean;
     verificator: string;
     otp: string;
+<<<<<<< HEAD
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
     verified: boolean;
     verificator: string;
 >>>>>>> f899d83 (Some changes (like adding email verification))
+=======
+>>>>>>> 73dcf27 (some changes)
 };
 
 export interface Friend {
@@ -34,9 +37,13 @@ export interface ReturnedUser {
     discriminator: string;
     creation: number;
 <<<<<<< HEAD
+<<<<<<< HEAD
     tfa: boolean;
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
+=======
+    tfa: boolean;
+>>>>>>> 73dcf27 (some changes)
 };
 
 export interface Member {

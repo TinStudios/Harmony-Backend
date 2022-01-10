@@ -45,7 +45,11 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
 =======
         verified boolean NOT NULL,
         verificator text NOT NULL,
+<<<<<<< HEAD
 >>>>>>> f899d83 (Some changes (like adding email verification))
+=======
+        otp text NOT NULL,
+>>>>>>> 73dcf27 (some changes)
         PRIMARY KEY (id)
     )`, (err, dbRes) => {
         if (err) {
@@ -112,6 +116,9 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 73dcf27 (some changes)
     database.query(`CREATE TABLE IF NOT EXISTS meta (
         url text NOT NULL,
         creation text NOT NULL,
@@ -126,6 +133,7 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         }
     });
 
+<<<<<<< HEAD
     database.query(`CREATE TABLE IF NOT EXISTS files (
         id text NOT NULL,
         type text NOT NULL,
@@ -180,6 +188,8 @@ if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
 =======
 >>>>>>> 0718f96 (Changed to TypeScript)
 =======
+=======
+>>>>>>> 73dcf27 (some changes)
     database.query(`CREATE TABLE IF NOT EXISTS files (
         id text NOT NULL,
         type text NOT NULL,

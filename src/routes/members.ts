@@ -133,7 +133,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query(`SELECT * FROM guilds`, (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (JSON.parse(guild.members).find((x: Member) => x.id === res.locals.user)) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x.id === res.locals.user)) {
                         database.query(`SELECT * FROM users`, async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === res.locals.user).map((x: Member) => {

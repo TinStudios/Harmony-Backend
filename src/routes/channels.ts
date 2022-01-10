@@ -174,9 +174,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (JSON.parse(guild.members).find((x: Member) => x?.id == res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id == x)?.permissions & 0x0000000010) == 0x0000000010)) {
 =======
                     const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild) {
                     if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
+<<<<<<< HEAD
 >>>>>>> f8e172d (asi ri ma na)
                         if (guild) {
+=======
+>>>>>>> 73dcf27 (some changes)
                             let channels = JSON.parse(guild.channels);
                             const channel = {
                                 id: intformat(flake.next(), 'dec').toString(),
@@ -207,6 +211,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             });
                         } else {
                             res.status(403).send({ error: "Missing permission." });
+<<<<<<< HEAD
                         }
                     } else {
                         res.status(404).send({ error: "Guild not found." });
@@ -230,9 +235,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             });
                         } else {
                             res.status(404).send({ error: "Guild not found." });
+=======
+>>>>>>> 73dcf27 (some changes)
                         }
                     } else {
-                        res.status(403).send({ error: "Missing permission." });
+                        res.status(404).send({ error: "Guild not found." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });

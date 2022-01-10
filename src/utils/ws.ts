@@ -77,7 +77,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
 =======
                 creation: 0,
                 verified: false,
-                verificator: ''
+                verificator: '',
+                otp: ''
             };
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {

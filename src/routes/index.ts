@@ -4,6 +4,7 @@ import { Client } from 'pg';
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NFTStorage } from 'nft.storage';
 import fetch from 'node-fetch';
 import UserAgent from 'user-agents';
@@ -160,8 +161,16 @@ import { User } from '../interfaces';
 import { User, FileI } from '../interfaces';
 >>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
 
+=======
+import { NFTStorage } from 'nft.storage';
+import fetch from 'node-fetch';
+import UserAgent from 'user-agents';
+import * as cheerio from 'cheerio';
+import { fromBuffer } from 'file-type';
+>>>>>>> 73dcf27 (some changes)
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
+import { User, FileI } from '../interfaces';
 
 import * as email from '../utils/email';
 
@@ -191,7 +200,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if (!req.url.startsWith('/files')) {
+        if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {
             const user: User = await checkLogin(req.headers.authorization ?? "");
             if (user.creation != 0) {
                 res.locals.user = user.id;
@@ -222,9 +231,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     friends(websockets, app, database);
 
-    app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const urlSplitted = req.url.split('/');
-            if(req.url.startsWith('/files') && urlSplitted.length > 3) {
+            if(req.url.startsWith('/files/') && urlSplitted.length > 3) {
             database.query(`SELECT * FROM files`, async (err, dbRes) => {
                 if(!err) {
                     const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
@@ -240,8 +249,59 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
-        } else if(req.url.startsWith('/ipfs') && urlSplitted.length > 3) {
-             
+        } else if(req.url.startsWith('/meta/')) {
+            const url = req.url.replace('/meta/', '');
+            database.query(`SELECT * FROM meta`, async (err, dbRes) => {
+                if (!err) {
+                const metasDb = dbRes.rows.find(x => x.url === url) 
+                if(!metasDb || (metasDb && Date.now() > (metasDb.creation + 86400000))) {
+            try {
+                    const fetchy = await fetch(url, {
+                        headers: {
+                            'User-Agent': (new UserAgent()).toString()
+                        }
+                    });
+                    const response = await fetchy.text();
+                    const html = cheerio.load(response);
+                    let metas = {
+                        title: '',
+                        description: '',
+                        image: ''
+                    };
+                    metas.title = html('meta[property="og:title"]').attr('content') ?? html('meta[property="title"]').attr('content') ?? '';
+                    metas.description = html('meta[property="og:description"]').attr('content') ?? html('meta[property="description"]').attr('content') ?? '';
+                    metas.image = html('meta[property="og:image"]').attr('content') ?? '';
+                    database.query(`INSERT INTO meta (url, creation, title, description, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO UPDATE SET creation = $2, title = $3, description = $4, image = $5`, [url, Date.now(), metas.title, metas.description, metas.image], (err, dbRes) => {
+                        if(!err) {
+                    res.send(metas);
+                    } else {
+                        res.status(500).send({ error: "Something went wrong with our server." });
+                    }
+                });
+                    } catch {
+                        res.status(500).send({ error: "Something went wrong with our server." });
+                    }
+                } else {
+                    delete metasDb.url;
+                    delete metasDb.creation;
+                    res.send(metasDb);
+                }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
+        } else if(req.url.startsWith('/proxy/')) {
+            try {
+            const fetchy = await fetch(req.url.replace('/proxy/', ''), {
+                headers: {
+                    'User-Agent': (new UserAgent()).toString()
+                }
+            });
+            const response = await fetchy.buffer();
+            res.set('Content-Type', (await fromBuffer(response))?.mime).send(response);
+        } catch {
+            res.status(500).send({ error: "Something went wrong with our server." });
+        }
         } else {
             res.status(404).send({ error: "Not found." });
         }
@@ -285,7 +345,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                 creation: 0,
                 verified: false,
-                verificator: ''
+                verificator: '',
+                otp: ''
             };
             database.query(`SELECT * FROM users`, async (err, res) => {
                 if (!err) {

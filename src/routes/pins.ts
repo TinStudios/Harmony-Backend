@@ -55,9 +55,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             }
                                         });
 <<<<<<< HEAD
+<<<<<<< HEAD
                                         messages.reverse();
 =======
 >>>>>>> 332c1ca (owo)
+=======
+                                        messages.reverse();
+>>>>>>> 73dcf27 (some changes)
                                         res.send(messages);
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });

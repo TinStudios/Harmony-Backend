@@ -56,6 +56,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 <<<<<<< HEAD
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                         if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+<<<<<<< HEAD
                             res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
                         } else {
                             res.status(403).send({ error: "You aren't in this guild." });
@@ -73,13 +74,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> f8e172d (asi ri ma na)
                     if (guild) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+=======
+>>>>>>> 73dcf27 (some changes)
                             res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
                         } else {
                             res.status(403).send({ error: "You aren't in this guild." });
                         }
-                    } else {
-                        res.status(404).send({ error: "Guild not found." });
-                    }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
