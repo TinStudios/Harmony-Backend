@@ -13,7 +13,7 @@ import * as twofactor from 'node-2fa';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, storage: NFTStorage) => {
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+        database.query('SELECT * FROM guilds', (err, dbRes) => {
             if (!err) {
                 const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
                 res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {})));
@@ -24,7 +24,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.get('/users/@me', async (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.token === req.headers.authorization);
                 let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
@@ -44,7 +44,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === userId);
                 if (user) {
@@ -62,7 +62,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
@@ -90,7 +90,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
         if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
-            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                     if (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id })) {
@@ -102,7 +102,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         }
                         const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                        database.query(`UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6`, [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
+                        database.query('UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6', [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
                             if (!err) {
                                 let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
                                 preReturnedUser.username = req.body.username;
@@ -146,7 +146,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/users/@me/otp', async (req: express.Request, res: express.Response) => {
-            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                         if(!user.otp) {
@@ -170,13 +170,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (req.body.password && otpCode) {
-            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                     if(!user.otp) {
                     if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }) && twofactor.verifyToken(otpCode, req.body.otp)) {
                             const token = 'Bearer ' + await generateToken({ id: user.id });
-                            database.query(`UPDATE users SET token = $1, otp = $2 WHERE id = $3`, [token, otpCode, user.id], err => {
+                            database.query('UPDATE users SET token = $1, otp = $2 WHERE id = $3', [token, otpCode, user.id], err => {
                                 if (!err) {
                                         try {
                                             email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
@@ -213,13 +213,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     app.delete('/users/@me/otp', async (req: express.Request, res: express.Response) => {
         if (req.body.password) {
-            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                     if(user.otp) {
                     if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }) && twofactor.verifyToken(user.otp, req.body.otp)) {
                         const token = 'Bearer ' + await generateToken({ id: user.id }) ;
-                        database.query(`UPDATE users SET token = $1, otp = $2 WHERE id = $3`, [token, '', user.id], err => {
+                        database.query('UPDATE users SET token = $1, otp = $2 WHERE id = $3', [token, '', user.id], err => {
                             if (!err) {
                                     try {
                                         email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
@@ -255,7 +255,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/users/@me/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
@@ -270,7 +270,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 description: 'Seltorn\'s ' + user.id + ' avatar',
                                 image: new File([req.file.buffer], user.id + '.png', { type: 'image/png' })
                               });
-                            database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3`, [user.id, 'users', icon.url], (err, dbRes) => {
+                            database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [user.id, 'users', icon.url], (err, dbRes) => {
                                 if (!err) {
                                     websockets.get(user.id)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
@@ -287,7 +287,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query('SELECT * FROM files', (err, dbRes) => {
                             if (!err) {
                         if (dbRes.rows.find(x => x.id === user.id && x.type === 'users')) {
-                            database.query(`DELETE FROM files WHERE id = $1`, [user.id], async (err, dbRes) => {
+                            database.query('DELETE FROM files WHERE id = $1', [user.id], async (err, dbRes) => {
                                 if (!err) {
                             res.send({});
                                 } else {

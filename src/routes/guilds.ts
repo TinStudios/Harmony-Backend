@@ -16,7 +16,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                         if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
@@ -47,7 +47,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 bans: [],
                 invites: []
             }
-            database.query(`INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
+            database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
                     const parsedGuild: any = { ...guild };
                     delete parsedGuild.channels;
@@ -75,7 +75,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -89,7 +89,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         description: 'Seltorn\'s ' + guildId + ' icon',
                                         image: new File([req.file.buffer], guildId + '.png', { type: 'image/png' })
                                       });
-                                    database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3`, [guildId, 'guilds', icon.url], (err, dbRes) => {
+                                    database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [guildId, 'guilds', icon.url], (err, dbRes) => {
                                         if (!err) {
                                             const parsedGuild: any = { ...guild };
                                             delete parsedGuild.channels;
@@ -112,7 +112,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM files', (err, dbRes) => {
                                     if (!err) {
                                 if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
-                                    database.query(`DELETE FROM files WHERE id = $1`, [guildId], async (err, dbRes) => {
+                                    database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
                                         if (!err) {
                                     res.send({});
                                         } else {
@@ -151,7 +151,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -182,7 +182,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 changesWereMade = true;
                             }
 
-                            database.query(`UPDATE guilds SET name = $1, description = $2, public = $3, members = $4 WHERE id = $5`, [guild.name, guild.description, guild.public, JSON.stringify(members), guildId], (err, dbRes) => {
+                            database.query('UPDATE guilds SET name = $1, description = $2, public = $3, members = $4 WHERE id = $5', [guild.name, guild.description, guild.public, JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     if (changesWereMade) {
                                         const parsedGuild: any = { ...guild };
@@ -225,7 +225,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -233,7 +233,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0')) {
                             if (guild.name === req.body.name) {
 
-                                database.query(`DELETE FROM guilds WHERE id = $1`, [guildId], async (err, dbRes) => {
+                                database.query('DELETE FROM guilds WHERE id = $1', [guildId], async (err, dbRes) => {
                                     if (!err) {
                                         members.forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {

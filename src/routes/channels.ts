@@ -13,7 +13,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -45,7 +45,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -78,7 +78,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId && req.body.name && req.body.name.length < 31) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -94,7 +94,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 pins: []
                             };
                             channels.push(channel);
-                            database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
                                     websockets.get(res.locals.user)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'channelCreated', guild: guildId, channel: channel }));
@@ -130,7 +130,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const roleId = urlParams[2];
         if (guildId && channelId && roleId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     let channels = JSON.parse(guild.channels);
@@ -180,7 +180,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
 
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
                                         let parsedChannel = { ...channel };
                                         delete parsedChannel.messages;
@@ -223,7 +223,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     let channels = JSON.parse(guild.channels);
@@ -246,7 +246,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
 
-                            database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
                                     if (changesWereMade) {
                                         let parsedChannel = { ...channel };
@@ -290,7 +290,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -299,7 +299,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x.permissions & 0x0000000008) === 0x0000000008)) {
                             if (channel.name === req.body.name) {
                                 channels.splice(channels.findIndex((x: Channel) => x?.id === channelId), 1)
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
                                         websockets.get(res.locals.user)?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: 'channelDeleted', guild: guildId, channel: channelId }));

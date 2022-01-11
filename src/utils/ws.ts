@@ -32,7 +32,7 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                 verificator: '',
                 otp: ''
             };
-            database.query(`SELECT * FROM users`, async (err, res) => {
+            database.query('SELECT * FROM users', async (err, res) => {
                 if (!err) {
                     if (res.rows.find(x => x.token === token) && res.rows.find(x => x.token === token).verified) {
                         try {

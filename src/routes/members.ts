@@ -12,11 +12,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (JSON.parse(guild.members).find((x: Member) => x.id === res.locals.user)) {
-                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                        database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).map((x: Member) => {
                                     if (x) {
@@ -49,11 +49,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x.id === res.locals.user)) {
-                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                        database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === res.locals.user).map((x: Member) => {
                                     x.username = dbRes.rows.find(x => x.id === res.locals.user).username;
@@ -86,11 +86,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const userId = urlParams[1];
         if (guildId && userId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (JSON.parse(guild.members).find((x: Member) => x.id === res.locals.user)) {
-                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                        database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === userId).map((x: Member) => {
                                     x.username = dbRes.rows.find(x => x.id === userId).username;
@@ -121,7 +121,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -131,7 +131,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const user = members.find((x: Member) => x?.id === res.locals.user);
                                 user.nickname = req.body.nickname ? req.body.nickname : null;
                                 members[members.findIndex((x: Member) => x?.id === res.locals.user)] = user;
-                                database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
@@ -169,14 +169,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (!members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0')) {
                             delete members[members.findIndex((x: Member) => x?.id === res.locals.user)];
-                            database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
+                            database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     websockets.get(res.locals.user)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));
@@ -211,7 +211,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const userId = urlParams[1];
         if (guildId && userId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -221,7 +221,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const user = members.find((x: Member) => x?.id === userId);
                                 user.nickname = req.body.nickname ? req.body.nickname : null;
                                 members[members.findIndex((x: Member) => x?.id === userId)] = user;
-                                database.query(`UPDATE guilds SET members = $1 WHERE id = $2`, [JSON.stringify(members), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
                                         members.forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
@@ -261,7 +261,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const userId = urlParams[1];
         if (guildId && userId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -273,7 +273,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (req.body.ban) {
                                 bans.push(userId);
                             }
-                            database.query(`UPDATE guilds SET members = $1, bans = $2 WHERE id = $3`, [JSON.stringify(members), JSON.stringify(bans), guildId], (err, dbRes) => {
+                            database.query('UPDATE guilds SET members = $1, bans = $2 WHERE id = $3', [JSON.stringify(members), JSON.stringify(bans), guildId], (err, dbRes) => {
                                 if (!err) {
                                     websockets.get(userId)?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));

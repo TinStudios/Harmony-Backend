@@ -15,7 +15,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -23,7 +23,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (channel) {
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
                                 let messages = channel.messages.filter((x: Message) => channel.pins.includes(x?.id));
-                                database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.map((message: Message) => {
                                             if (message) {
@@ -80,7 +80,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -104,9 +104,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     channel.messages = messages;
 
                                     channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                    database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                    database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                         if (!err) {
-                                            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                            database.query('SELECT * FROM users', async (err, dbRes) => {
                                                 if (!err) {
                                                     systemMessage.author = {
                                                         id: systemMessage?.author as string,
@@ -180,7 +180,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -192,9 +192,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (channel.pins.includes(messageId)) {
                                 channel.pins.splice(channel.pins.indexOf(messageId), 1);
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
                                                 JSON.parse(guild.members).forEach((member: Member) => {
                                                     if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {

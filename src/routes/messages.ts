@@ -20,7 +20,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const beforeId = req.query?.before;
         if (guildId && channelId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -34,7 +34,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 } else {
                                     messages = messages.slice(-101);
                                 }
-                                database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.map((message: Message) => {
                                             if (message) {
@@ -90,7 +90,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -100,7 +100,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const messages = channel.messages;
                                 const message = messages.find((x: Message) => x?.id === messageId);
                                 if (message) {
-                                    database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                    database.query('SELECT * FROM users', async (err, dbRes) => {
                                         if (!err) {
                                             if (message?.author !== '0') {
                                                 message.author = {
@@ -154,7 +154,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId && req.body.message && req.body.message.length < 4001) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -179,7 +179,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         description: 'Seltorn\'s ' + message.id + ' attachment',
                                         image: new File([req.file.buffer], req.body.attachmentName, { type: extension ? extension : '' })
                                       });
-                                      database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, [message.id, 'messages', attachment.url], (err, dbRes) => {
+                                      database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3)', [message.id, 'messages', attachment.url], (err, dbRes) => {
                                         if (err) {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                             return;
@@ -190,9 +190,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 messages.push(message);
                                 channel.messages = messages;
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
                                                 if (message?.author !== '0') {
                                                     message.author = {
@@ -254,7 +254,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId && req.body.message && req.body.message.length < 4001) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -269,9 +269,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 messages[messages.findIndex((x: Message) => x?.id === messageId)] = message;
                                 channel.messages = messages;
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
                                                 if (message?.author !== '0') {
                                                     message.author = {
@@ -333,7 +333,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query(`SELECT * FROM guilds`, async (err, dbRes) => {
+            database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -350,9 +350,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     channel.pins.splice(channel.pins.indexOf(messageId), 1);
                                 }
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query(`UPDATE guilds SET channels = $1 WHERE id = $2`, [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                                        database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
                                                 if (message?.author !== '0') {
                                                     message.author = {

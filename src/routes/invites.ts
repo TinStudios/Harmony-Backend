@@ -12,14 +12,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
                             const invites = JSON.parse(guild.invites);
-                            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+                            database.query('SELECT * FROM users', async (err, dbRes) => {
                                 if (!err) {
                                     res.send(invites.filter((invite: Invite) => invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses)).map((invite: Invite) => {
                                         invite.author = {
@@ -57,7 +57,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -76,7 +76,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     uses: 0
                                 };
                                 invites.push(invite);
-                                database.query(`UPDATE guilds SET invites = $1 WHERE id = $2`, [JSON.stringify(invites), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET invites = $1 WHERE id = $2', [JSON.stringify(invites), guildId], (err, dbRes) => {
                                     if (!err) {
                                         let inviteAuthored = { ...invite };
                                         inviteAuthored.author = {
@@ -123,7 +123,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const code = urlParams[1];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -133,7 +133,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             let invite = invites.find((x: Invite) => x.code === code);
                             if (invite) {
                                 invites.splice(invites.findIndex((x: Invite) => x.code === code), 1);
-                                database.query(`UPDATE guilds SET invites = $1 WHERE id = $2`, [invites, guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET invites = $1 WHERE id = $2', [invites, guildId], (err, dbRes) => {
                                     if (!err) {
                                         invite.author = {
                                             id: invite?.author as string,
@@ -177,7 +177,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (code) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
                     if (guild) {
@@ -209,7 +209,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (code) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
                     if (guild) {
@@ -224,7 +224,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 invites[invites.findIndex((x: Invite) => x.code === code)] = invite;
                             }
 
-                            database.query(`UPDATE guilds SET members = $1, invites = $2 WHERE id = $3`, [JSON.stringify(members), JSON.stringify(invites), guild.id], (err, dbRes) => {
+                            database.query('UPDATE guilds SET members = $1, invites = $2 WHERE id = $3', [JSON.stringify(members), JSON.stringify(invites), guild.id], (err, dbRes) => {
                                 if (!err) {
                                     const parsedGuild = Object.keys(guild).filter(x => x !== 'invites').reduce((obj, key, index) => ({
                                         ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'channels' ? (() => {

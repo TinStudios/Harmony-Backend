@@ -13,7 +13,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -41,7 +41,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const roleId = urlParams[1];
         if (guildId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -72,7 +72,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             })[0];
         if (guildId) {
             if (req.body.name && req.body.name.length < 31) {
-                database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+                database.query('SELECT * FROM guilds', (err, dbRes) => {
                     if (!err) {
                         const guild = dbRes.rows.find(x => x?.id === guildId);
                         if (guild) {
@@ -139,7 +139,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }, 0);
                                 const role = { id: crypto.randomUUID(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist === true };
                                 roles.push(role);
-                                database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
                                         res.status(201).send(role);
                                     } else {
@@ -176,7 +176,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const roleId = urlParams[1];
         if (guildId && roleId) {
             if (req.body.name) {
-                database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+                database.query('SELECT * FROM guilds', (err, dbRes) => {
                     if (!err) {
                         const guild = dbRes.rows.find(x => x?.id === guildId);
                         if (guild) {
@@ -252,7 +252,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     role.color = require('is-color')(req.body.color) ? req.body.color : req.body.color != false ? role.color : null;
                                     role.hoist = typeof req.body.hoist === 'boolean' ? req.body.hoist : role.hoist;
                                     roles[roles.findIndex((x: Role) => x?.id === roleId)] = role;
-                                    database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
+                                    database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
                                         if (!err) {
                                             res.send(role);
                                         } else {
@@ -290,7 +290,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const roleId = urlParams[1];
         if (guildId && roleId) {
-            database.query(`SELECT * FROM guilds`, (err, dbRes) => {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild) {
@@ -301,7 +301,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const index = roles.findIndex((x: Role) => x?.id === roleId);
                                 delete roles[index];
 
-                                database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
                                         res.send({});
                                     } else {

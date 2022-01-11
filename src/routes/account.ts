@@ -10,7 +10,7 @@ import * as twofactor from 'node-2fa';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.email === req.body.email);
                 if (user) {
@@ -54,7 +54,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     app.post('/register', (req: express.Request, res: express.Response) => {
         if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
-            database.query(`SELECT * FROM users`, async (err, dbRes) => {
+            database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const badAccount = dbRes.rows.find(x => x.email === req.body.email);
                     if (!badAccount?.verified) {
@@ -75,7 +75,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const token = 'Bearer ' + await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                         const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                        database.query(`INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
+                        database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
                             if (!err) {
                                 try {
                                     email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
@@ -115,11 +115,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.verificator === verificator);
                 if (user) {
-                    database.query(`UPDATE users SET verified = $1, verificator = $2 WHERE verificator = $3`, [true, '', verificator], err => {
+                    database.query('UPDATE users SET verified = $1, verificator = $2 WHERE verificator = $3', [true, '', verificator], err => {
                         if (!err) {
                             res.send({ token: user.token });
                         } else {
@@ -136,7 +136,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/reset/send', (req: express.Request, res: express.Response) => {
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.email === req.body.email);
 
@@ -175,7 +175,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.verificator === verificator);
                 if (user) {
@@ -196,7 +196,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query(`SELECT * FROM users`, async (err, dbRes) => {
+        database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.verificator === verificator);
                 if (user) {
