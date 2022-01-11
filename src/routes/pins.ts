@@ -2,6 +2,7 @@ import { Message, Channel, Member, Role } from '../interfaces';
 import express from "express";
 import { Client } from "pg";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
@@ -11,6 +12,11 @@ const intformat = require('biguint-format');
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 >>>>>>> 7e30e9e (Some changes)
+=======
+import crypto from 'crypto';
+
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+>>>>>>> d6bd0d1 (some changes)
 
     app.get('/guilds/*/channels/*/pins', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
@@ -169,6 +175,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                     const systemMessage: any = {
                                         id: crypto.randomUUID(),
+<<<<<<< HEAD
                                         author: '0',
                                         content: 'Message pinned!',
                                         creation: Date.now()
@@ -257,6 +264,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                     const systemMessage: any = {
                                         id: intformat(flake.next(), 'dec').toString(),
+=======
+>>>>>>> d6bd0d1 (some changes)
                                         author: '0',
                                         content: 'Message pinned!',
                                         creation: Date.now()

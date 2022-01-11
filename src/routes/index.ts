@@ -10,6 +10,7 @@ import fetch from 'node-fetch';
 import UserAgent from 'user-agents';
 import * as cheerio from 'cheerio';
 import { fromBuffer } from 'file-type';
+<<<<<<< HEAD
 =======
 import needle from 'needle';
 >>>>>>> 400baab (proxy (google drive) uploaded files)
@@ -170,6 +171,8 @@ import { fromBuffer } from 'file-type';
 >>>>>>> 73dcf27 (some changes)
 import FlakeId from 'flake-idgen';
 const flake = new FlakeId();
+=======
+>>>>>>> d6bd0d1 (some changes)
 import { User, FileI } from '../interfaces';
 
 import * as email from '../utils/email';
@@ -197,7 +200,7 @@ import friends from './friends';
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, clientDomain: string) => {
     email.authorize();
 
-    account(websockets, app, database, logger, flake, email, checkLogin, clientDomain);
+    account(websockets, app, database, logger, email, checkLogin, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {
@@ -217,17 +220,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     invites(websockets, app, database);
 
-    messages(websockets, app, database, flake, storage);
+    messages(websockets, app, database, storage);
 
-    pins(websockets, app, database, flake);
+    pins(websockets, app, database);
 
-    channels(websockets, app, database, flake);
+    channels(websockets, app, database);
 
-    roles(websockets, app, database, flake);
+    roles(websockets, app, database);
 
     members(websockets, app, database);
 
-    guilds(websockets, app, database, flake, storage);
+    guilds(websockets, app, database, storage);
 
     friends(websockets, app, database);
 

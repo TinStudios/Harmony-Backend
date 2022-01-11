@@ -2,6 +2,7 @@ import { Role, Member } from "../interfaces";
 import express from "express";
 import { Client } from "pg";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
@@ -15,6 +16,11 @@ module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 >>>>>>> 2aecc42 (Changed to import)
+=======
+import crypto from 'crypto';
+
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+>>>>>>> d6bd0d1 (some changes)
 
     app.get('/guilds/*/roles', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
@@ -287,6 +293,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }, 0);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 const role = { id: crypto.randomUUID(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist === true };
                                 roles.push(role);
                                 database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
@@ -299,6 +306,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
                                 const role = { id: intformat(flake.next(), 'dec').toString(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist === true };
 >>>>>>> f8e172d (asi ri ma na)
+=======
+                                const role = { id: crypto.randomUUID(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist === true };
+>>>>>>> d6bd0d1 (some changes)
                                 roles.push(role);
                                 database.query(`UPDATE guilds SET roles = $1 WHERE id = $2`, [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {

@@ -2,6 +2,7 @@ import { Message, Channel, Member, Role } from '../interfaces';
 import express from "express";
 import { Client } from "pg";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import crypto from 'crypto';
 import multer from "multer";
 import { NFTStorage, File } from 'nft.storage';
@@ -12,11 +13,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+=======
+import crypto from 'crypto';
+>>>>>>> d6bd0d1 (some changes)
 import multer from "multer";
 import { NFTStorage, File } from 'nft.storage';
 import { lookup } from 'mime-types';
 const upload = multer({ storage: multer.memoryStorage() })
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -31,6 +36,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, storage :NFTStorage) => {
 >>>>>>> e058ffd (drive -> ipfs uploads)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage :NFTStorage) => {
+>>>>>>> d6bd0d1 (some changes)
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
@@ -423,7 +431,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 >>>>>>> 332c1ca (owo)
 
                                 const message: any = {
-                                    id: intformat(flake.next(), 'dec').toString(),
+                                    id: crypto.randomUUID(),
                                     author: res.locals.user,
                                     content: req.body.message,
                                     creation: Date.now()

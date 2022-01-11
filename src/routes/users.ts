@@ -473,9 +473,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                     if (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id })) {
-                        let discriminator = dbRes.rows.find(x => x.username === req.body.username && x.discriminator === user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username)) : user.discriminator;
+                        let discriminator = dbRes.rows.find(x => x.username === req.body.username && x.discriminator === user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator)) : user.discriminator;
                         if(req.body.discriminator) {
-                            if(dbRes.rows.find(x => x.username === (req.body.username ?? user.username) && x.discriminator === req.body.discriminator)) {
+                            if(req.body.discriminator === '0000' || dbRes.rows.find(x => x.username === (req.body.username ?? user.username) && x.discriminator === req.body.discriminator)) {
                                 res.status(400).send({ error: "Discriminator not avaliable." });
                                 return;
                             }

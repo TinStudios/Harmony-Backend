@@ -2,6 +2,7 @@ import { Member, Channel, Role } from '../interfaces';
 import express from "express";
 import { Client } from "pg";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
@@ -45,6 +46,11 @@ module.exports = (websockets: Map<string, WebSocket[]>, app: express.Application
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
 >>>>>>> 2aecc42 (Changed to import)
+=======
+import crypto from 'crypto';
+
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+>>>>>>> d6bd0d1 (some changes)
 
     app.get('/guilds/*/channels/', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
@@ -165,6 +171,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             let channels = JSON.parse(guild.channels);
                             const channel = {
                                 id: crypto.randomUUID(),
+<<<<<<< HEAD
                                 name: req.body.name,
                                 topic: null,
                                 creation: Date.now(),
@@ -184,6 +191,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             let channels = JSON.parse(guild.channels);
                             const channel = {
                                 id: intformat(flake.next(), 'dec').toString(),
+=======
+>>>>>>> d6bd0d1 (some changes)
                                 name: req.body.name,
                                 topic: null,
                                 creation: Date.now(),

@@ -1,6 +1,7 @@
 import express from 'express';
 import { Client } from 'pg';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import crypto from 'crypto';
 import mime from 'mime-types';
 import multer from "multer";
@@ -12,12 +13,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+=======
+import crypto from 'crypto';
+>>>>>>> d6bd0d1 (some changes)
 import mime from 'mime-types';
 import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() })
 import { NFTStorage, File } from 'nft.storage';
 import { Member, Role } from '../interfaces';
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId) => {
@@ -42,6 +47,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 =======
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, flake: FlakeId, storage: NFTStorage) => {
 >>>>>>> e058ffd (drive -> ipfs uploads)
+=======
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
+>>>>>>> d6bd0d1 (some changes)
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const guildId = urlParamsValues
@@ -98,6 +106,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         if (req.body.name && req.body.name.length < 31) {
             const guild = {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 id: crypto.randomUUID(),
                 name: req.body.name,
                 description: req.body.description ?? null,
@@ -132,10 +141,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     app.patch('/guilds/*/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
 =======
                 id: intformat(flake.next(), 'dec').toString(),
+=======
+                id: crypto.randomUUID(),
+>>>>>>> d6bd0d1 (some changes)
                 name: req.body.name,
                 description: req.body.description ?? null,
                 public: false,
-                channels: [{ id: intformat(flake.next(), 'dec').toString(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: '0', permissions: 456 }, { id: '1', permissions: 192 }], messages: [], pins: [] }],
+                channels: [{ id: crypto.randomUUID(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: '0', permissions: 456 }, { id: '1', permissions: 192 }], messages: [], pins: [] }],
                 roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: '1', name: 'Members', permissions: 513, color: null, hoist: false }],
                 members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
                 creation: Date.now(),

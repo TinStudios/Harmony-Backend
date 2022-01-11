@@ -7,6 +7,7 @@ import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
 import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
+<<<<<<< HEAD
 import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
 
@@ -62,10 +63,12 @@ import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
 import FlakeId from 'flake-idgen';
 const intformat = require('biguint-format');
+=======
+>>>>>>> d6bd0d1 (some changes)
 import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, flake: FlakeId, email: any, checkLogin: any, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: any, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         database.query(`SELECT * FROM users`, async (err, dbRes) => {
             if (!err) {
@@ -135,6 +138,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         }
 
                         const id = crypto.randomUUID();
+<<<<<<< HEAD
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' + await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
@@ -185,6 +189,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         }
 
                         const id = intformat(flake.next(), 'dec').toString();
+=======
+>>>>>>> d6bd0d1 (some changes)
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' + await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
