@@ -10,20 +10,9 @@ export interface User {
     username: string;
     discriminator: string;
     creation: number;
-<<<<<<< HEAD
-<<<<<<< HEAD
     verified: boolean;
     verificator: string;
     otp: string;
-<<<<<<< HEAD
-=======
->>>>>>> 0718f96 (Changed to TypeScript)
-=======
-    verified: boolean;
-    verificator: string;
->>>>>>> f899d83 (Some changes (like adding email verification))
-=======
->>>>>>> 73dcf27 (some changes)
 };
 
 export interface Friend {
@@ -36,14 +25,7 @@ export interface ReturnedUser {
     username: string;
     discriminator: string;
     creation: number;
-<<<<<<< HEAD
-<<<<<<< HEAD
     tfa: boolean;
-=======
->>>>>>> 0718f96 (Changed to TypeScript)
-=======
-    tfa: boolean;
->>>>>>> 73dcf27 (some changes)
 };
 
 export interface Member {
@@ -73,14 +55,7 @@ export interface Message {
     id: string;
     author: string | Author;
     content: string;
-<<<<<<< HEAD
-<<<<<<< HEAD
     attachment?: string;
-=======
->>>>>>> 0718f96 (Changed to TypeScript)
-=======
-    attachment?: string;
->>>>>>> 332c1ca (owo)
     creation: number;
 };
 
@@ -94,10 +69,6 @@ export interface Channel {
     pins: string[];
 };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 51556ba (Some changes)
 export interface Invite {
     code: string;
     author: string | Author;
@@ -106,11 +77,6 @@ export interface Invite {
     uses: number;
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> 0718f96 (Changed to TypeScript)
-=======
->>>>>>> 51556ba (Some changes)
 export interface Guild {
     id: string;
     name: string,
@@ -120,8 +86,6 @@ export interface Guild {
     roles: Role[],
     members: Member[],
     bans: string[];
-<<<<<<< HEAD
-<<<<<<< HEAD
     invites: Invite[];
 };
 
@@ -129,19 +93,4 @@ export interface FileI {
     id: string;
     url: string;
     type: string;
-<<<<<<< HEAD
-<<<<<<< HEAD
 }; 
-=======
-};
->>>>>>> 0718f96 (Changed to TypeScript)
-=======
-    invites: Invite[];
-};
->>>>>>> 51556ba (Some changes)
-=======
-};
->>>>>>> 1d14aba (new storage...  aaaaaa 🥲)
-=======
-}; 
->>>>>>> e058ffd (drive -> ipfs uploads)

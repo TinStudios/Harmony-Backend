@@ -10,11 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/Seltorn/Seltorn.git"
   },
-<<<<<<< HEAD
-  "author": "Dot Studios",
-=======
   "author": "Seltorn Team",
->>>>>>> 15ca3a2 (Oops)
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Seltorn/Seltorn/issues"
@@ -58,12 +54,6 @@
     "xss-clean": "^0.1.1"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "@types/compression": "^1.7.2",
-    "@types/cors": "^2.8.12",
-    "@types/pg": "^8.6.1",
-=======
->>>>>>> 06ae0dd (oopsy)
     "nodemon": "^2.0.14",
     "ts-node": "^10.4.0",
     "typescript": "^4.4.4"
