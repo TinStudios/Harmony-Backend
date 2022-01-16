@@ -2172,7 +2172,7 @@ paths:
                   error:
                     type: string
                     example: "Not found."
-  /guilds/{guildId}}/roles:
+  /guilds/{guildId}/roles:
     get:
       tags:
       - Roles
@@ -2291,7 +2291,7 @@ paths:
                   error:
                     type: string
                     example: "Missing permission."
-  /guilds/{guildId}}/roles/{roleId}:
+  /guilds/{guildId}/roles/{roleId}:
     get:
       tags:
       - Roles
@@ -2487,7 +2487,7 @@ paths:
                   error:
                     type: string
                     example: "Not found."
-  /guilds/{guildId}}/members:
+  /guilds/{guildId}/members:
     get:
       tags:
       - Members
@@ -2543,7 +2543,7 @@ paths:
                   error:
                     type: string
                     example: "Missing permission."
-  /guilds/{guildId}}/members/@me:
+  /guilds/{guildId}/members/@me:
     get:
       tags:
       - Members
@@ -2696,7 +2696,7 @@ paths:
                   error:
                     type: string
                     example: "Missing permission."
-  /guilds/{guildId}}/members/{memberId}:
+  /guilds/{guildId}/members/{memberId}:
     get:
       tags:
       - Members
