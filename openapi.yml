@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Seltorn
-  description: This is Seltor's chat API documentation. You will need a Bearer Token for most requests as the Authorization header. You can get it by the login request.
+  description: This is Seltorn's chat API documentation. You will need a Bearer Token for most requests as the Authorization header. You can get it by the login request.
   version: 0.0.0
 servers:
   - url: http://localhost:3000
