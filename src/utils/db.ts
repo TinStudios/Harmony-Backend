@@ -42,18 +42,6 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         }
     });
 
-    database.query(`CREATE TABLE IF NOT EXISTS invites (
-        code text NOT NULL,
-        guild text NOT NULL,
-        channels text NOT NULL,
-        PRIMARY KEY (code)
-    )`, (err, dbRes) => {
-        if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
-        }
-    });
-
     database.query(`CREATE TABLE IF NOT EXISTS friends (
         id text NOT NULL,
         friends text NOT NULL,

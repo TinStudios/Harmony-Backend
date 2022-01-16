@@ -50,10 +50,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (user) {
                     let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
                     const { token, email, password, otp, verificator, ...rest } = preReturnedUser;
-                    const returnedUser: ReturnedUser = {...rest, tfa: !!user.otp };
+                    const returnedUser: ReturnedUser = {...rest };
                     res.send(returnedUser);
                 } else {
-                    res.status(404).send({ error: "User not found." });
+                    res.status(404).send({ error: "Not found." });
                 }
             } else {
                 res.status(500).send({ error: "Something went wrong with our server." });
@@ -65,7 +65,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
-                if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
+                if (req.headers.password && (await argon2.verify(user.password, req.headers.password?.toString(), { type: argon2.argon2id }))) {
                     database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
                         if (!err) {
                             let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
@@ -74,13 +74,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             websockets.get(user.id)?.forEach(websocket => {
                                 websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
                             });
-                            res.send({});
+                            res.send();
                         } else {
                             res.status(500).send({ error: "Something went wrong with our server." });
                         }
                     });
                 } else {
-                    res.status(401).send({ error: "Incorrect information." });
+                    res.status(401).send({ error: "Invalid information." });
                 }
             } else {
                 res.status(500).send({ error: "Something went wrong with our server." });
@@ -89,7 +89,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
-        if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
+        if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.discriminator ? !isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
             database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
@@ -134,14 +134,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(401).send({ error: "Incorrect information." });
+                        res.status(401).send({ error: "Invalid information." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -191,13 +191,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         } catch {
                                             logger.error("Error emailing " + user.email);
                                         }
-                                   res.send({});
+                                   res.send();
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                     } else {
-                        res.status(401).send({ error: "Incorrect information." });
+                        res.status(401).send({ error: "Invalid information." });
                     }
                     } else {
                         res.status(403).send({ error: "2FA already set up." });
@@ -207,7 +207,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -217,7 +217,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
                     if(user.otp) {
-                    if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }) && twofactor.verifyToken(user.otp, req.body.otp)) {
+                    if (req.headers.password && (await argon2.verify(user.password, req.headers.password?.toString(), { type: argon2.argon2id })) && twofactor.verifyToken(user.otp, req.headers.otp?.toString())) {
                         const token = 'Bearer ' + await generateToken({ id: user.id }) ;
                         database.query('UPDATE users SET token = $1, otp = $2 WHERE id = $3', [token, '', user.id], err => {
                             if (!err) {
@@ -234,13 +234,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     } catch {
                                         logger.error("Error emailing " + user.email);
                                     }   
-                                res.send({});
+                                res.send();
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
                     } else {
-                        res.status(401).send({ error: "Incorrect information." });
+                        res.status(401).send({ error: "Invalid information." });
                     }
                     } else {
                         res.status(403).send({ error: "2FA not set up." });
@@ -250,7 +250,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -289,13 +289,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (dbRes.rows.find(x => x.id === user.id && x.type === 'users')) {
                             database.query('DELETE FROM files WHERE id = $1', [user.id], async (err, dbRes) => {
                                 if (!err) {
-                            res.send({});
+                            res.send();
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }
                             });
                         } else {
-                            res.status(400).send({ error: "Something is missing." });
+                            res.status(400).send({ error: "Something is missing or it's not appropiate." });
                         }
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
@@ -303,7 +303,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 });
                     }
                 } else {
-                    res.status(401).send({ error: "Incorrect information." });
+                    res.status(401).send({ error: "Invalid information." });
                 }
             } else {
                 res.status(500).send({ error: "Something went wrong with our server." })

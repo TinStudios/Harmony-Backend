@@ -30,7 +30,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (friend) {
                         res.send(friend);
                     } else {
-                        res.status(404).send({ error: "Friend not found." });
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -82,14 +82,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(404).send({})
+                        res.status(404).send()
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -109,7 +109,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         delete friends[friends.findIndex((x: Friend) => x?.id === friendId)];
                         database.query('UPDATE friends SET friends = $1', [JSON.stringify(friends)], (err, dbRes) => {
                             if (!err) {
-                                res.send({});
+                                res.send();
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
@@ -122,7 +122,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 };

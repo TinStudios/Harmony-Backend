@@ -22,14 +22,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                             res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
                         } else {
-                            res.status(403).send({ error: "You aren't in this guild." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(404).send({ error: "Not found." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -63,7 +63,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -78,7 +78,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
 
@@ -114,13 +114,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
                                     database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
                                         if (!err) {
-                                    res.send({});
+                                    res.send();
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                         }
                                     });
                                 } else {
-                                    res.status(400).send({ error: "Something is missing." });
+                                    res.status(400).send({ error: "Something is missing or it's not appropiate." });
                                 }
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
@@ -131,14 +131,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
 
     });
@@ -196,7 +196,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         });
                                         res.send(parsedGuild);
                                     } else {
-                                        res.status(400).send({ error: "Something is missing." });
+                                        res.status(400).send({ error: "Something is missing or it's not appropiate." });
                                     }
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -206,14 +206,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -231,7 +231,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.includes('0')) {
-                            if (guild.name === req.body.name) {
+                            if (guild.name === req.headers.name) {
 
                                 database.query('DELETE FROM guilds WHERE id = $1', [guildId], async (err, dbRes) => {
                                     if (!err) {
@@ -240,26 +240,26 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));
                                             });
                                         });
-                                        res.send({});
+                                        res.send();
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                                 });
                             } else {
-                                res.status(400).send({ error: "Incorrect guild name." });
+                                res.status(400).send({ error: "Something is missing or it's not appropiate." });
                             }
                         } else {
-                            res.status(403).send({ error: "You don't own this guild." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 };

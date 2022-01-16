@@ -25,7 +25,7 @@ export interface ReturnedUser {
     username: string;
     discriminator: string;
     creation: number;
-    tfa: boolean;
+    tfa?: boolean;
 };
 
 export interface Member {

@@ -41,7 +41,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.locals.user = user.id;
                 next();
             } else {
-                res.status(401).send({ error: "Incorrect information." });
+                res.status(401).send({ error: "Invalid information." });
             }
         } else {
             next();

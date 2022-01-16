@@ -70,6 +70,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             canContinue = true;
                         }
 
+                        if(canContinue) {
                         const id = crypto.randomUUID();
                         const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
                         const token = 'Bearer ' + await generateToken({ id: id });
@@ -90,11 +91,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 } catch {
                                     logger.error("Error emailing " + req.body.email);
                                 }
-                                res.status(201).send({});
+                                res.status(201).send();
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         });
+                    }
                     } else {
                         res.status(401).send({ error: "Email in use." });
                     }
@@ -104,7 +106,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             });
 
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -157,7 +159,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } catch {
                             logger.error("Error emailing " + req.body.email);
                         }
-                        res.status(201).send({});
+                        res.status(201).send();
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
@@ -179,7 +181,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             if (!err) {
                 const user = dbRes.rows.find(x => x.verificator === verificator);
                 if (user) {
-                    res.send({});
+                    res.send();
                 } else {
                     res.status(401).send({ error: "Invalid reset code." });
                 }

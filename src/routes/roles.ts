@@ -16,18 +16,18 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const roles = JSON.parse(guild.roles);
                         res.send(roles);
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -44,22 +44,22 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const roles = JSON.parse(guild?.roles);
                         if (roles.find((x: Role) => x?.id === roleId)) {
                             res.send(roles.find((x: Role) => x?.id === roleId));
                         } else {
-                            res.status(404).send({ error: "Role not found." });
+                            res.status(404).send({ error: "Not found." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found" });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(404).send({ error: "Not found." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -151,17 +151,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(403).send({ error: "Missing permission." });
                             }
                         } else {
-                            res.status(404).send({ error: "Guild not found." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
                 });
             } else {
-                res.status(400).send({ error: "Something is missing." });
+                res.status(400).send({ error: "Something is missing or it's not appropiate." });
             }
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -174,12 +174,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             });
         const guildId = urlParams[0];
         const roleId = urlParams[1];
-        if (guildId && roleId) {
-            if (req.body.name) {
+        if (guildId && roleId && req.body.name) {
                 database.query('SELECT * FROM guilds', (err, dbRes) => {
                     if (!err) {
                         const guild = dbRes.rows.find(x => x?.id === guildId);
-                        if (guild) {
+                        if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                             const roles = JSON.parse(guild.roles);
                             const role = roles.find((x: Role) => x?.id === roleId);
                             if (role) {
@@ -247,7 +246,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     } else {
                                         permissions = role.permissions;
                                     }
-                                    role.name = req.body.name && req.body.length < 31 ? req.body.name : role.name;
+                                    role.name = req.body.name && req.body.name.length < 31 ? req.body.name : role.name;
                                     role.permissions = permissions;
                                     role.color = require('is-color')(req.body.color) ? req.body.color : req.body.color != false ? role.color : null;
                                     role.hoist = typeof req.body.hoist === 'boolean' ? req.body.hoist : role.hoist;
@@ -263,21 +262,18 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     res.status(403).send({ error: "Missing permission." });
                                 }
                             } else {
-                                res.status(404).send({ error: "Role not found." });
+                                res.status(403).send({ error: "Missing permission." });
                             }
                         } else {
-                            res.status(404).send({ error: "Guild not found." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
                 });
             } else {
-                res.status(400).send({ error: "Something is missing." });
+                res.status(400).send({ error: "Something is missing or it's not appropiate." });
             }
-        } else {
-            res.status(400).send({ error: "Something is missing." });
-        }
     });
 
     app.delete('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
@@ -293,7 +289,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const roles = JSON.parse(guild.roles);
                         const role = roles.find((x: Role) => x?.id === roleId);
                         if (role) {
@@ -303,7 +299,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                 database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        res.send({});
+                                        res.send();
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
@@ -312,17 +308,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(403).send({ error: "Missing permission." });
                             }
                         } else {
-                            res.status(404).send({})
+                            res.status(404).send({ error: "Not found." })
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 

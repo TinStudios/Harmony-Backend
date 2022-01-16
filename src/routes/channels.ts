@@ -16,7 +16,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channels = JSON.parse(guild.channels);
                         res.send(channels.map((channel: any) => {
                             delete channel.messages;
@@ -24,14 +24,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             return channel;
                         }));
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -48,7 +48,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
                         if (channel) {
@@ -56,17 +56,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             delete channel.pins;
                             res.send(channel);
                         } else {
-                            res.status(404).send({ error: "Channel not found." });
+                            res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -81,10 +81,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
-                    if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
                             let channels = JSON.parse(guild.channels);
-                            const channel = {
+                            const channel: any = {
                                 id: crypto.randomUUID(),
                                 name: req.body.name,
                                 topic: null,
@@ -96,10 +95,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             channels.push(channel);
                             database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                 if (!err) {
+                                    let parsedChannel = {...channel};
+                                    delete parsedChannel.messages;
+                                    delete parsedChannel.pins;
                                     websockets.get(res.locals.user)?.forEach(websocket => {
-                                        websocket.send(JSON.stringify({ event: 'channelCreated', guild: guildId, channel: channel }));
+                                        websocket.send(JSON.stringify({ event: 'channelCreated', guild: guildId, channel: parsedChannel }));
                                     });
-                                    res.status(201).send(channel);
+                                    res.status(201).send(parsedChannel);
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }
@@ -107,9 +109,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
-                    } else {
-                        res.status(404).send({ error: "Guild not found." });
-                    }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -196,20 +195,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                                 });
                             } else {
-                                res.status(400).send({ error: "Something is missing." });
+                                res.status(400).send({ error: "Something is missing or it's not appropiate." });
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Channel not found." });
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -259,7 +258,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         });
                                         res.send(channel);
                                     } else {
-                                        res.status(400).send({ error: "Something is missing." });
+                                        res.status(400).send({ error: "Something is missing or it's not appropiate." });
                                     }
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -269,14 +268,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Channel not found." });
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -293,11 +292,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let channels = JSON.parse(guild.channels);
                         const channel = channels.find((x: Channel) => x?.id === channelId);
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x.permissions & 0x0000000008) === 0x0000000008)) {
-                            if (channel.name === req.body.name) {
+                            if (channel.name === req.headers.name) {
                                 channels.splice(channels.findIndex((x: Channel) => x?.id === channelId), 1)
                                 database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
                                     if (!err) {
@@ -310,20 +309,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                                 });
                             } else {
-                                res.status(400).send({ error: "Incorrect channel name." });
+                                res.status(401).send({ error: "Invalid channel name." });
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 };

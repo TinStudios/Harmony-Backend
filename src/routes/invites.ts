@@ -15,7 +15,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
                             const invites = JSON.parse(guild.invites);
@@ -38,14 +38,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -60,7 +60,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000001) === 0x0000000001)) {
                             const invites = JSON.parse(guild.invites);
@@ -96,20 +96,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     }
                                 });
                             } else {
-                                res.status(400).send({ error: "Something is missing." });
+                                res.status(400).send({ error: "Something is missing or it's not appropiate." });
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -126,7 +126,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const members = JSON.parse(guild.members);
                         if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)) {
                             const invites = JSON.parse(guild.invites);
@@ -146,26 +146,26 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'inviteDeleted', invite: invite }));
                                             });
                                         });
-                                        res.send({});
+                                        res.send();
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
                                 });
                             } else {
-                                res.status(404).send({ error: "Invite not found." });
+                                res.status(404).send({ error: "Not found." });
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
                     } else {
-                        res.status(404).send({ error: "Guild not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -180,7 +180,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let invites = JSON.parse(guild.invites);
                         let invite = invites.find((x: Invite) => x.code === code);
 
@@ -190,14 +190,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Invite expired." });
                         }
                     } else {
-                        res.status(404).send({ error: "Invite not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 
@@ -212,7 +212,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
-                    if (guild) {
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let invites = JSON.parse(guild.invites);
                         let invite = invites.find((x: Invite) => x.code === code);
 
@@ -249,14 +249,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Invite expired." });
                         }
                     } else {
-                        res.status(404).send({ error: "Invite not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
         } else {
-            res.status(400).send({ error: "Something is missing." });
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
 };
