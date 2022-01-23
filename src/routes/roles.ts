@@ -182,7 +182,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             const roles = JSON.parse(guild.roles);
                             const role = roles.find((x: Role) => x?.id === roleId);
                             if (role) {
-                                if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
+                                if (roles.findIndex((role: Role) => JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id === roleId) && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
                                     let permissions = 0;
                                     let permissionsCodes: number[] = [];
                                     if (req.body.permissions) {
@@ -293,13 +293,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const roles = JSON.parse(guild.roles);
                         const role = roles.find((x: Role) => x?.id === roleId);
                         if (role) {
-                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
+                            if (roles.findIndex((role: Role) => JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id === roleId) && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
                                 const index = roles.findIndex((x: Role) => x?.id === roleId);
                                 delete roles[index];
 
                                 database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        res.send();
+                                        res.send({});
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }

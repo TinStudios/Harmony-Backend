@@ -29,10 +29,10 @@ import guilds from './guilds';
 
 import friends from './friends';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, captchaSecret: string, clientDomain: string) => {
     email.authorize();
 
-    account(websockets, app, database, logger, email, checkLogin, clientDomain);
+    account(websockets, app, database, logger, email, checkLogin, captchaSecret, clientDomain);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {

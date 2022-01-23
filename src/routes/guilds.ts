@@ -114,7 +114,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
                                     database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
                                         if (!err) {
-                                    res.send();
+                                    res.send({});
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                         }
@@ -240,7 +240,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));
                                             });
                                         });
-                                        res.send();
+                                        res.send({});
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }

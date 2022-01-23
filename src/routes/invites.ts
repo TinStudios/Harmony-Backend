@@ -146,7 +146,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 websocket.send(JSON.stringify({ event: 'inviteDeleted', invite: invite }));
                                             });
                                         });
-                                        res.send();
+                                        res.send({});
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
                                     }
@@ -180,7 +180,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                    if (guild) {
                         let invites = JSON.parse(guild.invites);
                         let invite = invites.find((x: Invite) => x.code === code);
 
@@ -190,7 +190,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Invite expired." });
                         }
                     } else {
-                        res.status(403).send({ error: "Missing permission." });
+                        res.status(404).send({ error: "Not found    ." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -212,7 +212,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => JSON.parse(x?.invites).find((x: Invite) => x.code === code));
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                    if (guild) {
                         let invites = JSON.parse(guild.invites);
                         let invite = invites.find((x: Invite) => x.code === code);
 

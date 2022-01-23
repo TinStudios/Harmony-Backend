@@ -82,7 +82,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         });
                     } else {
-                        res.status(404).send()
+                        res.status(404).send({ error: "Not found." })
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -109,7 +109,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         delete friends[friends.findIndex((x: Friend) => x?.id === friendId)];
                         database.query('UPDATE friends SET friends = $1', [JSON.stringify(friends)], (err, dbRes) => {
                             if (!err) {
-                                res.send();
+                                res.send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }

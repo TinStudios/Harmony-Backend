@@ -12,7 +12,8 @@ const schema = Joi.object({
   DB_DATABASE: Joi.string().default('postgres'),
   DB_PORT: Joi.number().default(5432),
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3001'),
-  STORAGE_API_KEY: Joi.string().required()
+  STORAGE_API_KEY: Joi.string().required(),
+  CAPTCHA_SECRET_KEY: Joi.string().required()
 })
   .unknown();
 
@@ -37,5 +38,8 @@ export default {
   },
   storage: {
     apiKey: value.STORAGE_API_KEY
+  },
+  captcha: {
+    secretKey: value.CAPTCHA_SECRET_KEY
   }
 };

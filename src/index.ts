@@ -30,7 +30,7 @@ const storage = new NFTStorage({ token: config.storage.apiKey })
 
 ws(wss, websockets, server as unknown as Server, database);
 
-routes(websockets, app, database, logger, storage, config.client.domain);
+routes(websockets, app, database, logger, storage, config.captcha.secretKey, config.client.domain);
 
 server.listen(config.server.port, async () => {
   db(database, logger, storage);

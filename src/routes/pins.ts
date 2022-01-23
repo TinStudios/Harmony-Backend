@@ -203,7 +203,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         });
                                                     }
                                                 });
-                                                res.send();
+                                                res.send({});
                                             } else {
                                                 res.status(500).send({ error: "Something went wrong with our server." });
                                             }

@@ -74,7 +74,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             websockets.get(user.id)?.forEach(websocket => {
                                 websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
                             });
-                            res.send();
+                            res.send({});
                         } else {
                             res.status(500).send({ error: "Something went wrong with our server." });
                         }
@@ -191,7 +191,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         } catch {
                                             logger.error("Error emailing " + user.email);
                                         }
-                                   res.send();
+                                   res.send({});
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }
@@ -234,7 +234,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     } catch {
                                         logger.error("Error emailing " + user.email);
                                     }   
-                                res.send();
+                                res.send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
@@ -289,7 +289,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (dbRes.rows.find(x => x.id === user.id && x.type === 'users')) {
                             database.query('DELETE FROM files WHERE id = $1', [user.id], async (err, dbRes) => {
                                 if (!err) {
-                            res.send();
+                            res.send({});
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }

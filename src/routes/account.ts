@@ -7,9 +7,12 @@ import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
 import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
+import { verify } from 'hcaptcha';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: any, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: any, captchaSecret: string, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.email === req.body.email);
@@ -50,9 +53,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+    });
     });
 
     app.post('/register', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
             database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
@@ -76,7 +85,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const token = 'Bearer ' + await generateToken({ id: id });
                         const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                         const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                        database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator], (err, dbRes) => {
+                        database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator, ''], (err, dbRes) => {
                             if (!err) {
                                 try {
                                     email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
@@ -91,7 +100,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 } catch {
                                     logger.error("Error emailing " + req.body.email);
                                 }
-                                res.status(201).send();
+                                res.status(201).send({});
                             } else {
                                 res.status(500).send({ error: "Something went wrong with our server." });
                             }
@@ -108,9 +117,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+});
     });
 
     app.post('/verify/*', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         const urlParamsValues: string[] = Object.values(req.params);
         const verificator = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
@@ -135,9 +150,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+});
     });
 
     app.post('/reset/send', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.email === req.body.email);
@@ -159,7 +180,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } catch {
                             logger.error("Error emailing " + req.body.email);
                         }
-                        res.status(201).send();
+                        res.status(201).send({});
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
@@ -168,9 +189,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+});
     });
 
     app.get('/reset/*', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         const urlParamsValues: string[] = Object.values(req.params);
         const verificator = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
@@ -181,7 +208,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             if (!err) {
                 const user = dbRes.rows.find(x => x.verificator === verificator);
                 if (user) {
-                    res.send();
+                    res.send({});
                 } else {
                     res.status(401).send({ error: "Invalid reset code." });
                 }
@@ -189,9 +216,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server" });
             }
         });
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+});
     });
 
     app.post('/reset/*', (req: express.Request, res: express.Response) => {
+        verify(captchaSecret, req.body.captcha).then((data) => {
+            if (data.success === true) {
         const urlParamsValues: string[] = Object.values(req.params);
         const verificator = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
@@ -230,6 +263,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server." });
             }
         });
+    } else {
+        res.status(401).send({ error: "Invalid captcha." });
+    }
+    });
     });
 
     function generateDiscriminator(excluded: string[]): string {
