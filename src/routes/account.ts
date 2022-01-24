@@ -196,8 +196,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.get('/reset/*', (req: express.Request, res: express.Response) => {
-        verify(captchaSecret, req.body.captcha).then((data) => {
-            if (data.success === true) {
         const urlParamsValues: string[] = Object.values(req.params);
         const verificator = urlParamsValues
             .map((x) => x.replace(/\//g, ''))
@@ -216,10 +214,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 res.status(500).send({ error: "Something went wrong with our server" });
             }
         });
-    } else {
-        res.status(401).send({ error: "Invalid captcha." });
-    }
-});
     });
 
     app.post('/reset/*', (req: express.Request, res: express.Response) => {
