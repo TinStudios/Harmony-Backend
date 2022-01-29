@@ -91,7 +91,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (!channel.pins.includes(messageId)) {
                                     channel.pins = [...channel.pins, messageId];
 
-                                    const systemMessage: any = {
+                                    const systemMessage: Message = {
                                         id: crypto.randomUUID(),
                                         author: '0',
                                         content: 'Message pinned!',

@@ -5,7 +5,7 @@ import mime from 'mime-types';
 import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() })
 import { NFTStorage, File } from 'nft.storage';
-import { Member, Role } from '../interfaces';
+import { Guild, Member, Role } from '../interfaces';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
@@ -49,7 +49,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             }
             database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
-                    const parsedGuild: any = { ...guild };
+                    const parsedGuild: Guild = { ...guild, ...{ members: [] } };
+                    delete parsedGuild.members;
                     delete parsedGuild.channels;
                     delete parsedGuild.invites;
                     delete parsedGuild.bans;
@@ -91,7 +92,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                       });
                                     database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [guildId, 'guilds', icon.url], (err, dbRes) => {
                                         if (!err) {
-                                            const parsedGuild: any = { ...guild };
+                                            const parsedGuild: Guild = { ...guild };
                                             delete parsedGuild.channels;
                                             delete parsedGuild.invites;
                                             delete parsedGuild.bans;
@@ -185,7 +186,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             database.query('UPDATE guilds SET name = $1, description = $2, public = $3, members = $4 WHERE id = $5', [guild.name, guild.description, guild.public, JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     if (changesWereMade) {
-                                        const parsedGuild: any = { ...guild };
+                                        const parsedGuild: Guild = { ...guild };
                                         delete parsedGuild.channels;
                                         delete parsedGuild.invites;
                                         delete parsedGuild.bans;

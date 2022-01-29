@@ -18,7 +18,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channels = JSON.parse(guild.channels);
-                        res.send(channels.filter((x: any) => x).map((channel: any) => {
+                        res.send(channels.filter((x: Channel) => x).map((channel: Channel) => {
                             delete channel.messages;
                             delete channel.pins;
                             return channel;
@@ -83,7 +83,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
                             let channels = JSON.parse(guild.channels);
-                            const channel: any = {
+                            const channel: Channel = {
                                 id: crypto.randomUUID(),
                                 name: req.body.name,
                                 topic: null,

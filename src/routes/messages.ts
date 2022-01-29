@@ -162,7 +162,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                 let messages = channel.messages;
 
-                                const message: any = {
+                                const message: Message = {
                                     id: crypto.randomUUID(),
                                     author: res.locals.user,
                                     content: req.body.message,
@@ -194,7 +194,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             if (!err) {
                                                 if (message?.author !== '0') {
                                                     message.author = {
-                                                        id: message?.author,
+                                                        id: message?.author as string,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username,
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x.id === message.author).nickname,
                                                         discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator

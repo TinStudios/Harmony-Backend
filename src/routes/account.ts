@@ -1,4 +1,4 @@
-import { Info } from '../interfaces';
+import { Info, User } from '../interfaces';
 
 import express from "express";
 import argon2 from 'argon2';
@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
 import { verify } from 'hcaptcha';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: any, captchaSecret: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<User>, captchaSecret: string, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {

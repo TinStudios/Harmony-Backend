@@ -1,7 +1,7 @@
 import express from 'express';
 import { Client } from 'pg';
 import crypto from 'crypto';
-import { Member, Role, Invite } from '../interfaces';
+import { Member, Role, Invite, Channel } from '../interfaces';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
     app.get('/guilds/*/invites', (req: express.Request, res: express.Response) => {
@@ -229,7 +229,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     const parsedGuild = Object.keys(guild).filter(x => x !== 'invites').reduce((obj, key, index) => ({
                                         ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'channels' ? (() => {
                                             let channels = JSON.parse(guild[x]);
-                                            const newChannels = channels.map((channel: any) => {
+                                            const newChannels = channels.map((channel: Channel) => {
                                                 delete channel.messages;
                                                 delete channel.pins;
                                                 return channel;

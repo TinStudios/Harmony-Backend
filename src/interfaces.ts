@@ -40,7 +40,7 @@ export interface Role {
     id: string,
     name: string;
     permissions: number;
-    color?: string;
+    color: string | null;
     hoist: boolean;
 };
 
@@ -59,14 +59,19 @@ export interface Message {
     creation: number;
 };
 
+export interface ChannelRole {
+    id: string,
+    permissions: number;
+};
+
 export interface Channel {
     id: string;
     name: string;
-    topic?: string;
+    topic: string | null;
     creation: number;
-    roles: Role[];
-    messages: Message[];
-    pins: string[];
+    roles: ChannelRole[];
+    messages?: Message[];
+    pins?: string[];
 };
 
 export interface Invite {
@@ -80,13 +85,13 @@ export interface Invite {
 export interface Guild {
     id: string;
     name: string,
-    description?: string,
+    description: string | null,
     public: boolean,
-    channels: Channel[],
+    channels?: Channel[],
     roles: Role[],
-    members: Member[],
-    bans: string[];
-    invites: Invite[];
+    members?: Member[],
+    bans?: string[];
+    invites?: Invite[];
 };
 
 export interface FileI {
