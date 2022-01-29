@@ -208,7 +208,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                    if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
                                                         });
@@ -287,7 +287,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                    if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageEdited', guild: guildId, channel: channelId, message: message }));
                                                         });
@@ -368,7 +368,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                    if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageDeleted', guild: guildId, channel: channelId, message: message }));
                                                             websocket.send(JSON.stringify({ event: 'messageUnpinned', guild: guildId, channel: channelId, message: message }));
