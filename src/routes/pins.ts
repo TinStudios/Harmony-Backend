@@ -25,8 +25,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 let messages = channel.messages.filter((x: Message) => channel.pins.includes(x?.id));
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
-                                        messages = messages.map((message: Message) => {
-                                            if (message) {
+                                        messages = messages.filter((x: Message) => x).map((message: Message) => {
                                                 if (message?.author !== '0') {
                                                     message.author = {
                                                         id: message?.author as string,
@@ -43,7 +42,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     };
                                                 }
                                                 return message;
-                                            }
                                         });
                                         messages.reverse();
                                         res.send(messages);

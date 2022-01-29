@@ -18,7 +18,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channels = JSON.parse(guild.channels);
-                        res.send(channels.map((channel: any) => {
+                        res.send(channels.filter((x: any) => x).map((channel: any) => {
                             delete channel.messages;
                             delete channel.pins;
                             return channel;

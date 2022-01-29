@@ -19,13 +19,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 const members = JSON.parse(guild.members);
-                                const roles = JSON.parse(guild.roles);
 
-                                res.send(members.map((x: Member) => {
-                                    if (x) {
+                                res.send(members.filter((x: Member) => x).map((x: Member) => {
                                         x.username = dbRes.rows.find(y => x?.id === y.id).username;
                                         x.discriminator = dbRes.rows.find(y => x?.id === y.id).discriminator;
-                                    }
                                     return x;
                                 }).filter((x: Member) => x).sort((a: Member, b: Member) => (a.nickname ?? a.username) > (b.nickname ?? b.username) ? 1 : (a.nickname ?? a.username) < (b.nickname ?? b.username) ? -1 : 0));
                             } else {

@@ -21,7 +21,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             const invites = JSON.parse(guild.invites);
                             database.query('SELECT * FROM users', async (err, dbRes) => {
                                 if (!err) {
-                                    res.send(invites.filter((invite: Invite) => invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses)).map((invite: Invite) => {
+                                    res.send(invites.filter((invite: Invite) => invite && ( invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses))).map((invite: Invite) => {
                                         invite.author = {
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
@@ -113,7 +113,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    app.delete('/guilds/*/invites', (req: express.Request, res: express.Response) => {
+    app.delete('/guilds/*/invites/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const urlParams = urlParamsValues
             .map((x: string) => x.replace(/\//g, ''))

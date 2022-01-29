@@ -5,32 +5,6 @@ import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
-    app.get('/guilds/*/roles', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
-            .map((x) => x.replace(/\//g, ''))
-            .filter((x) => {
-                return x != '';
-            })[0];
-        if (guildId) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const roles = JSON.parse(guild.roles);
-                        res.send(roles);
-                    } else {
-                        res.status(403).send({ error: "Missing permission." });
-                    }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
-            });
-        } else {
-            res.status(400).send({ error: "Something is missing or it's not appropiate." });
-        }
-    });
-
     app.get('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
         const urlParamsValues: string[] = Object.values(req.params);
         const urlParams = urlParamsValues
