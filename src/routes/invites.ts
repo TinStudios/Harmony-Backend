@@ -218,7 +218,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                         if (invite.expiration > Date.now() && (invite.uses < (invite.maxUses ?? Infinity))) {
                             const members = JSON.parse(guild.members);
-                            if (!members.find((x: Member) => x.id === res.locals.user)) {
+                            if (!members.find((x: Member) => x?.id === res.locals.user)) {
                                 members.push({ id: res.locals.user, nickname: null, roles: ['1'] });
                                 invite.uses++;
                                 invites[invites.findIndex((x: Invite) => x.code === code)] = invite;

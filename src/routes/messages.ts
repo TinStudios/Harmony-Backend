@@ -196,7 +196,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     message.author = {
                                                         id: message?.author as string,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x.id === message.author).nickname,
+                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                         discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
                                                     };
                                                 } else {
@@ -275,7 +275,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     message.author = {
                                                         id: message?.author,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x.id === message.author).nickname,
+                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                         discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
                                                     };
                                                 } else {
@@ -356,7 +356,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     message.author = {
                                                         id: message?.author,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x.id === message.author).nickname,
+                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                         discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
                                                     };
                                                 } else {
