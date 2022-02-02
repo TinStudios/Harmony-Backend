@@ -89,7 +89,7 @@ export interface Guild {
     public: boolean,
     channels?: Channel[],
     roles: Role[],
-    members?: Member[],
+    members?: Member[] | number,
     bans?: string[];
     invites?: Invite[];
 };

@@ -185,7 +185,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         delete parsedChannel.messages;
                                         delete parsedChannel.pins;
                                         JSON.parse(guild.members).forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
+                                            websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', guild: guildId, channel: parsedChannel }));
                                             });
                                         });
@@ -252,7 +252,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         delete parsedChannel.messages;
                                         delete parsedChannel.pins;
                                         JSON.parse(guild.members).forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
+                                            websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'channelEdited', guild: guildId, channel: parsedChannel }));
                                             });
                                         });

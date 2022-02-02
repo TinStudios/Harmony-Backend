@@ -21,8 +21,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const members = JSON.parse(guild.members);
 
                                 res.send(members.filter((x: Member) => x).map((x: Member) => {
-                                        x.username = dbRes.rows.find(y => x?.id === y.id).username;
-                                        x.discriminator = dbRes.rows.find(y => x?.id === y.id).discriminator;
+                                        x.username = dbRes.rows.find(y => x?.id === y.id).username ?? 'Deleted User';
+                                        x.discriminator = dbRes.rows.find(y => x?.id === y.id).discriminator ?? '0000';
+                                        if(!dbRes.rows.find(y => x?.id === y.id)) {
+                                            x.nickname = undefined;
+                                        }
                                     return x;
                                 }).filter((x: Member) => x).sort((a: Member, b: Member) => (a.nickname ?? a.username) > (b.nickname ?? b.username) ? 1 : (a.nickname ?? a.username) < (b.nickname ?? b.username) ? -1 : 0));
                             } else {
@@ -56,8 +59,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === res.locals.user).map((x: Member) => {
-                                    x.username = dbRes.rows.find(x => x.id === res.locals.user).username;
-                                    x.discriminator = dbRes.rows.find(x => x.id === res.locals.user).discriminator;
+                                    x.username = dbRes.rows.find(x => x?.id === res.locals.user).username ?? 'Deleted User';
+                                    x.discriminator = dbRes.rows.find(x => x?.id === res.locals.user).discriminator ?? '0000';
+                                    if(!dbRes.rows.find(x => x?.id === res.locals.user)) {
+                                        x.nickname = undefined;
+                                    }
                                     return x;
                                 })[0]);
                             } else {
@@ -95,8 +101,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(members.filter((x: Member) => x?.id === userId).map((x: Member) => {
-                                    x.username = dbRes.rows.find(x => x.id === userId).username;
-                                    x.discriminator = dbRes.rows.find(x => x.id === userId).discriminator;
+                                    x.username = dbRes.rows.find(x => x?.id === userId).username ?? 'Deleted User';
+                                    x.discriminator = dbRes.rows.find(x => x?.id === userId).discriminator ?? '0000';
+                                    if(!dbRes.rows.find(y => x?.id === userId)) {
+                                        x.nickname = undefined;
+                                    }
                                     return x;
                                 })[0]);
                             } else {
@@ -137,11 +146,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 members[members.findIndex((x: Member) => x?.id === res.locals.user)] = user;
                                 database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        members.forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'memberEdited', member: user }));
+                                            websockets.get(user.id)?.forEach(websocket => {
+                                                websocket.send(JSON.stringify({ event: 'memberEdited', guild: guildId, member: user }));
                                             });
-                                        });
                                         res.send(user);
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
@@ -224,11 +231,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 members[members.findIndex((x: Member) => x?.id === userId)] = user;
                                 database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
                                     if (!err) {
-                                        members.forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'memberEdited', member: user }));
-                                            });
-                                        });
                                         res.send(user);
                                     } else {
                                         res.status(500).send({ error: "Something went wrong with our server." });
@@ -283,7 +285,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     if (req.headers.ban) {
                                         members.filter((member: Member) => members.find((x: Member) => x?.id === member.id)?.roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000004) === 0x0000000004)).forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'memberBanned', member: user }));
+                                                websocket.send(JSON.stringify({ event: 'memberBanned', guild: guildId, member: user }));
                                             });
                                         });
                                     }

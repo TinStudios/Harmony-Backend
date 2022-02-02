@@ -89,7 +89,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
-        if (req.body.currentPassword && ((req.body.username ? req.body.username.length < 31 : true) && (req.body.discriminator ? !isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4 : true) && (req.body.email ? /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) : true))) {
+        if (req.body.currentPassword && (typeof req.body.username === 'undefined' || (req.body.username.length > 0 && req.body.username.length < 31)) && (typeof req.body.discriminator === 'undefined' || (!isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4)) && (typeof req.body.email === 'undefined' || /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email))) {
             database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
@@ -102,7 +102,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             }
                         }
                         const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                        database.query('UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6', [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, await argon2.hash(req.body.password ?? user.password, { type: argon2.argon2id }), token, user.id], err => {
+                        database.query('UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6', [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, req.body.password ? await argon2.hash(req.body.password, { type: argon2.argon2id }) : user.password, token, user.id], err => {
                             if (!err) {
                                 let preReturnedUser: User = Object.keys(user).reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(user).map(x => user[x])[index] }), {}) as User;
                                 preReturnedUser.username = req.body.username;
@@ -212,7 +212,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/users/@me/otp', async (req: express.Request, res: express.Response) => {
-        if (req.body.password) {
+        if (req.headers.password && req.headers.otp) {
             database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
@@ -289,7 +289,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (dbRes.rows.find(x => x.id === user.id && x.type === 'users')) {
                             database.query('DELETE FROM files WHERE id = $1', [user.id], async (err, dbRes) => {
                                 if (!err) {
-                            res.send({});
+                                    websockets.get(user.id)?.forEach(websocket => {
+                                        websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
+                                    });
+                                    res.send(returnedUser);
                                 } else {
                                     res.status(500).send({ error: "Something went wrong with our server." });
                                 }

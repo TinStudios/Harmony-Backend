@@ -49,8 +49,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             }
             database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                 if (!err) {
-                    const parsedGuild: Guild = { ...guild, ...{ members: [] } };
-                    delete parsedGuild.members;
+                    const parsedGuild: Guild = { ...guild, ...{ members: 1 } };
                     delete parsedGuild.channels;
                     delete parsedGuild.invites;
                     delete parsedGuild.bans;
@@ -92,13 +91,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                       });
                                     database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [guildId, 'guilds', icon.url], (err, dbRes) => {
                                         if (!err) {
-                                            const parsedGuild: Guild = { ...guild };
-                                            delete parsedGuild.channels;
-                                            delete parsedGuild.invites;
-                                            delete parsedGuild.bans;
+                                            const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
                                             members.forEach((member: Member) => {
-                                                websockets.get(member.id)?.forEach(websocket => {
-                                                    websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild }));
+                                                websockets.get(member?.id)?.forEach(websocket => {
+                                                    websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: false }));
                                                 });
                                             });
                                             res.send(parsedGuild);
@@ -115,7 +111,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
                                     database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
                                         if (!err) {
-                                    res.send({});
+                                            const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
+                                            members.forEach((member: Member) => {
+                                                websockets.get(member?.id)?.forEach(websocket => {
+                                                    websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: true }));
+                                                });
+                                            });
+                                            res.send(parsedGuild);
                                         } else {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                         }
@@ -186,12 +188,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             database.query('UPDATE guilds SET name = $1, description = $2, public = $3, members = $4 WHERE id = $5', [guild.name, guild.description, guild.public, JSON.stringify(members), guildId], (err, dbRes) => {
                                 if (!err) {
                                     if (changesWereMade) {
-                                        const parsedGuild: Guild = { ...guild };
-                                        delete parsedGuild.channels;
-                                        delete parsedGuild.invites;
-                                        delete parsedGuild.bans;
+                                        const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
                                         members.forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
+                                            websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'guildEdited', guild: parsedGuild }));
                                             });
                                         });
@@ -237,7 +236,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('DELETE FROM guilds WHERE id = $1', [guildId], async (err, dbRes) => {
                                     if (!err) {
                                         members.forEach((member: Member) => {
-                                            websockets.get(member.id)?.forEach(websocket => {
+                                            websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'guildLeft', guild: guildId }));
                                             });
                                         });
