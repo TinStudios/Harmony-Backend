@@ -16,8 +16,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.get('/friends/*', async (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const friendId = urlParamsValues
+        const friendId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -40,8 +39,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/friends/*', async (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const friendId = urlParamsValues
+        const friendId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -94,8 +92,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/friends/*', async (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const friendId = urlParamsValues
+        const friendId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';

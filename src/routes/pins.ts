@@ -6,8 +6,7 @@ import crypto from 'crypto';
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
     app.get('/guilds/*/channels/*/pins', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -26,22 +25,24 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
-                                                if (message?.author !== '0') {
-                                                    message.author = {
-                                                        id: message?.author as string,
-                                                        username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                        discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000'
-                                                    };
-                                                } else {
-                                                    message.author = {
-                                                        id: '0',
-                                                        username: 'System',
-                                                        nickname: undefined,
-                                                        discriminator: '0000'
-                                                    };
-                                                }
-                                                return message;
+                                            if (message?.author !== '0') {
+                                                message.author = {
+                                                    id: message?.author as string,
+                                                    username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
+                                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
+                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                    type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                };
+                                            } else {
+                                                message.author = {
+                                                    id: '0',
+                                                    username: 'Seltorn',
+                                                    nickname: undefined,
+                                                    discriminator: '0000',
+                                                    type: 'SYSTEM'
+                                                };
+                                            }
+                                            return message;
                                         });
                                         messages.reverse();
                                         res.send(messages);
@@ -68,8 +69,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/guilds/*/channels/*/pins/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -109,9 +109,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 if (!err) {
                                                     systemMessage.author = {
                                                         id: systemMessage?.author as string,
-                                                        username: 'System',
+                                                        username: 'Seltorn',
                                                         nickname: undefined,
-                                                        discriminator: '0000'
+                                                        discriminator: '0000',
+                                                        type: 'SYSTEM'
                                                     };
 
                                                     if (message?.author !== '0') {
@@ -124,7 +125,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     } else {
                                                         message.author = {
                                                             id: message?.author,
-                                                            username: 'System',
+                                                            username: 'Seltorn',
                                                             nickname: undefined,
                                                             discriminator: '0000'
                                                         };
@@ -169,8 +170,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/guilds/*/channels/*/pins/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';

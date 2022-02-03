@@ -28,6 +28,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                 username: "",
                 discriminator: "",
                 creation: 0,
+                type: '',
+                owner: '',
                 verified: false,
                 verificator: '',
                 otp: ''
@@ -41,7 +43,7 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
 
                             const ecPublicKey = await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256');
 
-                            const info = await jwtVerify(token.split('Bearer ')[1], ecPublicKey, {
+                            const info = await jwtVerify((token.startsWith('Bearer ') ? token.split('Bearer ') : token.split('Bot '))[1], ecPublicKey, {
                                 issuer: 'seltorn',
                                 audience: 'seltorn'
                             });

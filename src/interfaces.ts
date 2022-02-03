@@ -10,6 +10,8 @@ export interface User {
     username: string;
     discriminator: string;
     creation: number;
+    type: string;
+    owner: string;
     verified: boolean;
     verificator: string;
     otp: string;
@@ -49,6 +51,7 @@ export interface Author {
     username: string;
     nickname?: string;
     discriminator: string;
+    type: string;
 };
 
 export interface Message {

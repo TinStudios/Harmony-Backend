@@ -6,8 +6,7 @@ import crypto from 'crypto';
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
     app.get('/guilds/*/channels/', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -36,8 +35,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.get('/guilds/*/channels/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -71,8 +69,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/guilds/*/channels', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -82,33 +79,33 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions & 0x0000000010) === 0x0000000010)) {
-                            let channels = JSON.parse(guild.channels);
-                            const channel: Channel = {
-                                id: crypto.randomUUID(),
-                                name: req.body.name,
-                                topic: null,
-                                creation: Date.now(),
-                                roles: [{ id: "0", permissions: 456 }, { id: "1", permissions: 192 }],
-                                messages: [],
-                                pins: []
-                            };
-                            channels.push(channel);
-                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    let parsedChannel = {...channel};
-                                    delete parsedChannel.messages;
-                                    delete parsedChannel.pins;
-                                    websockets.get(res.locals.user)?.forEach(websocket => {
-                                        websocket.send(JSON.stringify({ event: 'channelCreated', guild: guildId, channel: parsedChannel }));
-                                    });
-                                    res.status(201).send(parsedChannel);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
-                        } else {
-                            res.status(403).send({ error: "Missing permission." });
-                        }
+                        let channels = JSON.parse(guild.channels);
+                        const channel: Channel = {
+                            id: crypto.randomUUID(),
+                            name: req.body.name,
+                            topic: null,
+                            creation: Date.now(),
+                            roles: [{ id: "0", permissions: 456 }, { id: "1", permissions: 192 }],
+                            messages: [],
+                            pins: []
+                        };
+                        channels.push(channel);
+                        database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                            if (!err) {
+                                let parsedChannel = { ...channel };
+                                delete parsedChannel.messages;
+                                delete parsedChannel.pins;
+                                websockets.get(res.locals.user)?.forEach(websocket => {
+                                    websocket.send(JSON.stringify({ event: 'channelCreated', guild: guildId, channel: parsedChannel }));
+                                });
+                                res.status(201).send(parsedChannel);
+                            } else {
+                                res.status(500).send({ error: "Something went wrong with our server." });
+                            }
+                        });
+                    } else {
+                        res.status(403).send({ error: "Missing permission." });
+                    }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -119,8 +116,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/guilds/*/channels/*/roles/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -213,8 +209,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/guilds/*/channels/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -280,8 +275,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/guilds/*/channels/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';

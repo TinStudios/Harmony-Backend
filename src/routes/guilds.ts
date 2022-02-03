@@ -9,8 +9,7 @@ import { Guild, Member, Role } from '../interfaces';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -19,11 +18,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                        if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                            res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
-                        } else {
-                            res.status(403).send({ error: "Missing permission." });
-                        }
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                        res.send(Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {}));
+                    } else {
+                        res.status(403).send({ error: "Missing permission." });
+                    }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -34,31 +33,105 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/guilds', (req: express.Request, res: express.Response) => {
-        if (req.body.name && req.body.name.length < 31) {
-            const guild = {
-                id: crypto.randomUUID(),
-                name: req.body.name,
-                description: req.body.description ?? null,
-                public: false,
-                channels: [{ id: crypto.randomUUID(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: '0', permissions: 456 }, { id: '1', permissions: 192 }], messages: [], pins: [] }],
-                roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: '1', name: 'Members', permissions: 513, color: null, hoist: false }],
-                members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
-                creation: Date.now(),
-                bans: [],
-                invites: []
-            }
-            database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
-                if (!err) {
-                    const parsedGuild: Guild = { ...guild, ...{ members: 1 } };
-                    delete parsedGuild.channels;
-                    delete parsedGuild.invites;
-                    delete parsedGuild.bans;
-                    websockets.get(res.locals.user)?.forEach(websocket => {
-                        websocket.send(JSON.stringify({ event: 'guildJoined', guild: parsedGuild }));
-                    });
-                    res.status(201).send(parsedGuild);
+        database.query('SELECT * FROM users', async (err, dbRes) => {
+            if (!err) {
+                const user = dbRes.rows.find(x => x.id === res.locals.user);
+                if (user.type === 'USER') {
+                    if (req.body.name && req.body.name.length < 31) {
+                        const guild = {
+                            id: crypto.randomUUID(),
+                            name: req.body.name,
+                            description: req.body.description ?? null,
+                            public: false,
+                            channels: [{ id: crypto.randomUUID(), name: 'general', topic: null, creation: Date.now(), roles: [{ id: '0', permissions: 456 }, { id: '1', permissions: 192 }], messages: [], pins: [] }],
+                            roles: [{ id: '0', name: 'Owner', permissions: 3647, color: null, hoist: false }, { id: '1', name: 'Members', permissions: 513, color: null, hoist: false }],
+                            members: [{ id: res.locals.user, nickname: null, roles: ['0', '1'] }],
+                            creation: Date.now(),
+                            bans: [],
+                            invites: []
+                        }
+                        database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
+                            if (!err) {
+                                const parsedGuild: Guild = { ...guild, ...{ members: 1 } };
+                                delete parsedGuild.channels;
+                                delete parsedGuild.invites;
+                                delete parsedGuild.bans;
+                                websockets.get(res.locals.user)?.forEach(websocket => {
+                                    websocket.send(JSON.stringify({ event: 'guildJoined', guild: parsedGuild }));
+                                });
+                                res.status(201).send(parsedGuild);
+                            } else {
+                                console.log(err);
+                                res.status(500).send({ error: "Something went wrong with our server." });
+                            }
+                        });
+                    } else {
+                        res.status(400).send({ error: "Something is missing or it's not appropiate." });
+                    }
                 } else {
-                    console.log(err);
+                    res.status(403).send({ error: "Only users can create guilds." });
+                }
+            } else {
+                res.status(500).send({ error: "Something went wrong with our server." });
+            }
+        });
+    });
+
+    app.post('/guilds/*/add/*', (req: express.Request, res: express.Response) => {
+        const urlParams = Object.values(req.params)
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            });
+        const guildId = urlParams[0];
+        const botId = urlParams[1];
+        const permissions = !isNaN(Number(req.query?.permissions)) ? Number(req.query?.permissions) : 0;
+        if (guildId && botId) {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild) {
+                        const members = JSON.parse(guild.members);
+                        if (members.find((x: Member) => x?.id === res.locals.user)?.roles.find((x: string) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) >= permissions) && (((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010))) {
+                            database.query('SELECT * FROM users', (err, dbRes) => {
+                                if (!err) {
+                                    const bot = dbRes.rows.find(x => x?.id === botId);
+                                    if (bot) {
+                                        if (!members.find((x: Member) => x?.id === botId)) {
+                                            let roles = JSON.parse(guild.roles);
+                                            const rolesArray = ['1'];
+                                            if (permissions > 0) {
+                                                const role = { id: crypto.randomUUID(), name: bot.name, permissions: permissions, color: null, hoist: false };
+                                                roles.push(role);
+                                                rolesArray.push(role.id)
+                                            }
+                                            members.push({ id: botId, nickname: null, roles: rolesArray });
+                                            database.query('UPDATE guilds SET members = $1, roles = $2 WHERE id = $3', [JSON.stringify(members), JSON.stringify(roles), guild.id], (err, dbRes) => {
+                                                if (!err) {
+                                                    const { token, email, password, owner, verified, verificator, otp, ...returnedBot } = bot;
+                                                    returnedBot.creation = Number(bot.creation);
+                                                    res.send(returnedBot);
+                                                } else {
+                                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                                }
+                                            });
+                                        } else {
+                                            res.status(403).send({ error: "Bot already added." });
+                                        }
+                                    } else {
+                                        res.status(404).send({ error: "Not found." });
+                                    }
+                                } else {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                }
+                            });
+                        } else {
+                            res.status(403).send({ error: "Missing permission." });
+                        }
+                    } else {
+                        res.status(403).send({ error: "Missing permission." });
+                    }
+                } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
@@ -68,8 +141,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/guilds/*/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -88,7 +160,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         name: guildId + '\'s icon',
                                         description: 'Seltorn\'s ' + guildId + ' icon',
                                         image: new File([req.file.buffer], guildId + '.png', { type: 'image/png' })
-                                      });
+                                    });
                                     database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [guildId, 'guilds', icon.url], (err, dbRes) => {
                                         if (!err) {
                                             const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
@@ -108,27 +180,27 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             } else {
                                 database.query('SELECT * FROM files', (err, dbRes) => {
                                     if (!err) {
-                                if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
-                                    database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
-                                        if (!err) {
-                                            const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
-                                            members.forEach((member: Member) => {
-                                                websockets.get(member?.id)?.forEach(websocket => {
-                                                    websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: true }));
-                                                });
+                                        if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
+                                            database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
+                                                if (!err) {
+                                                    const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
+                                                    members.forEach((member: Member) => {
+                                                        websockets.get(member?.id)?.forEach(websocket => {
+                                                            websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: true }));
+                                                        });
+                                                    });
+                                                    res.send(parsedGuild);
+                                                } else {
+                                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                                }
                                             });
-                                            res.send(parsedGuild);
                                         } else {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                            res.status(400).send({ error: "Something is missing or it's not appropiate." });
                                         }
-                                    });
-                                } else {
-                                    res.status(400).send({ error: "Something is missing or it's not appropiate." });
-                                }
-                            } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
-                            }
-                        });
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
                             }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
@@ -147,8 +219,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/guilds/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -218,8 +289,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/guilds/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const guildId = urlParamsValues
+        const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';

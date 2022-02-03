@@ -13,119 +13,118 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     app.post('/login', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.email === req.body.email);
-                if (user) {
-                    try {
-                        if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
-                            if (user.verified) {
-                                if(user.otp === '' || twofactor.verifyToken(user.otp, req.body.otp)) {
-                                const correct = (await checkLogin(user.token)).id !== '';
-                                if (!correct) {
-                                    const token = 'Bearer ' + await generateToken({ id: user.id });
-                                    database.query('UPDATE users SET token = $1 WHERE id = $2', [token, user.id], err => {
-                                        if (!err) {
-                                            res.send({ token: token });
+                database.query('SELECT * FROM users', async (err, dbRes) => {
+                    if (!err) {
+                        const user = dbRes.rows.find(x => x.email === req.body.email);
+                        if (user) {
+                            try {
+                                if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
+                                    if (user.verified) {
+                                        if (user.otp === '' || twofactor.verifyToken(user.otp, req.body.otp)) {
+                                            const correct = (await checkLogin(user.token)).id !== '';
+                                            if (!correct) {
+                                                const token = 'Bearer ' + await generateToken({ id: user.id });
+                                                database.query('UPDATE users SET token = $1 WHERE id = $2', [token, user.id], err => {
+                                                    if (!err) {
+                                                        res.send({ token: token });
+                                                    } else {
+                                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                                    }
+                                                });
+                                            } else {
+                                                res.send({ token: user.token });
+                                            }
                                         } else {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                            res.status(401).send({ error: "Invalid information." });
                                         }
-                                    });
+                                    } else {
+                                        res.status(403).send({ error: "Account not verified." });
+                                    }
                                 } else {
-                                    res.send({ token: user.token });
+                                    res.status(401).send({ error: "Invalid information." });
                                 }
-                            } else {
-                                res.status(401).send({ error: "Invalid information." });
-                            }
-                            } else {
-                                res.status(403).send({ error: "Account not verified." });
+                            } catch (e) {
+                                res.status(500).send({ error: "Something went wrong with our server." });
                             }
                         } else {
                             res.status(401).send({ error: "Invalid information." });
                         }
-                    } catch (e) {
+                    } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
-                } else {
-                    res.status(401).send({ error: "Invalid information." });
-                }
+                });
             } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
+                res.status(401).send({ error: "Invalid captcha." });
             }
         });
-    } else {
-        res.status(401).send({ error: "Invalid captcha." });
-    }
-    });
     });
 
     app.post('/register', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {
-        if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
-            database.query('SELECT * FROM users', async (err, dbRes) => {
-                if (!err) {
-                    const badAccount = dbRes.rows.find(x => x.email === req.body.email);
-                    if (!badAccount?.verified) {
-                        let canContinue = false;
+                if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
+                    database.query('SELECT * FROM users', async (err, dbRes) => {
+                        if (!err) {
+                            const badAccount = dbRes.rows.find(x => x.email === req.body.email);
+                            if (!badAccount?.verified) {
+                                let canContinue = false;
 
-                        if (badAccount) {
-                            database.query('DELETE FROM users WHERE id = $1', [badAccount.id], async (err, dbRes) => {
-                                if (!err) {
+                                if (badAccount) {
+                                    database.query('DELETE FROM users WHERE id = $1', [badAccount.id], async (err, dbRes) => {
+                                        if (!err) {
+                                            canContinue = true;
+                                        }
+                                    });
+                                } else {
                                     canContinue = true;
                                 }
-                            });
-                        } else {
-                            canContinue = true;
-                        }
 
-                        if(canContinue) {
-                        const id = crypto.randomUUID();
-                        const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
-                        const token = 'Bearer ' + await generateToken({ id: id });
-                        const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
-                        const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                        database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), false, verificator, ''], (err, dbRes) => {
-                            if (!err) {
-                                try {
-                                    email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
-                                        'Subject: Verify your Seltorn account!\n',
-                                        'From: seltornteam@gmail.com\n',
-                                        'To: ' + req.body.email + '\n\n',
-                                        'Thank you for registering to Seltorn!\n',
-                                        'To start chatting, we need to verify your email address.\n',
-                                        'Use this link to verify: ' + clientDomain + '/verify/' + verificator + '\n',
-                                        'Best regards,\n',
-                                        'Seltorn Team\n\n'].join('')).toString('base64url'));
-                                } catch {
-                                    logger.error("Error emailing " + req.body.email);
+                                if (canContinue) {
+                                    const id = crypto.randomUUID();
+                                    const password = await argon2.hash(req.body.password, { type: argon2.argon2id });
+                                    const token = 'Bearer ' + await generateToken({ id: id });
+                                    const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
+                                    const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
+                                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), 'USER', '', false, verificator, ''], (err, dbRes) => {
+                                        if (!err) {
+                                            try {
+                                                email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                                    'Subject: Verify your Seltorn account!\n',
+                                                    'From: seltornteam@gmail.com\n',
+                                                    'To: ' + req.body.email + '\n\n',
+                                                    'Thank you for registering to Seltorn!\n',
+                                                    'To start chatting, we need to verify your email address.\n',
+                                                    'Use this link to verify: ' + clientDomain + '/verify/' + verificator + '\n',
+                                                    'Best regards,\n',
+                                                    'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                            } catch {
+                                                logger.error("Error emailing " + req.body.email);
+                                            }
+                                            res.status(201).send({});
+                                        } else {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                        }
+                                    });
                                 }
-                                res.status(201).send({});
                             } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
+                                res.status(401).send({ error: "Email in use." });
                             }
-                        });
-                    }
-                    } else {
-                        res.status(401).send({ error: "Email in use." });
-                    }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
-            });
+                        } else {
+                            res.status(500).send({ error: "Something went wrong with our server." });
+                        }
+                    });
 
-        } else {
-            res.status(400).send({ error: "Something is missing or it's not appropiate." });
-        }
-    } else {
-        res.status(401).send({ error: "Invalid captcha." });
-    }
-});
+                } else {
+                    res.status(400).send({ error: "Something is missing or it's not appropiate." });
+                }
+            } else {
+                res.status(401).send({ error: "Invalid captcha." });
+            }
+        });
     });
 
     app.post('/verify/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const verificator = urlParamsValues
+        const verificator = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -153,45 +152,44 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     app.post('/reset/send', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.email === req.body.email);
-
-                const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                database.query('UPDATE users SET verificator = $1 WHERE id = $2', [verificator, user.id], (err, dbRes) => {
+                database.query('SELECT * FROM users', async (err, dbRes) => {
                     if (!err) {
-                        try {
-                            email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
-                                'Subject: Reset your password\n',
-                                'From: seltornteam@gmail.com\n',
-                                'To: ' + user.email + '\n\n',
-                                'Dear ' + user.username + '#' + user.discriminator + ':\n',
-                                'We received a request to reset your account\'s password.\n',
-                                'Use this link to reset it: ' + clientDomain + '/reset/' + verificator + '\n',
-                                'If you didn\'t request this, please contact our support team as soon as possible.\n',
-                                'Best regards,\n',
-                                'Seltorn Team\n\n'].join('')).toString('base64url'));
-                        } catch {
-                            logger.error("Error emailing " + req.body.email);
-                        }
-                        res.status(201).send({});
+                        const user = dbRes.rows.find(x => x.email === req.body.email);
+
+                        const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
+                        database.query('UPDATE users SET verificator = $1 WHERE id = $2', [verificator, user.id], (err, dbRes) => {
+                            if (!err) {
+                                try {
+                                    email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                        'Subject: Reset your password\n',
+                                        'From: seltornteam@gmail.com\n',
+                                        'To: ' + user.email + '\n\n',
+                                        'Dear ' + user.username + '#' + user.discriminator + ':\n',
+                                        'We received a request to reset your account\'s password.\n',
+                                        'Use this link to reset it: ' + clientDomain + '/reset/' + verificator + '\n',
+                                        'If you didn\'t request this, please contact our support team as soon as possible.\n',
+                                        'Best regards,\n',
+                                        'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                } catch {
+                                    logger.error("Error emailing " + req.body.email);
+                                }
+                                res.status(201).send({});
+                            } else {
+                                res.status(500).send({ error: "Something went wrong with our server." });
+                            }
+                        });
                     } else {
                         res.status(500).send({ error: "Something went wrong with our server." });
                     }
                 });
             } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
+                res.status(401).send({ error: "Invalid captcha." });
             }
         });
-    } else {
-        res.status(401).send({ error: "Invalid captcha." });
-    }
-});
     });
 
     app.get('/reset/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const verificator = urlParamsValues
+        const verificator = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -213,48 +211,47 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     app.post('/reset/*', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const verificator = urlParamsValues
-            .map((x) => x.replace(/\//g, ''))
-            .filter((x) => {
-                return x != '';
-            })[0];
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.verificator === verificator);
-                if (user) {
-                    const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                    database.query('UPDATE users SET token = $1, password = $2, verificator = $3 WHERE id = $4', [token, await argon2.hash(req.body.password, { type: argon2.argon2id }), '', user.id], (err, dbRes) => {
-                        if (!err) {
-                            try {
-                                email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
-                                    'Subject: Important changes to your account\n',
-                                    'From: seltornteam@gmail.com\n',
-                                    'To: ' + user.email + '\n\n',
-                                    'Dear ' + user.username + '#' + user.discriminator + ':\n',
-                                    'We received and processed a request to change your account\'s password.\n',
-                                    'If you didn\'t request this, please contact our support team as soon as possible.\n',
-                                    'Best regards,\n',
-                                    'Seltorn Team\n\n'].join('')).toString('base64url'));
-                            } catch {
-                                logger.error("Error emailing " + req.body.email);
-                            }
-                            res.send({ token: token });
+                const verificator = Object.values(req.params)
+                    .map((x) => x.replace(/\//g, ''))
+                    .filter((x) => {
+                        return x != '';
+                    })[0];
+                database.query('SELECT * FROM users', async (err, dbRes) => {
+                    if (!err) {
+                        const user = dbRes.rows.find(x => x.verificator === verificator);
+                        if (user) {
+                            const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
+                            database.query('UPDATE users SET token = $1, password = $2, verificator = $3 WHERE id = $4', [token, await argon2.hash(req.body.password, { type: argon2.argon2id }), '', user.id], (err, dbRes) => {
+                                if (!err) {
+                                    try {
+                                        email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
+                                            'Subject: Important changes to your account\n',
+                                            'From: seltornteam@gmail.com\n',
+                                            'To: ' + user.email + '\n\n',
+                                            'Dear ' + user.username + '#' + user.discriminator + ':\n',
+                                            'We received and processed a request to change your account\'s password.\n',
+                                            'If you didn\'t request this, please contact our support team as soon as possible.\n',
+                                            'Best regards,\n',
+                                            'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                    } catch {
+                                        logger.error("Error emailing " + req.body.email);
+                                    }
+                                    res.send({ token: token });
+                                } else {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                }
+                            });
                         } else {
-                            res.status(500).send({ error: "Something went wrong with our server." });
+                            res.status(401).send({ error: "Invalid reset code." });
                         }
-                    });
-                } else {
-                    res.status(401).send({ error: "Invalid reset code." });
-                }
+                    } else {
+                        res.status(500).send({ error: "Something went wrong with our server." });
+                    }
+                });
             } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
+                res.status(401).send({ error: "Invalid captcha." });
             }
         });
-    } else {
-        res.status(401).send({ error: "Invalid captcha." });
-    }
-    });
     });
 
     function generateDiscriminator(excluded: string[]): string {

@@ -13,6 +13,8 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         username text NOT NULL,
         discriminator text NOT NULL,
         creation text NOT NULL,
+        type text NOT NULL,
+        owner text NOT NULL,
         verified boolean NOT NULL,
         verificator text NOT NULL,
         otp text NOT NULL,
@@ -76,46 +78,52 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         if (!err) {
             database.query('SELECT * FROM files', async (err, dbRes) => {
                 if (!err) {
-            if (!dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
-            const defaultPfp = await storage.store({
-                name: 'Default Avatar',
-                description: 'Seltorn\'s default avatar',
-                image: new File([fs.readFileSync(__dirname + '/../../files/default.png')], 'default.png', { type: 'image/png' })
-              });
-            database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['default', 'users', defaultPfp.url], (err, dbRes) => {
-                if (err) {
+                    if (!dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
+                        const defaultPfp = await storage.store({
+                            name: 'Default Avatar',
+                            description: 'Seltorn\'s default avatar',
+                            image: new File([fs.readFileSync(__dirname + '/../../files/default.png')], 'default.png', { type: 'image/png' })
+                        });
+                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['default', 'users', defaultPfp.url], (err, dbRes) => {
+                            if (err) {
+                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+                                process.exit(-1);
+                            }
+                        });
+                    }
+
+                    if (!dbRes.rows.find(x => x.id === 'bot' && x.type === 'users')) {
+                        const botPfp = await storage.store({
+                            name: 'Bot default Avatar',
+                            description: 'Seltorn\'s bots default avatar',
+                            image: new File([fs.readFileSync(__dirname + '/../../files/bot.png')], 'bot.png', { type: 'image/png' })
+                        });
+                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['bot', 'users', botPfp.url], (err, dbRes) => {
+                            if (err) {
+                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+                                process.exit(-1);
+                            }
+                        });
+                    }
+
+                    if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
+                        const systemPfp = await storage.store({
+                            name: 'System\'s Avatar',
+                            description: 'Seltorn\'s system avatar',
+                            image: new File([fs.readFileSync(__dirname + '/../../files/system.png')], 'system.png', { type: 'image/png' })
+                        });
+                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['0', 'users', systemPfp.url], (err, dbRes) => {
+                            if (err) {
+                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
+                                process.exit(-1);
+                            }
+                        });
+                    }
+                } else {
                     logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
+                    process.exit(-1);
                 }
             });
         }
-    } else {
-        logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
-    }
-});
-
-database.query('SELECT * FROM files', async (err, dbRes) => {
-    if (!err) {
-if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
-            const systemPfp = await storage.store({
-                name: 'System\'s Avatar',
-                description: 'Seltorn\'s system avatar',
-                image: new File([fs.readFileSync(__dirname + '/../../files/system.png')], 'system.png', { type: 'image/png' })
-              });
-            database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['0', 'users', systemPfp.url], (err, dbRes) => {
-                if (err) {
-                    logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-            process.exit(-1);
-                }
-            });
-        }
-    } else {
-        logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-        process.exit(-1);
-    }
-    });
-
-}
-    });
+    });;
 };

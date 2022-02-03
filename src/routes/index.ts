@@ -29,6 +29,8 @@ import guilds from './guilds';
 
 import friends from './friends';
 
+import bots from './bots';
+
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, captchaSecret: string, clientDomain: string) => {
     email.authorize();
 
@@ -38,8 +40,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {
             const user: User = await checkLogin(req.headers.authorization ?? "");
             if (user.creation != 0) {
-                res.locals.user = user.id;
-                next();
+                if (user.type !== 'SUSPENDED') {
+                    if (user.type === 'BOT' && (req.url.startsWith('/friends') || req.url.startsWith('/bots'))) {
+                        if (req.url.startsWith('/friends')) {
+                            res.status(403).send({ error: "Bots can't have friends." });
+                        } else {
+                            res.status(403).send({ error: "Bots can't have bots." });
+                        }
+                    } else {
+                        res.locals.user = user.id;
+                        next();
+                    }
+                } else {
+                    res.status(403).send({ error: "Account suspended." });
+                }
             } else {
                 res.status(401).send({ error: "Invalid information." });
             }
@@ -66,77 +80,87 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     friends(websockets, app, database);
 
+    bots(websockets, app, database, storage);
+
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const urlSplitted = req.url.split('/');
-            if(req.url.startsWith('/files/') && urlSplitted.length > 3) {
+        if (req.url.startsWith('/files/') && urlSplitted.length > 3) {
             database.query('SELECT * FROM files', async (err, dbRes) => {
-                if(!err) {
+                if (!err) {
                     const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
                     const file = dbRes.rows.find((x: FileI) => x.id === extensionLess && x.type === urlSplitted[2]);
-                    if(urlSplitted[2] === 'users' && !file) {
-                        res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
-                    } else if(file) {
+                    if (urlSplitted[2] === 'users' && !file) {
+                        database.query('SELECT * FROM users', async (err, dbResB) => {
+                            if (!err) {
+                                if (dbResB.rows.find(x => x.id === extensionLess)?.type !== 'BOT') {
+                                    res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
+                                } else {
+                                    res.redirect(dbRes.rows.find((x: FileI) => x.id === 'bot' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
+                                }
+                            }
+                        });
+                    } else if (file) {
                         res.redirect(file.url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
-                        } else {
+                    } else {
                         res.status(404).send({ error: "Not found." });
-                        }
+                    }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
-        } else if(req.url.startsWith('/meta/')) {
+        } else if (req.url.startsWith('/meta/')) {
             const url = req.url.replace('/meta/', '');
             database.query('SELECT * FROM meta', async (err, dbRes) => {
                 if (!err) {
-                const metasDb = dbRes.rows.find(x => x.url === url) 
-                if(!metasDb || (metasDb && Date.now() > (metasDb.creation + 86400000))) {
-            try {
-                    const fetchy = await fetch(url, {
-                        headers: {
-                            'User-Agent': (new UserAgent()).toString()
+                    const metasDb = dbRes.rows.find(x => x.url === url)
+                    if (!metasDb || (metasDb && Date.now() > (metasDb.creation + 86400000))) {
+                        try {
+                            const fetchy = await fetch(url, {
+                                headers: {
+                                    'User-Agent': (new UserAgent()).toString()
+                                }
+                            });
+                            const response = await fetchy.text();
+                            const html = cheerio.load(response);
+                            let metas = {
+                                title: '',
+                                description: '',
+                                image: ''
+                            };
+                            metas.title = html('meta[property="og:title"]').attr('content') ?? html('meta[property="title"]').attr('content') ?? '';
+                            metas.description = html('meta[property="og:description"]').attr('content') ?? html('meta[property="description"]').attr('content') ?? '';
+                            metas.image = html('meta[property="og:image"]').attr('content') ?? '';
+                            database.query('INSERT INTO meta (url, creation, title, description, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO UPDATE SET creation = $2, title = $3, description = $4, image = $5', [url, Date.now(), metas.title, metas.description, metas.image], (err, dbRes) => {
+                                if (!err) {
+                                    res.send(metas);
+                                } else {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                }
+                            });
+                        } catch {
+                            res.status(500).send({ error: "Something went wrong with our server." });
                         }
-                    });
-                    const response = await fetchy.text();
-                    const html = cheerio.load(response);
-                    let metas = {
-                        title: '',
-                        description: '',
-                        image: ''
-                    };
-                    metas.title = html('meta[property="og:title"]').attr('content') ?? html('meta[property="title"]').attr('content') ?? '';
-                    metas.description = html('meta[property="og:description"]').attr('content') ?? html('meta[property="description"]').attr('content') ?? '';
-                    metas.image = html('meta[property="og:image"]').attr('content') ?? '';
-                    database.query('INSERT INTO meta (url, creation, title, description, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO UPDATE SET creation = $2, title = $3, description = $4, image = $5', [url, Date.now(), metas.title, metas.description, metas.image], (err, dbRes) => {
-                        if(!err) {
-                    res.send(metas);
                     } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
+                        delete metasDb.url;
+                        delete metasDb.creation;
+                        res.send(metasDb);
                     }
-                });
-                    } catch {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                    }
-                } else {
-                    delete metasDb.url;
-                    delete metasDb.creation;
-                    res.send(metasDb);
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
             });
-        } else if(req.url.startsWith('/proxy/')) {
+        } else if (req.url.startsWith('/proxy/')) {
             try {
-            const fetchy = await fetch(req.url.replace('/proxy/', ''), {
-                headers: {
-                    'User-Agent': (new UserAgent()).toString()
-                }
-            });
-            const response = await fetchy.buffer();
-            res.set('Content-Type', (await fromBuffer(response))?.mime).send(response);
-        } catch {
-            res.status(500).send({ error: "Something went wrong with our server." });
-        }
+                const fetchy = await fetch(req.url.replace('/proxy/', ''), {
+                    headers: {
+                        'User-Agent': (new UserAgent()).toString()
+                    }
+                });
+                const response = await fetchy.buffer();
+                res.set('Content-Type', (await fromBuffer(response))?.mime).send(response);
+            } catch {
+                res.status(500).send({ error: "Something went wrong with our server." });
+            }
         } else {
             res.status(404).send({ error: "Not found." });
         }
@@ -156,6 +180,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 username: "",
                 discriminator: "",
                 creation: 0,
+                type: '',
+                owner: '',
                 verified: false,
                 verificator: '',
                 otp: ''
@@ -169,7 +195,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             const ecPublicKey = await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256');
 
-                            const info = await jwtVerify(token.split('Bearer ')[1], ecPublicKey, {
+                            const info = await jwtVerify((token.startsWith('Bearer ') ? token.split('Bearer ') : token.split('Bot '))[1], ecPublicKey, {
                                 issuer: 'seltorn',
                                 audience: 'seltorn'
                             });

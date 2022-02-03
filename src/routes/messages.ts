@@ -7,11 +7,10 @@ import { NFTStorage, File } from 'nft.storage';
 import { lookup } from 'mime-types';
 const upload = multer({ storage: multer.memoryStorage() })
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage :NFTStorage) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -37,22 +36,24 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
-                                                if (message?.author !== '0') {
-                                                    message.author = {
-                                                        id: message?.author as string,
-                                                        username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                        discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000'
-                                                    }
-                                                } else {
-                                                    message.author = {
-                                                        id: '0',
-                                                        username: 'System',
-                                                        nickname: undefined,
-                                                        discriminator: '0000'
-                                                    };
+                                            if (message?.author !== '0') {
+                                                message.author = {
+                                                    id: message?.author as string,
+                                                    username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
+                                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
+                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                    type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                 }
-                                                return message;
+                                            } else {
+                                                message.author = {
+                                                    id: '0',
+                                                    username: 'Seltorn',
+                                                    nickname: undefined,
+                                                    discriminator: '0000',
+                                                    type: 'SYSTEM'
+                                                };
+                                            }
+                                            return message;
                                         });
                                         res.send(messages);
                                     } else {
@@ -78,8 +79,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.get('/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -105,14 +105,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     id: message?.author,
                                                     username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                     nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
-                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author).discriminator ?? '0000'
+                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author).discriminator ?? '0000',
+                                                    type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                 };
                                             } else {
                                                 message.author = {
                                                     id: '0',
-                                                    username: 'System',
+                                                    username: 'Seltorn',
                                                     nickname: undefined,
-                                                    discriminator: '0000'
+                                                    discriminator: '0000',
+                                                    type: 'SYSTEM'
                                                 };
                                             }
 
@@ -143,15 +145,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/guilds/*/channels/*/messages', upload.single('attachment'), (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
             });
         const guildId = urlParams[0];
         const channelId = urlParams[1];
-        if (guildId && channelId && req.body.message && req.body.message.length < 4001) {
+        if (guildId && channelId && req.body.content && req.body.content.length < 4001) {
             database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
@@ -165,7 +166,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const message: Message = {
                                     id: crypto.randomUUID(),
                                     author: res.locals.user,
-                                    content: req.body.message,
+                                    content: req.body.content,
                                     creation: Date.now(),
                                     edited: 0
                                 };
@@ -177,8 +178,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         name: req.body.attachmentName,
                                         description: 'Seltorn\'s ' + message.id + ' attachment',
                                         image: new File([req.file.buffer], req.body.attachmentName, { type: extension ? extension : '' })
-                                      });
-                                      database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3)', [message.id, 'messages', attachment.url], (err, dbRes) => {
+                                    });
+                                    database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3)', [message.id, 'messages', attachment.url], (err, dbRes) => {
                                         if (err) {
                                             res.status(500).send({ error: "Something went wrong with our server." });
                                             return;
@@ -198,14 +199,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         id: message?.author as string,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
-                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
+                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
                                                     message.author = {
                                                         id: message?.author,
-                                                        username: 'System',
+                                                        username: 'Seltorn',
                                                         nickname: undefined,
-                                                        discriminator: '0000'
+                                                        discriminator: '0000',
+                                                        type: 'SYSTEM'
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
@@ -243,8 +246,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -252,7 +254,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         const messageId = urlParams[2];
-        if (guildId && channelId && messageId && req.body.message && req.body.message.length < 4001) {
+        if (guildId && channelId && messageId && req.body.content && req.body.content.length < 4001) {
             database.query('SELECT * FROM guilds', async (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
@@ -264,7 +266,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             let message = messages.find((x: Message) => x?.id === messageId);
                             if (message.author === res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
 
-                                message.content = req.body.message;
+                                message.content = req.body.content;
                                 message.edited = Date.now();
                                 messages[messages.findIndex((x: Message) => x?.id === messageId)] = message;
                                 channel.messages = messages;
@@ -278,14 +280,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         id: message?.author,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
-                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
+                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
                                                     message.author = {
                                                         id: message?.author,
-                                                        username: 'System',
+                                                        username: 'Seltorn',
                                                         nickname: undefined,
-                                                        discriminator: '0000'
+                                                        discriminator: '0000',
+                                                        type: 'SYSTEM'
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
@@ -323,8 +327,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.delete('/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
-        const urlParamsValues: string[] = Object.values(req.params);
-        const urlParams = urlParamsValues
+        const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
                 return x != '';
@@ -359,14 +362,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         id: message?.author,
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
-                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000'
+                                                        discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
                                                     message.author = {
                                                         id: '0',
-                                                        username: 'System',
+                                                        username: 'Seltorn',
                                                         nickname: undefined,
-                                                        discriminator: '0000'
+                                                        discriminator: '0000',
+                                                        type: 'SYSTEM'
                                                     };
                                                 }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
