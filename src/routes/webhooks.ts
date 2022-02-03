@@ -5,7 +5,7 @@ import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
-    app.post('/webhook/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
+    app.post('/webhooks/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
