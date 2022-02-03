@@ -166,7 +166,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     id: crypto.randomUUID(),
                                     author: res.locals.user,
                                     content: req.body.message,
-                                    creation: Date.now()
+                                    creation: Date.now(),
+                                    edited: 0
                                 };
 
                                 if (req.file) {
@@ -264,6 +265,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             if (message.author === res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
 
                                 message.content = req.body.message;
+                                message.edited = Date.now();
                                 messages[messages.findIndex((x: Message) => x?.id === messageId)] = message;
                                 channel.messages = messages;
                                 channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;

@@ -95,7 +95,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         id: crypto.randomUUID(),
                                         author: '0',
                                         content: 'Message pinned!',
-                                        creation: Date.now()
+                                        creation: Date.now(),
+                                        edited: 0
                                     };
 
                                     messages.push(systemMessage);

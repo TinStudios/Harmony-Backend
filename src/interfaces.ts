@@ -57,6 +57,7 @@ export interface Message {
     content: string;
     attachment?: string;
     creation: number;
+    edited: number;
 };
 
 export interface ChannelRole {
