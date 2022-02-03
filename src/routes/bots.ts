@@ -220,6 +220,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     database.query('UPDATE users SET token = $1 WHERE id = $2', [token, botId], err => {
                         if (!err) {
                             const { email, password, owner, verified, verificator, otp, ...returnedBot } = bot;
+                            returnedBot.token = token;
                             returnedBot.creation = Number(bot.creation);
                             websockets.get(res.locals.user)?.forEach(websocket => {
                                 websocket.send(JSON.stringify({ event: 'botReset', bot: returnedBot }));
@@ -251,7 +252,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .setIssuedAt()
             .setIssuer('seltorn')
             .setAudience('seltorn')
-            .setExpirationTime('7d')
+            .setExpirationTime('365d')
             .sign(privateKey);
     }
 };

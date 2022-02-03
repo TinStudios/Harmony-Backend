@@ -61,6 +61,7 @@ export interface Message {
     attachment?: string;
     creation: number;
     edited: number;
+    type: string;
 };
 
 export interface ChannelRole {
@@ -68,12 +69,18 @@ export interface ChannelRole {
     permissions: number;
 };
 
+export interface Webhook {
+    token: string;
+    username: string;
+}
+
 export interface Channel {
     id: string;
     name: string;
     topic: string | null;
     creation: number;
     roles: ChannelRole[];
+    webhooks: Webhook[];
     messages?: Message[];
     pins?: string[];
 };

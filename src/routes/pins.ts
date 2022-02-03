@@ -25,6 +25,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
+                                            if(message?.type !== 'WEBHOOK') {
                                             if (message?.author !== '0') {
                                                 message.author = {
                                                     id: message?.author as string,
@@ -42,6 +43,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     type: 'SYSTEM'
                                                 };
                                             }
+                                        }
                                             return message;
                                         });
                                         messages.reverse();
@@ -96,7 +98,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         author: '0',
                                         content: 'Message pinned!',
                                         creation: Date.now(),
-                                        edited: 0
+                                        edited: 0,
+                                        type: 'NORMAL'
                                     };
 
                                     messages.push(systemMessage);
@@ -115,6 +118,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         type: 'SYSTEM'
                                                     };
 
+                                                    if(message?.type !== 'WEBHOOK') {
                                                     if (message?.author !== '0') {
                                                         message.author = {
                                                             id: message?.author,
@@ -130,6 +134,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             discriminator: '0000'
                                                         };
                                                     }
+                                                }
 
                                                     JSON.parse(guild.members).forEach((member: Member) => {
                                                         if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {

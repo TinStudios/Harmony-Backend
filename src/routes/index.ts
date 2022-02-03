@@ -31,10 +31,14 @@ import friends from './friends';
 
 import bots from './bots';
 
+import webhooks from './webhooks';
+
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, captchaSecret: string, clientDomain: string) => {
     email.authorize();
 
     account(websockets, app, database, logger, email, checkLogin, captchaSecret, clientDomain);
+
+    webhooks(websockets, app, database);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {

@@ -36,6 +36,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
+                                            if(message?.type !== 'WEBHOOK') {
                                             if (message?.author !== '0') {
                                                 message.author = {
                                                     id: message?.author as string,
@@ -53,6 +54,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     type: 'SYSTEM'
                                                 };
                                             }
+                                        }
                                             return message;
                                         });
                                         res.send(messages);
@@ -100,6 +102,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (message) {
                                     database.query('SELECT * FROM users', async (err, dbRes) => {
                                         if (!err) {
+                                            if(message?.type !== 'WEBHOOK') {
                                             if (message?.author !== '0') {
                                                 message.author = {
                                                     id: message?.author,
@@ -117,6 +120,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     type: 'SYSTEM'
                                                 };
                                             }
+                                        }
 
                                             res.send(message);
                                         } else {
@@ -168,7 +172,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     author: res.locals.user,
                                     content: req.body.content,
                                     creation: Date.now(),
-                                    edited: 0
+                                    edited: 0,
+                                    type: 'NORMAL'
                                 };
 
                                 if (req.file) {
@@ -194,6 +199,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     if (!err) {
                                         database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
+                                                if(message?.type !== 'WEBHOOK') {
                                                 if (message?.author !== '0') {
                                                     message.author = {
                                                         id: message?.author as string,
@@ -211,6 +217,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         type: 'SYSTEM'
                                                     };
                                                 }
+                                            }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
                                                     if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
@@ -275,6 +282,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     if (!err) {
                                         database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
+                                                if(message?.type !== 'WEBHOOK') {
                                                 if (message?.author !== '0') {
                                                     message.author = {
                                                         id: message?.author,
@@ -292,6 +300,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         type: 'SYSTEM'
                                                     };
                                                 }
+                                            }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
                                                     if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
@@ -357,6 +366,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     if (!err) {
                                         database.query('SELECT * FROM users', async (err, dbRes) => {
                                             if (!err) {
+                                                if(message?.type !== 'WEBHOOK') {
                                                 if (message?.author !== '0') {
                                                     message.author = {
                                                         id: message?.author,
@@ -374,6 +384,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         type: 'SYSTEM'
                                                     };
                                                 }
+                                            }
                                                 JSON.parse(guild.members).forEach((member: Member) => {
                                                     if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                         websockets.get(member.id)?.forEach(websocket => {
