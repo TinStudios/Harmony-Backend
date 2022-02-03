@@ -28,9 +28,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         if (channel) {
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
                                 let messages = channel.messages;
-                                const before = messages.findIndex((x: Message) => x?.id === beforeId);
+                                const before = messages.findIndex((x: Message) => x?.id === beforeId) - 1;
                                 if (beforeId) {
-                                    messages = messages.slice(before - (before > 99 ? 100 : before), before + 1)
+                                    messages = messages.slice(before - (before > 99 ? 100 : before), before + 1);
                                 } else {
                                     messages = messages.slice(-101);
                                 }
