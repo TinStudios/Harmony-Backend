@@ -27,7 +27,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const message: Message = {
                                     id: crypto.randomUUID(),
                                     author: {
-                                        id: crypto.randomUUID(),
+                                        id: 'default',
                                         username: req.body.username ?? channel.webhooks.find((x: Webhook) => x.token === token).username,
                                         discriminator: '0000',
                                         type: 'WEBHOOK'
