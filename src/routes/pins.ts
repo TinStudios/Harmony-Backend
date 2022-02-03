@@ -25,25 +25,25 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 database.query('SELECT * FROM users', async (err, dbRes) => {
                                     if (!err) {
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
-                                            if(message?.type !== 'WEBHOOK') {
-                                            if (message?.author !== '0') {
-                                                message.author = {
-                                                    id: message?.author as string,
-                                                    username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
-                                                    nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                    discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
-                                                    type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
-                                                };
-                                            } else {
-                                                message.author = {
-                                                    id: '0',
-                                                    username: 'Seltorn',
-                                                    nickname: undefined,
-                                                    discriminator: '0000',
-                                                    type: 'SYSTEM'
-                                                };
+                                            if (message?.type !== 'WEBHOOK') {
+                                                if (message?.author !== '0') {
+                                                    message.author = {
+                                                        id: message?.author as string,
+                                                        username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
+                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
+                                                        discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                    };
+                                                } else {
+                                                    message.author = {
+                                                        id: '0',
+                                                        username: 'Seltorn',
+                                                        nickname: undefined,
+                                                        discriminator: '0000',
+                                                        type: 'SYSTEM'
+                                                    };
+                                                }
                                             }
-                                        }
                                             return message;
                                         });
                                         messages.reverse();
@@ -118,23 +118,23 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         type: 'SYSTEM'
                                                     };
 
-                                                    if(message?.type !== 'WEBHOOK') {
-                                                    if (message?.author !== '0') {
-                                                        message.author = {
-                                                            id: message?.author,
-                                                            username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
-                                                            nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                            discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000'
-                                                        };
-                                                    } else {
-                                                        message.author = {
-                                                            id: message?.author,
-                                                            username: 'Seltorn',
-                                                            nickname: undefined,
-                                                            discriminator: '0000'
-                                                        };
+                                                    if (message?.type !== 'WEBHOOK') {
+                                                        if (message?.author !== '0') {
+                                                            message.author = {
+                                                                id: message?.author,
+                                                                username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
+                                                                nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
+                                                                discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000'
+                                                            };
+                                                        } else {
+                                                            message.author = {
+                                                                id: message?.author,
+                                                                username: 'Seltorn',
+                                                                nickname: undefined,
+                                                                discriminator: '0000'
+                                                            };
+                                                        }
                                                     }
-                                                }
 
                                                     JSON.parse(guild.members).forEach((member: Member) => {
                                                         if (member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {

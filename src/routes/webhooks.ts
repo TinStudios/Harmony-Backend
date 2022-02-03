@@ -22,45 +22,45 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
                         if (channel && channel.webhooks.find((x: Webhook) => x.token === token)) {
-                             let messages = channel.messages;
+                            let messages = channel.messages;
 
-                                const message: Message = {
-                                    id: crypto.randomUUID(),
-                                    author: {
-                                        id: 'default',
-                                        username: req.body.username ?? channel.webhooks.find((x: Webhook) => x.token === token).username,
-                                        discriminator: '0000',
-                                        type: 'WEBHOOK'
-                                    },
-                                    content: req.body.content,
-                                    creation: Date.now(),
-                                    edited: 0,
+                            const message: Message = {
+                                id: crypto.randomUUID(),
+                                author: {
+                                    id: 'default',
+                                    username: req.body.username ?? channel.webhooks.find((x: Webhook) => x.token === token).username,
+                                    discriminator: '0000',
                                     type: 'WEBHOOK'
-                                };
+                                },
+                                content: req.body.content,
+                                creation: Date.now(),
+                                edited: 0,
+                                type: 'WEBHOOK'
+                            };
 
-                                messages.push(message);
-                                channel.messages = messages;
-                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                    if (!err) {
-                                        database.query('SELECT * FROM users', async (err, dbRes) => {
-                                            if (!err) {
-                                                JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                                        websockets.get(member.id)?.forEach(websocket => {
-                                                            websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
-                                                        });
-                                                    }
-                                                });
-                                                res.status(201).send(message);
-                                            } else {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            }
-                                        });
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
-                                });
+                            messages.push(message);
+                            channel.messages = messages;
+                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                if (!err) {
+                                    database.query('SELECT * FROM users', async (err, dbRes) => {
+                                        if (!err) {
+                                            JSON.parse(guild.members).forEach((member: Member) => {
+                                                if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                    websockets.get(member.id)?.forEach(websocket => {
+                                                        websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
+                                                    });
+                                                }
+                                            });
+                                            res.status(201).send(message);
+                                        } else {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                        }
+                                    });
+                                } else {
+                                    res.status(500).send({ error: "Something went wrong with our server." });
+                                }
+                            });
                         } else {
                             res.status(404).send({ error: "Missing permission." });
                         }

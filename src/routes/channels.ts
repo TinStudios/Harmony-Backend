@@ -33,7 +33,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
         }
     });
-    
+
     app.get('/guilds/*/channels/*/webhooks', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
@@ -46,21 +46,21 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if(guild) {
-                    let channels = JSON.parse(guild.channels);
-                    let channel = channels.find((x: Channel) => x?.id === channelId);
-                    if (channel) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
-                            res.send(channel.webhooks);
+                    if (guild) {
+                        let channels = JSON.parse(guild.channels);
+                        let channel = channels.find((x: Channel) => x?.id === channelId);
+                        if (channel) {
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
+                                res.send(channel.webhooks);
+                            } else {
+                                res.status(403).send({ error: "Missing permission." });
+                            }
                         } else {
-                            res.status(403).send({ error: "Missing permission." });
+                            res.status(404).send({ error: "Not found." });
                         }
                     } else {
-                        res.status(404).send({ error: "Not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(403).send({ error: "Missing permission." });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -82,45 +82,45 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if(guild) {
-                    let channels = JSON.parse(guild.channels);
-                    let channel = channels.find((x: Channel) => x?.id === channelId);
-                    if (channel) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
-                            let webhooks = [...channel.webhooks];
-                            
-                            const webhook = {
-                                token: crypto.randomUUID(),
-                                username: req.body.username
-                            };
+                    if (guild) {
+                        let channels = JSON.parse(guild.channels);
+                        let channel = channels.find((x: Channel) => x?.id === channelId);
+                        if (channel) {
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
+                                let webhooks = [...channel.webhooks];
 
-                            webhooks.push(webhook);
+                                const webhook = {
+                                    token: crypto.randomUUID(),
+                                    username: req.body.username
+                                };
 
-                            channel.webhooks = webhooks;
+                                webhooks.push(webhook);
 
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                channel.webhooks = webhooks;
 
-                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
+                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                    if (!err) {
                                         JSON.parse(guild.members).filter((x: Member) => x?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)).forEach((member: Member) => {
                                             websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'webhookCreated', guild: guildId, channel: channelId, webhook: webhook }));
                                             });
                                         });
                                         res.status(201).send(webhook);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                            } else {
+                                res.status(403).send({ error: "Missing permission." });
+                            }
                         } else {
-                            res.status(403).send({ error: "Missing permission." });
+                            res.status(404).send({ error: "Not found." });
                         }
                     } else {
-                        res.status(404).send({ error: "Not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(403).send({ error: "Missing permission." });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
@@ -148,34 +148,34 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (channel) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
                             let webhooks = [...channel.webhooks];
-                            if(webhooks.find(x => x.token === token)) {
+                            if (webhooks.find(x => x.token === token)) {
 
                                 const webhook = {
                                     token: token,
                                     username: req.body.username
                                 };
-                            
-                            webhooks[webhooks.findIndex(x => x.token === token)] = webhook;
 
-                            channel.webhooks = webhooks;
+                                webhooks[webhooks.findIndex(x => x.token === token)] = webhook;
 
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                channel.webhooks = webhooks;
 
-                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    JSON.parse(guild.members).filter((x: Member) => x?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)).forEach((member: Member) => {
+                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                    if (!err) {
+                                        JSON.parse(guild.members).filter((x: Member) => x?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)).forEach((member: Member) => {
                                             websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'webhookEdited', guild: guildId, channel: channelId, webhook: webhook }));
                                             });
                                         });
                                         res.send(webhook);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
-                        } else {
-                            res.status(404).send({ error: "Not found." });
-                        }
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                            } else {
+                                res.status(404).send({ error: "Not found." });
+                            }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
@@ -209,29 +209,29 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (channel) {
                         if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
                             let webhooks = [...channel.webhooks];
-                            if(webhooks.find(x => x.token === token)) {
+                            if (webhooks.find(x => x.token === token)) {
 
-                            webhooks.splice(webhooks.findIndex(x => x.token === token), 1);
+                                webhooks.splice(webhooks.findIndex(x => x.token === token), 1);
 
-                            channel.webhooks = webhooks;
+                                channel.webhooks = webhooks;
 
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
 
-                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    JSON.parse(guild.members).filter((x: Member) => x?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)).forEach((member: Member) => {
+                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                    if (!err) {
+                                        JSON.parse(guild.members).filter((x: Member) => x?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)).forEach((member: Member) => {
                                             websockets.get(member?.id)?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'webhookEdited', guild: guildId, channel: channelId, webhook: token }));
                                             });
                                         });
                                         res.send({});
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
-                            });
-                        } else {
-                            res.status(404).send({ error: "Not found." });
-                        }
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                            } else {
+                                res.status(404).send({ error: "Not found." });
+                            }
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
@@ -342,81 +342,81 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             database.query('SELECT * FROM guilds', (err, dbRes) => {
                 if (!err) {
                     const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if(guild) {
-                    let channels = JSON.parse(guild.channels);
-                    let channel = channels.find((x: Channel) => x?.id === channelId);
-                    if (channel) {
-                        if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
+                    if (guild) {
+                        let channels = JSON.parse(guild.channels);
+                        let channel = channels.find((x: Channel) => x?.id === channelId);
+                        if (channel) {
+                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000008) === 0x0000000008)) {
 
-                            if (JSON.parse(guild.roles).find((x: Role) => x.id === roleId) && req.body.permissions) {
-                                let role = channel.roles.find((x: Role) => x?.id === roleId) ?? {};
+                                if (JSON.parse(guild.roles).find((x: Role) => x.id === roleId) && req.body.permissions) {
+                                    let role = channel.roles.find((x: Role) => x?.id === roleId) ?? {};
 
-                                let permissions = 0;
-                                let permissionsCodes: number[] = [];
-                                req.body.permissions?.forEach((permission: string) => {
-                                    switch (permission) {
-                                        case 'VIEW_CHANNEL':
-                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000040) === 0x0000000040)) {
-                                                permissionsCodes.push(0x0000000040);
-                                            }
-                                            break;
+                                    let permissions = 0;
+                                    let permissionsCodes: number[] = [];
+                                    req.body.permissions?.forEach((permission: string) => {
+                                        switch (permission) {
+                                            case 'VIEW_CHANNEL':
+                                                if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000040) === 0x0000000040)) {
+                                                    permissionsCodes.push(0x0000000040);
+                                                }
+                                                break;
 
-                                        case 'SEND_MESSAGES':
-                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000080) === 0x0000000080)) {
-                                                permissionsCodes.push(0x0000000080);
-                                            }
-                                            break;
+                                            case 'SEND_MESSAGES':
+                                                if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000080) === 0x0000000080)) {
+                                                    permissionsCodes.push(0x0000000080);
+                                                }
+                                                break;
 
-                                        case 'MANAGE_MESSAGES':
-                                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000100) === 0x0000000100)) {
-                                                permissionsCodes.push(0x0000000100);
-                                            }
-                                            break;
+                                            case 'MANAGE_MESSAGES':
+                                                if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y?.id === x)).some((x: Role) => (x?.permissions & 0x0000000100) === 0x0000000100)) {
+                                                    permissionsCodes.push(0x0000000100);
+                                                }
+                                                break;
 
-                                        default:
-                                            break;
-                                    }
-                                });
-                                permissions = permissionsCodes.reduce((x, y) => {
-                                    return x | y;
-                                }, 0);
+                                            default:
+                                                break;
+                                        }
+                                    });
+                                    permissions = permissionsCodes.reduce((x, y) => {
+                                        return x | y;
+                                    }, 0);
 
-                                console.log(permissionsCodes);
+                                    console.log(permissionsCodes);
 
-                                role.id = roleId;
-                                role.permissions = permissions;
+                                    role.id = roleId;
+                                    role.permissions = permissions;
 
-                                channel.roles[channel.roles.findIndex((x: Channel) => x?.id === roleId)] = role;
+                                    channel.roles[channel.roles.findIndex((x: Channel) => x?.id === roleId)] = role;
 
-                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
+                                    channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
 
-                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                    if (!err) {
-                                        let parsedChannel = { ...channel };
-                                        delete parsedChannel.messages;
-                                        delete parsedChannel.pins;
-                                        JSON.parse(guild.members).forEach((member: Member) => {
-                                            websockets.get(member?.id)?.forEach(websocket => {
-                                                websocket.send(JSON.stringify({ event: 'channelEdited', guild: guildId, channel: parsedChannel }));
+                                    database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
+                                        if (!err) {
+                                            let parsedChannel = { ...channel };
+                                            delete parsedChannel.messages;
+                                            delete parsedChannel.pins;
+                                            JSON.parse(guild.members).forEach((member: Member) => {
+                                                websockets.get(member?.id)?.forEach(websocket => {
+                                                    websocket.send(JSON.stringify({ event: 'channelEdited', guild: guildId, channel: parsedChannel }));
+                                                });
                                             });
-                                        });
-                                        res.send(parsedChannel);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
-                                });
+                                            res.send(parsedChannel);
+                                        } else {
+                                            res.status(500).send({ error: "Something went wrong with our server." });
+                                        }
+                                    });
+                                } else {
+                                    res.status(400).send({ error: "Something is missing or it's not appropiate." });
+                                }
                             } else {
-                                res.status(400).send({ error: "Something is missing or it's not appropiate." });
+                                res.status(403).send({ error: "Missing permission." });
                             }
                         } else {
-                            res.status(403).send({ error: "Missing permission." });
+                            res.status(404).send({ error: "Not found." });
                         }
                     } else {
-                        res.status(404).send({ error: "Not found." });
+                        res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(403).send({ error: "Missing permission." });
-                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }
