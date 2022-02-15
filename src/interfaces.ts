@@ -9,6 +9,8 @@ export interface User {
     password: string;
     username: string;
     discriminator: string;
+    avatar: string;
+    about: string;
     creation: number;
     type: string;
     owner: string;
@@ -34,6 +36,8 @@ export interface Member {
     id: string;
     username: string;
     discriminator: string;
+    avatar: string;
+    about: string;
     nickname?: string;
     roles: string[];
 };
@@ -51,6 +55,8 @@ export interface Author {
     username: string;
     nickname?: string;
     discriminator: string;
+    avatar: string;
+    about: string;
     type: string;
 };
 
@@ -59,6 +65,7 @@ export interface Message {
     author: string | Author;
     content: string;
     attachment?: string;
+    attachmentId?: string;
     creation: number;
     edited: number;
     type: string;

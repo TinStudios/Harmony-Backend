@@ -1,8 +1,7 @@
 import { Client } from "pg";
-import { NFTStorage, File } from 'nft.storage'
 import fs from 'fs';
 
-export default async (database: Client, logger: any, storage: NFTStorage) => {
+export default async (database: Client, logger: any) => {
     await database.connect();
 
     database.query(`CREATE TABLE IF NOT EXISTS users (
@@ -12,6 +11,8 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         password text NOT NULL,
         username text NOT NULL,
         discriminator text NOT NULL,
+        avatar text NOT NULL,
+        about text NOT NULL,
         creation text NOT NULL,
         type text NOT NULL,
         owner text NOT NULL,
@@ -30,6 +31,7 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
         id text NOT NULL,
         name text NOT NULL,
         description TEXT,
+        icon text NOT NULL,
         public boolean NOT NULL,
         channels text NOT NULL,
         roles text NOT NULL,
@@ -68,62 +70,4 @@ export default async (database: Client, logger: any, storage: NFTStorage) => {
             process.exit(-1);
         }
     });
-
-    database.query(`CREATE TABLE IF NOT EXISTS files (
-        id text NOT NULL,
-        type text NOT NULL,
-        url text NOT NULL,
-        PRIMARY KEY (id)
-    )`, (err, dbRes) => {
-        if (!err) {
-            database.query('SELECT * FROM files', async (err, dbRes) => {
-                if (!err) {
-                    if (!dbRes.rows.find(x => x.id === 'default' && x.type === 'users')) {
-                        const defaultPfp = await storage.store({
-                            name: 'Default Avatar',
-                            description: 'Seltorn\'s default avatar',
-                            image: new File([fs.readFileSync(__dirname + '/../../files/default.png')], 'default.png', { type: 'image/png' })
-                        });
-                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['default', 'users', defaultPfp.url], (err, dbRes) => {
-                            if (err) {
-                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-                                process.exit(-1);
-                            }
-                        });
-                    }
-
-                    if (!dbRes.rows.find(x => x.id === 'bot' && x.type === 'users')) {
-                        const botPfp = await storage.store({
-                            name: 'Bot default Avatar',
-                            description: 'Seltorn\'s bots default avatar',
-                            image: new File([fs.readFileSync(__dirname + '/../../files/bot.png')], 'bot.png', { type: 'image/png' })
-                        });
-                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['bot', 'users', botPfp.url], (err, dbRes) => {
-                            if (err) {
-                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-                                process.exit(-1);
-                            }
-                        });
-                    }
-
-                    if (!dbRes.rows.find(x => x.id === '0' && x.type === 'users')) {
-                        const systemPfp = await storage.store({
-                            name: 'System\'s Avatar',
-                            description: 'Seltorn\'s system avatar',
-                            image: new File([fs.readFileSync(__dirname + '/../../files/system.png')], 'system.png', { type: 'image/png' })
-                        });
-                        database.query(`INSERT INTO files (id, type, url) VALUES ($1, $2, $3)`, ['0', 'users', systemPfp.url], (err, dbRes) => {
-                            if (err) {
-                                logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-                                process.exit(-1);
-                            }
-                        });
-                    }
-                } else {
-                    logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
-                    process.exit(-1);
-                }
-            });
-        }
-    });;
 };

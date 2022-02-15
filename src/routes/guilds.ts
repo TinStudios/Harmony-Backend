@@ -3,11 +3,12 @@ import { Client } from 'pg';
 import crypto from 'crypto';
 import mime from 'mime-types';
 import multer from "multer";
-const upload = multer({ storage: multer.memoryStorage() })
-import { NFTStorage, File } from 'nft.storage';
+const upload = multer({ storage: multer.memoryStorage(), limits: {
+    fileSize: 1000000000
+} })
 import { Guild, Member, Role } from '../interfaces';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, uploadFile: any) => {
     app.get('/guilds/*', (req: express.Request, res: express.Response) => {
         const guildId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
@@ -50,7 +51,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             bans: [],
                             invites: []
                         }
-                        database.query('INSERT INTO guilds (id, name, description, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [guild.id, guild.name, guild.description, guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
+                        database.query('INSERT INTO guilds (id, name, description, icon, public, channels, roles, members, bans, invites) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', [guild.id, guild.name, guild.description, '', guild.public, JSON.stringify(guild.channels), JSON.stringify(guild.roles), JSON.stringify(guild.members), JSON.stringify(guild.bans), JSON.stringify(guild.invites)], (err, dbRes) => {
                             if (!err) {
                                 const parsedGuild: Guild = { ...guild, ...{ members: 1 } };
                                 delete parsedGuild.channels;
@@ -156,17 +157,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             if (req.file) {
                                 if (mime.extension(req.file?.mimetype ?? '') === 'png') {
-                                    const icon = await storage.store({
-                                        name: guildId + '\'s icon',
-                                        description: 'Seltorn\'s ' + guildId + ' icon',
-                                        image: new File([req.file.buffer], guildId + '.png', { type: 'image/png' })
-                                    });
-                                    database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [guildId, 'guilds', icon.url], (err, dbRes) => {
+                                    const icon = await uploadFile(req.file);
+                                    database.query('UPDATE guilds SET icon = $1 WHERE id = $2', [icon, guild.id], (err, dbRes) => {
                                         if (!err) {
+                                           guild.icon = icon;
                                             const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
                                             members.forEach((member: Member) => {
                                                 websockets.get(member?.id)?.forEach(websocket => {
-                                                    websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: false }));
+                                                    websocket.send(JSON.stringify({ event: 'guildEdited', guild: parsedGuild }));
                                                 });
                                             });
                                             res.send(parsedGuild);
@@ -178,15 +176,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     res.status(400).send({ error: "We only accept PNG." });
                                 }
                             } else {
-                                database.query('SELECT * FROM files', (err, dbRes) => {
+                                database.query('SELECT * FROM guilds', (err, dbRes) => {
                                     if (!err) {
-                                        if (dbRes.rows.find(x => x.id === guildId && x.type === 'guilds')) {
-                                            database.query('DELETE FROM files WHERE id = $1', [guildId], async (err, dbRes) => {
+                                        if (dbRes.rows.find(x => x.id === guildId).icon) {
+                                            database.query('UPDATE guilds SET icon = $1 WHERE id = $2', ['', guild.id], (err, dbRes) => {
                                                 if (!err) {
+                                                   guild.icon = '';
                                                     const parsedGuild = Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {});
                                                     members.forEach((member: Member) => {
                                                         websockets.get(member?.id)?.forEach(websocket => {
-                                                            websocket.send(JSON.stringify({ event: 'guildNewIcon', guild: parsedGuild, removed: true }));
+                                                            websocket.send(JSON.stringify({ event: 'guildEdited', guild: parsedGuild }));
                                                         });
                                                     });
                                                     res.send(parsedGuild);

@@ -7,10 +7,11 @@ import { Client } from 'pg';
 import crypto from 'crypto';
 import mime from 'mime-types';
 import multer from "multer";
-import { NFTStorage, File } from 'nft.storage';
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: {
+    fileSize: 1000000000
+} });
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, uploadFile: any) => {
     app.get('/bots', (req: express.Request, res: express.Response) => {
         database.query('SELECT * FROM users', (err, dbRes) => {
             if (!err) {
@@ -39,7 +40,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const token = 'Bot ' + await generateToken({ id: id });
                     const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                     const creation = Date.now();
-                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', [id, token, '', '', req.body.username, discriminator, creation, 'BOT', res.locals.user, true, '', ''], (err, dbRes) => {
+                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, about, avatar, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)', [id, token, '', '', req.body.username, discriminator, '', 'botDefault', creation, 'BOT', res.locals.user, true, '', ''], (err, dbRes) => {
                         if (!err) {
                             const returnedBot = {
                                 id: id,
@@ -118,7 +119,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    app.patch('/bots/*/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
+    app.patch('/bots/*/avatar', upload.single('avatar'), (req: express.Request, res: express.Response) => {
         const botId = Object.values(req.params)
             .map((x) => x.replace(/\//g, ''))
             .filter((x) => {
@@ -130,12 +131,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 if (bot) {
                     if (req.file) {
                         if (mime.extension(req.file?.mimetype ?? '') === 'png') {
-                            const icon = await storage.store({
-                                name: bot.id + '\'s avatar',
-                                description: 'Seltorn\'s ' + bot.id + ' avatar',
-                                image: new File([req.file.buffer], bot.id + '.png', { type: 'image/png' })
-                            });
-                            database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [bot.id, 'users', icon.url], (err, dbRes) => {
+                            const icon = await uploadFile(req.file);
+                            database.query('UPDATE users SET avatar = $1 WHERE id = $2', [icon, bot.id], (err, dbRes) => {
                                 if (!err) {
                                     const { email, password, owner, verified, verificator, otp, ...returnedBot } = bot;
                                     returnedBot.creation = Number(bot.creation);
@@ -148,10 +145,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(400).send({ error: "We only accept PNG." });
                         }
                     } else {
-                        database.query('SELECT * FROM files', (err, dbRes) => {
+                        database.query('SELECT * FROM users', (err, dbRes) => {
                             if (!err) {
-                                if (dbRes.rows.find(x => x.id === bot.id && x.type === 'users')) {
-                                    database.query('DELETE FROM files WHERE id = $1', [bot.id], async (err, dbRes) => {
+                                if (dbRes.rows.find(x => x.id === bot.id).avatar) {
+                                    database.query('UPDATE users SET avatar = $1 WHERE id = $2', ['botDefault', bot.id], (err, dbRes) => {
                                         if (!err) {
                                             const { email, password, owner, verified, verificator, otp, ...returnedBot } = bot;
                                             returnedBot.creation = Number(bot.creation);

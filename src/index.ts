@@ -6,8 +6,6 @@ import app from './app';
 import config from './utils/config';
 import { createLogger } from './utils/logger';
 
-import { NFTStorage } from 'nft.storage';
-
 import ws from './utils/ws';
 import routes from './routes';
 import db from './utils/db';
@@ -26,14 +24,12 @@ const server = createServer(app);
 
 const websockets = new Map();
 
-const storage = new NFTStorage({ token: config.storage.apiKey })
-
 ws(wss, websockets, server as unknown as Server, database);
 
-routes(websockets, app, database, logger, storage, config.captcha.secretKey, config.client.domain);
+routes(websockets, app, database, logger, config.storage.apiKey, config.captcha.secretKey, config.storage.domain, config.client.domain);
 
 server.listen(config.server.port, async () => {
-  db(database, logger, storage);
+  db(database, logger);
 
   logger.info(`Listening on port ${config.server.port}`);
 });

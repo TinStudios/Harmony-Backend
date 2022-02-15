@@ -22,6 +22,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.send(members.filter((x: Member) => x).map((x: Member) => {
                                     x.username = dbRes.rows.find(y => x?.id === y.id).username ?? 'Deleted User';
                                     x.discriminator = dbRes.rows.find(y => x?.id === y.id).discriminator ?? '0000';
+                                    x.avatar = dbRes.rows.find(y => x?.id === y.id).avatar ?? 'userDefault';
+                                    x.about = dbRes.rows.find(y => x?.id === y.id).about;
                                     if (!dbRes.rows.find(y => x?.id === y.id)) {
                                         x.nickname = undefined;
                                     }
@@ -59,6 +61,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === res.locals.user).map((x: Member) => {
                                     x.username = dbRes.rows.find(x => x?.id === res.locals.user).username ?? 'Deleted User';
                                     x.discriminator = dbRes.rows.find(x => x?.id === res.locals.user).discriminator ?? '0000';
+                                    x.avatar =  dbRes.rows.find(y => x?.id === res.locals.user).avatar ?? 'userDefault';
+                                    x.about = dbRes.rows.find(y => x?.id === y.id).about;
                                     if (!dbRes.rows.find(x => x?.id === res.locals.user)) {
                                         x.nickname = undefined;
                                     }
@@ -100,6 +104,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     res.send(members.filter((x: Member) => x?.id === userId).map((x: Member) => {
                                         x.username = dbRes.rows.find(x => x?.id === userId).username ?? 'Deleted User';
                                         x.discriminator = dbRes.rows.find(x => x?.id === userId).discriminator ?? '0000';
+                                        x.avatar =  dbRes.rows.find(y => x?.id === userId).avatar ?? 'userDefault';
+                                        x.about = dbRes.rows.find(y => x?.id === y.id).about;
                                         if (!dbRes.rows.find(y => x?.id === userId)) {
                                             x.nickname = undefined;
                                         }
@@ -195,6 +201,99 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
+        } else {
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
+        }
+    });
+
+    app.post('/guilds/*/members/*/roles/*', (req: express.Request, res: express.Response) => {
+        const urlParams = Object.values(req.params)
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            });
+        const guildId = urlParams[0];
+        const userId = urlParams[1];
+        const roleId = urlParams[2];
+        if (guildId && userId && roleId) {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                        const members = JSON.parse(guild.members);
+                        const user = members.find((x: Member) => x?.id === userId);
+                        const roles = JSON.parse(guild.roles);
+                        const role = roles.find((x: Role) => x.id === roleId);
+                        if(role) {
+                        if ((roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x.id === roleId)) && (res.locals.user === userId || roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((role: Role) => user?.roles.includes(role.id))) && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
+                                user.roles.push(roleId);
+                                members[members.findIndex((x: Member) => x?.id === userId)] = user;
+                                database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
+                                    if (!err) {
+                                        res.send(user);
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                        } else {
+                            res.status(403).send({ error: "Missing permission." });
+                        }
+                    } else {
+                        res.status(404).send({ error: "Mot found." });
+                    }
+                } else {
+                    res.status(403).send({ error: "Missing permission." });
+                }
+                } else {
+                    res.status(500).send({ error: "Something went wrong with our server." });
+                }
+            });
+        } else {
+            res.status(400).send({ error: "Something is missing or it's not appropiate." });
+        }
+    });
+
+    app.delete('/guilds/*/members/*/roles/*', (req: express.Request, res: express.Response) => {
+        const urlParams = Object.values(req.params)
+            .map((x) => x.replace(/\//g, ''))
+            .filter((x) => {
+                return x != '';
+            });
+        const guildId = urlParams[0];
+        const userId = urlParams[1];
+        const roleId = urlParams[2];
+        if (guildId && userId && roleId) {
+            database.query('SELECT * FROM guilds', (err, dbRes) => {
+                if (!err) {
+                    const guild = dbRes.rows.find(x => x?.id === guildId);
+                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
+                        const members = JSON.parse(guild.members);
+                        const user = members.find((x: Member) => x?.id === userId);
+                        const roles = JSON.parse(guild.roles);
+                        if(user.roles.find((x: string) => x === roleId)) {
+                            if ((roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x.id === roleId)) && (res.locals.user === userId || roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((role: Role) => user?.roles.includes(role.id))) && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
+                                user.roles.splice(user.roles.findIndex((x: Role) => x.id === roleId), 1);
+                                members[members.findIndex((x: Member) => x?.id === userId)] = user;
+                                database.query('UPDATE guilds SET members = $1 WHERE id = $2', [JSON.stringify(members), guildId], (err, dbRes) => {
+                                    if (!err) {
+                                        res.send(user);
+                                    } else {
+                                        res.status(500).send({ error: "Something went wrong with our server." });
+                                    }
+                                });
+                        } else {
+                            res.status(403).send({ error: "Missing permission." });
+                        }
+                    } else {
+                        res.status(404).send({ error: "Mot found." });
+                    }
+                } else {
+                    res.status(403).send({ error: "Missing permission." });
+                }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
                 }

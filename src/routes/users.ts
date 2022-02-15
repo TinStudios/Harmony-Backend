@@ -1,5 +1,5 @@
 import express from 'express';
-import { User, Member, ReturnedUser, Info, Role } from '../interfaces';
+import { ReturnedUser, Info } from '../interfaces';
 
 import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
@@ -7,11 +7,12 @@ import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
 import mime from 'mime-types';
 import multer from "multer";
-import { NFTStorage, File } from 'nft.storage';
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: {
+    fileSize: 1000000000
+} });
 import * as twofactor from 'node-2fa';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, storage: NFTStorage) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, uploadFile: any) => {
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
         database.query('SELECT * FROM guilds', (err, dbRes) => {
             if (!err) {
@@ -89,7 +90,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
-        if (req.body.currentPassword && (typeof req.body.username === 'undefined' || (req.body.username.length > 0 && req.body.username.length < 31)) && (typeof req.body.discriminator === 'undefined' || (!isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4)) && (typeof req.body.email === 'undefined' || /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email))) {
+        if (req.body.currentPassword && (typeof req.body.username === 'undefined' || (req.body.username.length > 0 && req.body.username.length < 31)) && (typeof req.body.discriminator === 'undefined' || (!isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4)) && (typeof req.body.about === 'undefined' || (req.body.about.length > 0 && req.body.about.length < 201)) && (typeof req.body.email === 'undefined' || /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email))) {
             database.query('SELECT * FROM users', async (err, dbRes) => {
                 if (!err) {
                     const user = dbRes.rows.find(x => x.id === res.locals.user);
@@ -103,7 +104,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             }
                             const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                            database.query('UPDATE users SET username = $1, discriminator = $2, email = $3, password = $4, token = $5 WHERE id = $6', [req.body.username ?? user.username, discriminator, req.body.email ?? user.email, req.body.password ? await argon2.hash(req.body.password, { type: argon2.argon2id }) : user.password, token, user.id], err => {
+                            database.query('UPDATE users SET username = $1, discriminator = $2, about = $3, email = $4, password = $5, token = $6 WHERE id = $7', [req.body.username ?? user.username, discriminator, req.body.about ?? user.about, req.body.email ?? user.email, req.body.password ? await argon2.hash(req.body.password, { type: argon2.argon2id }) : user.password, token, user.id], err => {
                                 if (!err) {
                                     let preReturnedUser = { ...user };
                                     preReturnedUser.username = req.body.username;
@@ -138,7 +139,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(401).send({ error: "Invalid information." });
                         }
                     } else {
-                        res.status(403).send({ error: "Only users can delete their account this way." });
+                        res.status(403).send({ error: "Only users can edit their account this way." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });
@@ -265,7 +266,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    app.patch('/users/@me/icon', upload.single('icon'), (req: express.Request, res: express.Response) => {
+    app.patch('/users/@me/avatar', upload.single('avatar'), (req: express.Request, res: express.Response) => {
         database.query('SELECT * FROM users', async (err, dbRes) => {
             if (!err) {
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
@@ -276,12 +277,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation), tfa: !!user.otp };
                         if (req.file) {
                             if (mime.extension(req.file?.mimetype ?? '') === 'png') {
-                                const icon = await storage.store({
-                                    name: user.id + '\'s avatar',
-                                    description: 'Seltorn\'s ' + user.id + ' avatar',
-                                    image: new File([req.file.buffer], user.id + '.png', { type: 'image/png' })
-                                });
-                                database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET url = $3', [user.id, 'users', icon.url], (err, dbRes) => {
+                                const icon = await uploadFile(req.file);
+                                database.query('UPDATE users SET avatar = $1 WHERE id = $2', [icon, user.id], (err, dbRes) => {
                                     if (!err) {
                                         websockets.get(user.id)?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
@@ -295,10 +292,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 res.status(400).send({ error: "We only accept PNG." });
                             }
                         } else {
-                            database.query('SELECT * FROM files', (err, dbRes) => {
+                            database.query('SELECT * FROM users', (err, dbRes) => {
                                 if (!err) {
-                                    if (dbRes.rows.find(x => x.id === user.id && x.type === 'users')) {
-                                        database.query('DELETE FROM files WHERE id = $1', [user.id], async (err, dbRes) => {
+                                    if (dbRes.rows.find(x => x.id === user.id).avatar) {
+                                        database.query('UPDATE users SET avatar = $1 WHERE id = $2', ['userDefault', user.id], (err, dbRes) => {
                                             if (!err) {
                                                 websockets.get(user.id)?.forEach(websocket => {
                                                     websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));

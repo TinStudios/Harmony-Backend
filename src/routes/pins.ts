@@ -32,6 +32,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
                                                         discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                         type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
@@ -40,6 +42,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: 'Seltorn',
                                                         nickname: undefined,
                                                         discriminator: '0000',
+                                                        avatar: 'systemDefault',
+                                                        about: '',
                                                         type: 'SYSTEM'
                                                     };
                                                 }
@@ -115,6 +119,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: 'Seltorn',
                                                         nickname: undefined,
                                                         discriminator: '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                         type: 'SYSTEM'
                                                     };
 
@@ -124,14 +130,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                                 id: message?.author,
                                                                 username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
                                                                 nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                                discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000'
+                                                                discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                                avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                                about: dbRes.rows.find(x => x?.id === message?.author)?.about,
+                                                                type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                             };
                                                         } else {
                                                             message.author = {
                                                                 id: message?.author,
                                                                 username: 'Seltorn',
                                                                 nickname: undefined,
-                                                                discriminator: '0000'
+                                                                discriminator: '0000',
+                                                                avatar: 'systemDefault',
+                                                                about: '',
+                                                                type: 'SYSTEM'
                                                             };
                                                         }
                                                     }

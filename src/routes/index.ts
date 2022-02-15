@@ -1,11 +1,12 @@
 import express from 'express';
 import { Client } from 'pg';
-import { NFTStorage } from 'nft.storage';
-import fetch from 'node-fetch';
+import got from 'got-cjs';
+import { Blob } from 'node:buffer';
+import { FormData } from 'formdata-node';
 import UserAgent from 'user-agents';
 import * as cheerio from 'cheerio';
 import { fromBuffer } from 'file-type';
-import { User, FileI } from '../interfaces';
+import { User } from '../interfaces';
 
 import * as email from '../utils/email';
 
@@ -33,7 +34,7 @@ import bots from './bots';
 
 import webhooks from './webhooks';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storage: NFTStorage, captchaSecret: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storageApiKey: string, captchaSecret: string, storageDomain: string, clientDomain: string) => {
     email.authorize();
 
     account(websockets, app, database, logger, email, checkLogin, captchaSecret, clientDomain);
@@ -41,9 +42,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     webhooks(websockets, app, database);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if (!req.url.startsWith('/files/') && !req.url.startsWith('/proxy/')) {
-            const user: User = await checkLogin(req.headers.authorization ?? "");
-            if (user.creation != 0) {
+        if (!req.url.startsWith('/proxy/')) {
+            const user = await checkLogin(req.headers.authorization ?? "");
+            if (typeof user !== 'boolean') {
                 if (user.type !== 'SUSPENDED') {
                     if (user.type === 'BOT' && (req.url.startsWith('/friends') || req.url.startsWith('/bots'))) {
                         if (req.url.startsWith('/friends')) {
@@ -66,65 +67,39 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         }
     });
 
-    users(websockets, app, database, logger, email, storage);
+    users(websockets, app, database, logger, email, uploadFile);
 
     invites(websockets, app, database);
 
-    messages(websockets, app, database, storage);
+    messages(websockets, app, database, uploadFile);
 
     pins(websockets, app, database);
 
     channels(websockets, app, database);
 
-    roles(websockets, app, database);
-
     members(websockets, app, database);
 
-    guilds(websockets, app, database, storage);
+    roles(websockets, app, database);
+
+    guilds(websockets, app, database, uploadFile);
 
     friends(websockets, app, database);
 
-    bots(websockets, app, database, storage);
+    bots(websockets, app, database, uploadFile);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        const urlSplitted = req.url.split('/');
-        if (req.url.startsWith('/files/') && urlSplitted.length > 3) {
-            database.query('SELECT * FROM files', async (err, dbRes) => {
-                if (!err) {
-                    const extensionLess = urlSplitted[3].includes('.') ? urlSplitted[3].split('').slice(0, urlSplitted[3].split('').lastIndexOf('.')).join('') : urlSplitted[3];
-                    const file = dbRes.rows.find((x: FileI) => x.id === extensionLess && x.type === urlSplitted[2]);
-                    if (urlSplitted[2] === 'users' && !file) {
-                        database.query('SELECT * FROM users', async (err, dbResB) => {
-                            if (!err) {
-                                if (dbResB.rows.find(x => x.id === extensionLess)?.type !== 'BOT') {
-                                    res.redirect(dbRes.rows.find((x: FileI) => x.id === 'default' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
-                                } else {
-                                    res.redirect(dbRes.rows.find((x: FileI) => x.id === 'bot' && x.type === 'users').url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
-                                }
-                            }
-                        });
-                    } else if (file) {
-                        res.redirect(file.url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
-                    } else {
-                        res.status(404).send({ error: "Not found." });
-                    }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
-            });
-        } else if (req.url.startsWith('/meta/')) {
+        if (req.url.startsWith('/meta/')) {
             const url = req.url.replace('/meta/', '');
             database.query('SELECT * FROM meta', async (err, dbRes) => {
                 if (!err) {
                     const metasDb = dbRes.rows.find(x => x.url === url)
                     if (!metasDb || (metasDb && Date.now() > (metasDb.creation + 86400000))) {
                         try {
-                            const fetchy = await fetch(url, {
+                            const response = await got.get(url, {
                                 headers: {
                                     'User-Agent': (new UserAgent()).toString()
                                 }
-                            });
-                            const response = await fetchy.text();
+                            }).text();
                             const html = cheerio.load(response);
                             let metas = {
                                 title: '',
@@ -155,12 +130,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             });
         } else if (req.url.startsWith('/proxy/')) {
             try {
-                const fetchy = await fetch(req.url.replace('/proxy/', ''), {
+                const response = await got.get(req.url.replace('/proxy/', ''), {
                     headers: {
                         'User-Agent': (new UserAgent()).toString()
                     }
-                });
-                const response = await fetchy.buffer();
+                }).buffer();
                 res.set('Content-Type', (await fromBuffer(response))?.mime).send(response);
             } catch {
                 res.status(500).send({ error: "Something went wrong with our server." });
@@ -174,22 +148,22 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         res.status(500).send({ error: "Something went wrong with our server." });
     });
 
-    async function checkLogin(token: string): Promise<User> {
+    async function uploadFile(file: Express.Multer.File) {
+        const form = new FormData();
+
+        form.set('file', new Blob([file.buffer], { type: file.mimetype }));
+
+        const response = await got.post(storageDomain, {
+            body: form,
+            headers: {
+                'Authorization': storageApiKey
+            }
+        }).text();
+        return response;
+    }
+
+    async function checkLogin(token: string): Promise<User | boolean> {
         return await new Promise(resolve => {
-            const emptyUser: User = {
-                id: "",
-                token: "",
-                email: "",
-                password: "",
-                username: "",
-                discriminator: "",
-                creation: 0,
-                type: '',
-                owner: '',
-                verified: false,
-                verificator: '',
-                otp: ''
-            };
             database.query('SELECT * FROM users', async (err, res) => {
                 if (!err) {
                     if (res.rows.find(x => x.token === token) && res.rows.find(x => x.token === token).verified) {
@@ -206,13 +180,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             resolve(res.rows.find(x => x.token === token));
 
                         } catch {
-                            resolve(emptyUser);
+                            resolve(false);
                         }
                     } else {
-                        resolve(emptyUser);
+                        resolve(false);
                     }
                 } else {
-                    resolve(emptyUser);
+                    resolve(false);
                 }
             });
         });

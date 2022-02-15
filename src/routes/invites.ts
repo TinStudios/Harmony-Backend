@@ -26,6 +26,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
                                             discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
+                                            avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
+                                            about: dbRes.rows.find(x => x?.id === invite?.author)?.about,
                                             type: dbRes.rows.find(x => x?.id === invite?.author)?.type ?? 'UNKNOWN'
                                         };
                                         return invite;
@@ -82,7 +84,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
-                                            discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator
+                                            discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
+                                            avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
+                                            type: dbRes.rows.find(x => x?.id === invite?.author)?.type ?? 'UNKNOWN'
                                         };
                                         members.filter((member: Member) => member?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)).forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {
@@ -137,7 +141,9 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
-                                            discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator
+                                            discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
+                                            avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
+                                            type: dbRes.rows.find(x => x?.id === invite?.author)?.type ?? 'UNKNOWN'
                                         };
                                         members.filter((member: Member) => member?.roles.find((x: String) => ((JSON.parse(guild.roles).find((y: Role) => y?.id === x)?.permissions ?? 0) & 0x0000000010) === 0x0000000010)).forEach((member: Member) => {
                                             websockets.get(member.id)?.forEach(websocket => {

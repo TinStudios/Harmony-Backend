@@ -3,11 +3,11 @@ import express from "express";
 import { Client } from "pg";
 import crypto from 'crypto';
 import multer from "multer";
-import { NFTStorage, File } from 'nft.storage';
-import { lookup } from 'mime-types';
-const upload = multer({ storage: multer.memoryStorage() })
+const upload = multer({ storage: multer.memoryStorage(), limits: {
+    fileSize: 1000000000
+} })
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, storage: NFTStorage) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, uploadFile: any) => {
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
@@ -43,6 +43,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
                                                         discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                         type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     }
                                                 } else {
@@ -51,6 +53,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: 'Seltorn',
                                                         nickname: undefined,
                                                         discriminator: '0000',
+                                                        avatar: 'systemDefault',
+                                                        about: '',
                                                         type: 'SYSTEM'
                                                     };
                                                 }
@@ -109,6 +113,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                         nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
                                                         discriminator: dbRes.rows.find(x => x?.id === message?.author).discriminator ?? '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                         type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
@@ -117,6 +123,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         username: 'Seltorn',
                                                         nickname: undefined,
                                                         discriminator: '0000',
+                                                        avatar: 'systemDefault',
+                                                        about: '',
                                                         type: 'SYSTEM'
                                                     };
                                                 }
@@ -178,18 +186,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                 if (req.file) {
                                     message.attachment = req.body.attachmentName;
-                                    const extension = lookup(req.body.attachmentName);
-                                    const attachment = await storage.store({
-                                        name: req.body.attachmentName,
-                                        description: 'Seltorn\'s ' + message.id + ' attachment',
-                                        image: new File([req.file.buffer], req.body.attachmentName, { type: extension ? extension : '' })
-                                    });
-                                    database.query('INSERT INTO files (id, type, url) VALUES ($1, $2, $3)', [message.id, 'messages', attachment.url], (err, dbRes) => {
-                                        if (err) {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
-                                            return;
-                                        }
-                                    });
+                                    const attachment = await uploadFile(req.file);
+                                    message.attachmentId = attachment;
                                 }
 
                                 messages.push(message);
@@ -206,6 +204,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                             discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                             type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
@@ -214,6 +214,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: 'Seltorn',
                                                             nickname: undefined,
                                                             discriminator: '0000',
+                                                            avatar: 'systemDefault',
+                                                            about: '',
                                                             type: 'SYSTEM'
                                                         };
                                                     }
@@ -289,6 +291,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                             discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                             type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
@@ -297,6 +301,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: 'Seltorn',
                                                             nickname: undefined,
                                                             discriminator: '0000',
+                                                            avatar: 'systemDefault',
+                                                            about: '',
                                                             type: 'SYSTEM'
                                                         };
                                                     }
@@ -373,6 +379,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
                                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message.author).nickname,
                                                             discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
                                                             type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
@@ -381,6 +389,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                             username: 'Seltorn',
                                                             nickname: undefined,
                                                             discriminator: '0000',
+                                                            avatar: 'systemDefault',
+                                                            about: '',
                                                             type: 'SYSTEM'
                                                         };
                                                     }

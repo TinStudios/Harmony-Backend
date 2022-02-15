@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
 import { verify } from 'hcaptcha';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<User>, captchaSecret: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<boolean | User>, captchaSecret: string, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         verify(captchaSecret, req.body.captcha).then((data) => {
             if (data.success === true) {
@@ -21,7 +21,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
                                     if (user.verified) {
                                         if (user.otp === '' || twofactor.verifyToken(user.otp, req.body.otp)) {
-                                            const correct = (await checkLogin(user.token)).id !== '';
+                                            const correct = Boolean(await checkLogin(user.token));
                                             if (!correct) {
                                                 const token = 'Bearer ' + await generateToken({ id: user.id });
                                                 database.query('UPDATE users SET token = $1 WHERE id = $2', [token, user.id], err => {
@@ -85,7 +85,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     const token = 'Bearer ' + await generateToken({ id: id });
                                     const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                                     const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', [id, token, req.body.email, password, req.body.username, discriminator, Date.now(), 'USER', '', false, verificator, ''], (err, dbRes) => {
+                                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, about, avatar, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)', [id, token, req.body.email, password, req.body.username, discriminator, '', 'userDefault', Date.now(), 'USER', '', false, verificator, ''], (err, dbRes) => {
                                         if (!err) {
                                             try {
                                                 email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',

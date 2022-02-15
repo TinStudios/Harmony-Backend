@@ -6,8 +6,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
     server.on('upgrade', async (request, socket, head) => {
         const pathname = request.url?.split('?')[0];
         const token = decodeURIComponent(request.url?.split('token=')[request.url?.split('token=').length - 1] ?? "");
-        const user: User = await checkLogin(token);
-        if (pathname === '/socket' && user.creation != 0) {
+        const user = await checkLogin(token);
+        if (pathname === '/socket' && typeof user !== 'boolean') {
             wss.handleUpgrade(request, socket, head, (ws) => {
                 var websocketForThis = websockets.get(user.id) ?? [];
                 websocketForThis.push(ws as unknown as WebSocket);
@@ -18,22 +18,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
         }
     });
 
-    async function checkLogin(token: string): Promise<User> {
+    async function checkLogin(token: string): Promise<User | boolean> {
         return await new Promise(resolve => {
-            const emptyUser: User = {
-                id: "",
-                token: "",
-                email: "",
-                password: "",
-                username: "",
-                discriminator: "",
-                creation: 0,
-                type: '',
-                owner: '',
-                verified: false,
-                verificator: '',
-                otp: ''
-            };
             database.query('SELECT * FROM users', async (err, res) => {
                 if (!err) {
                     if (res.rows.find(x => x.token === token) && res.rows.find(x => x.token === token).verified) {
@@ -50,13 +36,13 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                             resolve(res.rows.find(x => x.token === token));
 
                         } catch {
-                            resolve(emptyUser);
+                            resolve(false);
                         }
                     } else {
-                        resolve(emptyUser);
+                        resolve(false);
                     }
                 } else {
-                    resolve(emptyUser);
+                    resolve(false);
                 }
             });
         });
