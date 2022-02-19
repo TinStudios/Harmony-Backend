@@ -1,5 +1,4 @@
 import { Client } from "pg";
-import fs from 'fs';
 
 export default async (database: Client, logger: any) => {
     await database.connect();
@@ -20,9 +19,8 @@ export default async (database: Client, logger: any) => {
         verificator text NOT NULL,
         otp text NOT NULL,
         PRIMARY KEY (id)
-    )`, (err, dbRes) => {
+    )`, err => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
             process.exit(-1);
         }
     });
@@ -39,9 +37,8 @@ export default async (database: Client, logger: any) => {
         bans text NOT NULL,
         invites text NOT NULL,
         PRIMARY KEY (id)
-    )`, (err, dbRes) => {
+    )`, err => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
             process.exit(-1);
         }
     });
@@ -50,9 +47,8 @@ export default async (database: Client, logger: any) => {
         id text NOT NULL,
         friends text NOT NULL,
         PRIMARY KEY (id)
-    )`, (err, dbRes) => {
+    )`, err => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
             process.exit(-1);
         }
     });
@@ -64,9 +60,8 @@ export default async (database: Client, logger: any) => {
         description text NOT NULL,
         image text NOT NULL,
         PRIMARY KEY (url)
-    )`, (err, dbRes) => {
+    )`, err => {
         if (err) {
-            logger.error('Something went terribly wrong initializing. Seltorn will shutdown.');
             process.exit(-1);
         }
     });

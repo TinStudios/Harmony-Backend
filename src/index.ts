@@ -26,7 +26,7 @@ const websockets = new Map();
 
 ws(wss, websockets, server as unknown as Server, database);
 
-routes(websockets, app, database, logger, config.storage.apiKey, config.captcha.secretKey, config.storage.domain, config.client.domain);
+routes(websockets, app, database, logger, config.storage.apiKey, config.recaptcha.secretKey, config.storage.domain, config.client.domain);
 
 server.listen(config.server.port, async () => {
   db(database, logger);

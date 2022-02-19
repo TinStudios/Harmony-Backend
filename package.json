@@ -1,21 +1,21 @@
 {
-  "name": "seltorn",
+  "name": "harmony-backend",
   "version": "0.0.0",
-  "description": "Seltorn's backend",
+  "description": "Harmony's backend",
   "scripts": {
     "start": "tsc && cross-env NODE_ENV=production node ./build/index.js",
     "start:dev": "cross-env NODE_ENV=development nodemon ./src/index.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Seltorn/Seltorn.git"
+    "url": "git+https://github.com/HarmonyOpenChat/backend.git"
   },
-  "author": "Seltorn Team",
+  "author": "Harmony Open Chat",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Seltorn/Seltorn/issues"
+    "url": "https://github.com/HarmonyOpenChat/backend/issues"
   },
-  "homepage": "https://github.com/Seltorn/Seltorn#readme",
+  "homepage": "https://github.com/HarmonyOpenChat/backend#readme",
   "dependencies": {
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",

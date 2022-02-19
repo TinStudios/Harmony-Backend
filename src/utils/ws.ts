@@ -30,8 +30,8 @@ export default (wss: WebSocketServer, websockets: Map<string, WebSocket[]>, serv
                             const ecPublicKey = await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256');
 
                             const info = await jwtVerify((token.startsWith('Bearer ') ? token.split('Bearer ') : token.split('Bot '))[1], ecPublicKey, {
-                                issuer: 'seltorn',
-                                audience: 'seltorn'
+                                issuer: 'harmony',
+                                audience: 'harmony'
                             });
                             resolve(res.rows.find(x => x.token === token));
 

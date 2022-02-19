@@ -24,7 +24,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id === channelId);
-                        if (channel) {
+                        if (channel?.type === 'text') {
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
                                 let messages = channel.messages;
                                 const before = messages.findIndex((x: Message) => x?.id === beforeId) - 1;
@@ -50,7 +50,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 } else {
                                                     message.author = {
                                                         id: '0',
-                                                        username: 'Seltorn',
+                                                        username: 'Harmony',
                                                         nickname: undefined,
                                                         discriminator: '0000',
                                                         avatar: 'systemDefault',
@@ -99,7 +99,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id === channelId);
-                        if (channel) {
+                        if (channel?.type === 'text') {
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
                                 const messages = channel.messages;
                                 const message = messages.find((x: Message) => x?.id === messageId);
@@ -120,7 +120,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 } else {
                                                     message.author = {
                                                         id: '0',
-                                                        username: 'Seltorn',
+                                                        username: 'Harmony',
                                                         nickname: undefined,
                                                         discriminator: '0000',
                                                         avatar: 'systemDefault',
@@ -171,7 +171,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if (channel) {
+                        if (channel?.type === 'text') {
                             if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                 let messages = channel.messages;
 
@@ -211,7 +211,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     } else {
                                                         message.author = {
                                                             id: message?.author,
-                                                            username: 'Seltorn',
+                                                            username: 'Harmony',
                                                             nickname: undefined,
                                                             discriminator: '0000',
                                                             avatar: 'systemDefault',
@@ -270,7 +270,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if (channel) {
+                        if (channel?.type === 'text') {
                             let messages = channel.messages;
                             let message = messages.find((x: Message) => x?.id === messageId);
                             if (message.author === res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
@@ -298,7 +298,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     } else {
                                                         message.author = {
                                                             id: message?.author,
-                                                            username: 'Seltorn',
+                                                            username: 'Harmony',
                                                             nickname: undefined,
                                                             discriminator: '0000',
                                                             avatar: 'systemDefault',
@@ -357,7 +357,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         let channels = JSON.parse(guild.channels);
                         let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if (channel) {
+                        if (channel?.type === 'text') {
                             let messages = channel.messages;
                             let message = messages.find((x: Message) => x?.id === messageId);
                             if (message?.author === res.locals.user || JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
@@ -386,7 +386,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                     } else {
                                                         message.author = {
                                                             id: '0',
-                                                            username: 'Seltorn',
+                                                            username: 'Harmony',
                                                             nickname: undefined,
                                                             discriminator: '0000',
                                                             avatar: 'systemDefault',

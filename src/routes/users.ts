@@ -119,13 +119,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         try {
                                             email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                                 'Subject: Important changes to your account\n',
-                                                'From: seltornteam@gmail.com\n',
+                                                'From: harmonyopenchat@gmail.com\n',
                                                 'To: ' + user.email + '\n\n',
                                                 'Dear ' + returnedUser.username + '#' + returnedUser.discriminator + ':\n',
                                                 (req.body.email && !req.body.password ? 'We received and processed a request to change your account\'s email.' : req.body.password && !req.body.email ? 'We received and processed a request to change your account\'s password.' : 'We received and processed a request to change your account\'s email and password.') + '\n',
                                                 'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                                 'Best regards,\n',
-                                                'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                                'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                         } catch {
                                             logger.error("Error emailing " + user.email);
                                         }
@@ -156,7 +156,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 const user = dbRes.rows.find(x => x.id === res.locals.user);
                 if (user.type === 'USER') {
                     if (!user.otp) {
-                        const secret = twofactor.generateSecret({ name: 'Seltorn', account: user.email });;
+                        const secret = twofactor.generateSecret({ name: 'Harmony', account: user.email });;
                         res.send(secret);
                     } else {
                         res.status(403).send({ error: "2FA already set up." });
@@ -190,13 +190,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         try {
                                             email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                                 'Subject: Important changes to your account\n',
-                                                'From: seltornteam@gmail.com\n',
+                                                'From: harmonyopenchat@gmail.com\n',
                                                 'To: ' + user.email + '\n\n',
                                                 'Dear ' + user.username + '#' + user.discriminator + ':\n',
                                                 'We received and processed a request to protect your account with 2FA.\n',
                                                 'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                                 'Best regards,\n',
-                                                'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                                'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                         } catch {
                                             logger.error("Error emailing " + user.email);
                                         }
@@ -236,13 +236,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     try {
                                         email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                             'Subject: Important changes to your account\n',
-                                            'From: seltornteam@gmail.com\n',
+                                            'From: harmonyopenchat@gmail.com\n',
                                             'To: ' + user.email + '\n\n',
                                             'Dear ' + user.username + '#' + user.discriminator + ':\n',
                                             'We received and processed a request to remove your account 2FA protection.\n',
                                             'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                             'Best regards,\n',
-                                            'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                            'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                     } catch {
                                         logger.error("Error emailing " + user.email);
                                     }
@@ -340,8 +340,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         return await new SignJWT({ info })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()
-            .setIssuer('seltorn')
-            .setAudience('seltorn')
+            .setIssuer('harmony')
+            .setAudience('harmony')
             .setExpirationTime('7d')
             .sign(privateKey);
     }

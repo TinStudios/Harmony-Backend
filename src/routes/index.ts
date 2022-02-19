@@ -34,10 +34,10 @@ import bots from './bots';
 
 import webhooks from './webhooks';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storageApiKey: string, captchaSecret: string, storageDomain: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storageApiKey: string, recaptchaSecret: string, storageDomain: string, clientDomain: string) => {
     email.authorize();
 
-    account(websockets, app, database, logger, email, checkLogin, captchaSecret, clientDomain);
+    account(websockets, app, database, logger, email, checkLogin, recaptchaSecret, clientDomain);
 
     webhooks(websockets, app, database);
 
@@ -174,8 +174,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             const ecPublicKey = await importSPKI(require('fs').readFileSync(__dirname + '/../../public.key').toString(), 'ES256');
 
                             const info = await jwtVerify((token.startsWith('Bearer ') ? token.split('Bearer ') : token.split('Bot '))[1], ecPublicKey, {
-                                issuer: 'seltorn',
-                                audience: 'seltorn'
+                                issuer: 'harmony',
+                                audience: 'harmony'
                             });
                             resolve(res.rows.find(x => x.token === token));
 

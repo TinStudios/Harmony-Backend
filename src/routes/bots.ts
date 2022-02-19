@@ -247,8 +247,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         return await new SignJWT({ info })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()
-            .setIssuer('seltorn')
-            .setAudience('seltorn')
+            .setIssuer('harmony')
+            .setAudience('harmony')
             .setExpirationTime('365d')
             .sign(privateKey);
     }

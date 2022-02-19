@@ -7,12 +7,12 @@ import { importPKCS8 } from 'jose/key/import';
 import { Client } from 'pg';
 import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
-import { verify } from 'hcaptcha';
+import verify from '../utils/captcha';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<boolean | User>, captchaSecret: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<boolean | User>, recaptchaSecret: string, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
-        verify(captchaSecret, req.body.captcha).then((data) => {
-            if (data.success === true) {
+        verify(recaptchaSecret, req.body.captcha).then(validated => {
+            if (validated) {
                 database.query('SELECT * FROM users', async (err, dbRes) => {
                     if (!err) {
                         const user = dbRes.rows.find(x => x.email === req.body.email);
@@ -60,8 +60,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/register', (req: express.Request, res: express.Response) => {
-        verify(captchaSecret, req.body.captcha).then((data) => {
-            if (data.success === true) {
+        verify(recaptchaSecret, req.body.captcha).then(validated => {
+            if (validated) {
                 if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
                     database.query('SELECT * FROM users', async (err, dbRes) => {
                         if (!err) {
@@ -89,14 +89,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         if (!err) {
                                             try {
                                                 email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
-                                                    'Subject: Verify your Seltorn account!\n',
-                                                    'From: seltornteam@gmail.com\n',
+                                                    'Subject: Verify your Harmony account!\n',
+                                                    'From: harmonyopenchat@gmail.com\n',
                                                     'To: ' + req.body.email + '\n\n',
-                                                    'Thank you for registering to Seltorn!\n',
+                                                    'Thank you for registering to Harmony!\n',
                                                     'To start chatting, we need to verify your email address.\n',
                                                     'Use this link to verify: ' + clientDomain + '/verify/' + verificator + '\n',
                                                     'Best regards,\n',
-                                                    'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                                    'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                             } catch {
                                                 logger.error("Error emailing " + req.body.email);
                                             }
@@ -150,8 +150,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/reset/send', (req: express.Request, res: express.Response) => {
-        verify(captchaSecret, req.body.captcha).then((data) => {
-            if (data.success === true) {
+        verify(recaptchaSecret, req.body.captcha).then(validated => {
+            if (validated) {
                 database.query('SELECT * FROM users', async (err, dbRes) => {
                     if (!err) {
                         const user = dbRes.rows.find(x => x.email === req.body.email);
@@ -162,14 +162,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 try {
                                     email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                         'Subject: Reset your password\n',
-                                        'From: seltornteam@gmail.com\n',
+                                        'From: harmonyopenchat@gmail.com\n',
                                         'To: ' + user.email + '\n\n',
                                         'Dear ' + user.username + '#' + user.discriminator + ':\n',
                                         'We received a request to reset your account\'s password.\n',
                                         'Use this link to reset it: ' + clientDomain + '/reset/' + verificator + '\n',
                                         'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                         'Best regards,\n',
-                                        'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                        'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                 } catch {
                                     logger.error("Error emailing " + req.body.email);
                                 }
@@ -209,8 +209,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/reset/*', (req: express.Request, res: express.Response) => {
-        verify(captchaSecret, req.body.captcha).then((data) => {
-            if (data.success === true) {
+        verify(recaptchaSecret, req.body.captcha).then(validated => {
+            if (validated) {
                 const verificator = Object.values(req.params)
                     .map((x) => x.replace(/\//g, ''))
                     .filter((x) => {
@@ -226,13 +226,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     try {
                                         email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                             'Subject: Important changes to your account\n',
-                                            'From: seltornteam@gmail.com\n',
+                                            'From: harmonyopenchat@gmail.com\n',
                                             'To: ' + user.email + '\n\n',
                                             'Dear ' + user.username + '#' + user.discriminator + ':\n',
                                             'We received and processed a request to change your account\'s password.\n',
                                             'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                             'Best regards,\n',
-                                            'Seltorn Team\n\n'].join('')).toString('base64url'));
+                                            'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                     } catch {
                                         logger.error("Error emailing " + req.body.email);
                                     }
@@ -269,8 +269,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         return await new SignJWT({ info })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()
-            .setIssuer('seltorn')
-            .setAudience('seltorn')
+            .setIssuer('harmony')
+            .setAudience('harmony')
             .setExpirationTime('7d')
             .sign(privateKey);
     }

@@ -84,10 +84,11 @@ export interface Webhook {
 export interface Channel {
     id: string;
     name: string;
+    type: string;
     topic: string | null;
     creation: number;
     roles: ChannelRole[];
-    webhooks: Webhook[];
+    webhooks?: Webhook[];
     messages?: Message[];
     pins?: string[];
 };

@@ -14,7 +14,7 @@ const schema = Joi.object({
   STORAGE_DOMAIN: Joi.string().default('http://localhost:3001'),
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3002'),
   STORAGE_API_KEY: Joi.string().required(),
-  CAPTCHA_SECRET_KEY: Joi.string().required()
+  RECAPTCHA_SECRET_KEY: Joi.string().required()
 })
   .unknown();
 
@@ -41,7 +41,7 @@ export default {
     domain: value.STORAGE_DOMAIN,
     apiKey: value.STORAGE_API_KEY
   },
-  captcha: {
-    secretKey: value.CAPTCHA_SECRET_KEY
+  recaptcha: {
+    secretKey: value.RECAPTCHA_SECRET_KEY
   }
 };
