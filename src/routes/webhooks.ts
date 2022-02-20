@@ -29,6 +29,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 author: {
                                     id: 'default',
                                     username: req.body.username ?? channel.webhooks.find((x: Webhook) => x.token === token).username,
+                                    roles: [],
                                     discriminator: '0000',
                                     avatar: 'botDefault',
                                     about: '',

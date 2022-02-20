@@ -5,7 +5,7 @@ import crypto from 'crypto';
 
 export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
 
-    app.get('/guilds/*/channels/', (req: express.Request, res: express.Response) => {
+    app.get('/guilds/*/channels', (req: express.Request, res: express.Response) => {
         const guildId = Object.values(req.params)
             .map((x: string) => x.replace(/\//g, ''))
             .filter((x) => {
@@ -17,7 +17,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     const guild = dbRes.rows.find(x => x?.id === guildId);
                     if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
                         const channels = JSON.parse(guild.channels);
-                        res.send(channels.filter((x: Channel) => x).map((channel: Channel) => {
+                        res.send(channels.filter((x: Channel) => x).sort((a: Channel, b: Channel) => a.position - b.position).map((channel: Channel) => {
                             delete channel.messages;
                             delete channel.pins;
                             return channel;
@@ -280,6 +280,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         let channels = JSON.parse(guild.channels);
                         const channel: Channel = {
                             id: crypto.randomUUID(),
+                            position: channels.length,
                             name: req.body.name,
                             topic: null,
                             type: req.body.type ?? 'text',

@@ -10,7 +10,7 @@ export interface User {
     username: string;
     discriminator: string;
     avatar: string;
-    about: string;
+    about?: string;
     creation: number;
     type: string;
     owner: string;
@@ -37,7 +37,7 @@ export interface Member {
     username: string;
     discriminator: string;
     avatar: string;
-    about: string;
+    about?: string;
     nickname?: string;
     roles: string[];
 };
@@ -54,9 +54,10 @@ export interface Author {
     id: string;
     username: string;
     nickname?: string;
+    roles: string[];
     discriminator: string;
     avatar: string;
-    about: string;
+    about?: string;
     type: string;
 };
 
@@ -83,6 +84,7 @@ export interface Webhook {
 
 export interface Channel {
     id: string;
+    position: number;
     name: string;
     type: string;
     topic: string | null;

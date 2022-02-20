@@ -20,11 +20,12 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             const invites = JSON.parse(guild.invites);
                             database.query('SELECT * FROM users', async (err, dbRes) => {
                                 if (!err) {
-                                    res.send(invites.filter((invite: Invite) => invite && (invite.expiration > Date.now() && ((invite.uses ?? Infinity) < invite.maxUses))).map((invite: Invite) => {
+                                    res.send(invites.filter((invite: Invite) => invite && (invite.expiration > Date.now() && (invite.uses < (invite.maxUses ?? Infinity)))).map((invite: Invite) => {
                                         invite.author = {
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
+                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.roles,
                                             discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
                                             avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
                                             about: dbRes.rows.find(x => x?.id === invite?.author)?.about,
@@ -84,6 +85,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
+                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.roles,
                                             discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
                                             avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
                                             type: dbRes.rows.find(x => x?.id === invite?.author)?.type ?? 'UNKNOWN'
@@ -135,12 +137,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             let invite = invites.find((x: Invite) => x.code === code);
                             if (invite) {
                                 invites.splice(invites.findIndex((x: Invite) => x.code === code), 1);
-                                database.query('UPDATE guilds SET invites = $1 WHERE id = $2', [invites, guildId], (err, dbRes) => {
+                                database.query('UPDATE guilds SET invites = $1 WHERE id = $2', [JSON.stringify(invites), guildId], (err, dbRes) => {
                                     if (!err) {
                                         invite.author = {
                                             id: invite?.author as string,
                                             username: dbRes.rows.find(x => x?.id === invite?.author)?.username,
                                             nickname: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.nickname,
+                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === invite?.author)?.roles,
                                             discriminator: dbRes.rows.find(x => x?.id === invite?.author)?.discriminator,
                                             avatar: dbRes.rows.find(x => x?.id === invite?.author)?.avatar ?? 'userDefault',
                                             type: dbRes.rows.find(x => x?.id === invite?.author)?.type ?? 'UNKNOWN'
@@ -193,7 +196,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Invite expired." });
                         }
                     } else {
-                        res.status(404).send({ error: "Not found    ." });
+                        res.status(404).send({ error: "Not found." });
                     }
                 } else {
                     res.status(500).send({ error: "Something went wrong with our server." });

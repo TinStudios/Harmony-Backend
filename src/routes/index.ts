@@ -26,6 +26,8 @@ import roles from './roles';
 
 import members from './members';
 
+import bans from './bans';
+
 import guilds from './guilds';
 
 import friends from './friends';
@@ -78,6 +80,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     channels(websockets, app, database);
 
     members(websockets, app, database);
+
+    bans(websockets, app, database);
 
     roles(websockets, app, database);
 

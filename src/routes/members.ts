@@ -20,10 +20,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 const members = JSON.parse(guild.members);
 
                                 res.send(members.filter((x: Member) => x).map((x: Member) => {
-                                    x.username = dbRes.rows.find(y => x?.id === y.id).username ?? 'Deleted User';
-                                    x.discriminator = dbRes.rows.find(y => x?.id === y.id).discriminator ?? '0000';
-                                    x.avatar = dbRes.rows.find(y => x?.id === y.id).avatar ?? 'userDefault';
-                                    x.about = dbRes.rows.find(y => x?.id === y.id).about;
+                                    x.username = dbRes.rows.find(y => x?.id === y.id)?.username ?? 'Deleted User';
+                                    x.discriminator = dbRes.rows.find(y => x?.id === y.id)?.discriminator ?? '0000';
+                                    x.avatar = dbRes.rows.find(y => x?.id === y.id)?.avatar ?? 'userDefault';
+                                    x.about = dbRes.rows.find(y => x?.id === y.id)?.about;
                                     if (!dbRes.rows.find(y => x?.id === y.id)) {
                                         x.nickname = undefined;
                                     }
@@ -59,10 +59,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         database.query('SELECT * FROM users', async (err, dbRes) => {
                             if (!err) {
                                 res.send(JSON.parse(guild.members).filter((x: Member) => x?.id === res.locals.user).map((x: Member) => {
-                                    x.username = dbRes.rows.find(x => x?.id === res.locals.user).username ?? 'Deleted User';
-                                    x.discriminator = dbRes.rows.find(x => x?.id === res.locals.user).discriminator ?? '0000';
+                                    x.username = dbRes.rows.find(x => x?.id === res.locals.user)?.username ?? 'Deleted User';
+                                    x.discriminator = dbRes.rows.find(x => x?.id === res.locals.user)?.discriminator ?? '0000';
                                     x.avatar =  dbRes.rows.find(y => x?.id === res.locals.user).avatar ?? 'userDefault';
-                                    x.about = dbRes.rows.find(y => x?.id === y.id).about;
+                                    x.about = dbRes.rows.find(y => x?.id === y.id)?.about;
                                     if (!dbRes.rows.find(x => x?.id === res.locals.user)) {
                                         x.nickname = undefined;
                                     }
@@ -105,7 +105,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         x.username = dbRes.rows.find(x => x?.id === userId).username ?? 'Deleted User';
                                         x.discriminator = dbRes.rows.find(x => x?.id === userId).discriminator ?? '0000';
                                         x.avatar =  dbRes.rows.find(y => x?.id === userId).avatar ?? 'userDefault';
-                                        x.about = dbRes.rows.find(y => x?.id === y.id).about;
+                                        x.about = dbRes.rows.find(y => x?.id === y.id)?.about;
                                         if (!dbRes.rows.find(y => x?.id === userId)) {
                                             x.nickname = undefined;
                                         }
