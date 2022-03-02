@@ -134,5 +134,7 @@ token.json
 # Other
 .DS_Store
 icons/*
-*.lock
+
+# Lock files
+yarn.lock
 package-lock.json
