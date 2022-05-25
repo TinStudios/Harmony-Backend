@@ -1,13 +1,13 @@
 import { Message, Channel, Member, Role } from '../interfaces';
 import express from "express";
-import { Client } from "pg";
+import cassandra from 'cassandra-driver';
 import crypto from 'crypto';
 import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage(), limits: {
     fileSize: 1000000000
 } })
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, uploadFile: any) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client, uploadFile: any) => {
 
     app.get('/guilds/*/channels/*/messages', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
@@ -19,38 +19,38 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const beforeId = req.query?.before;
         if (guildId && channelId) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id === channelId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        const channel = guild.channels.find((x: Channel) => x?.id?.toString() === channelId);
                         if (channel?.type === 'text') {
-                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
-                                let messages = channel.messages;
-                                const before = messages.findIndex((x: Message) => x?.id === beforeId) - 1;
+                            if (guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.map((x: string) => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
+                                let messages = channel.messages ?? [];
+                                const before = messages.findIndex((x: Message) => x?.id?.toString() === beforeId) - 1;
                                 if (beforeId) {
                                     messages = messages.slice(before - (before > 99 ? 100 : before), before + 1);
                                 } else {
                                     messages = messages.slice(-101);
                                 }
-                                database.query('SELECT * FROM users', async (err, dbRes) => {
-                                    if (!err) {
+                                database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                    
                                         messages = messages.filter((x: Message) => x).map((message: Message) => {
                                             if (message?.type !== 'WEBHOOK') {
-                                                if (message?.author !== '0') {
+                                                if (message?.author?.toString() !== '0000000-0000-0000-0000-000000000000') {
                                                     message.author = {
-                                                        id: message?.author as string,
-                                                        username: dbRes.rows.find(x => x?.id === message?.author)?.username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.nickname,
-                                                        roles:  JSON.parse(guild.members).find((x: Member) => x?.id === message?.author)?.roles,
-                                                        discriminator: dbRes.rows.find(x => x?.id === message?.author)?.discriminator ?? '0000',
-                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
-                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
-                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                        id: message?.author?.toString() as string,
+                                                        username: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.username ?? 'Deleted User',
+                                                        nickname: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString())?.nickname,
+                                                        roles:  guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString())?.roles,
+                                                        discriminator: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.discriminator ?? '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.about,
+                                                        type: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.type ?? 'UNKNOWN'
                                                     }
                                                 } else {
                                                     message.author = {
-                                                        id: '0',
+                                                        id: '0000000-0000-0000-0000-000000000000',
                                                         username: 'Harmony',
                                                         roles: [],
                                                         discriminator: '0000',
@@ -63,9 +63,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             return message;
                                         });
                                         res.send(messages);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -76,9 +74,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -95,33 +91,33 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const channel = JSON.parse(guild.channels).find((x: Channel) => x?.id === channelId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        const channel = guild.channels.find((x: Channel) => x?.id?.toString() === channelId);
                         if (channel?.type === 'text') {
-                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
+                            if (guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.map((x: string) => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).some((x: Role) => (x.permissions & 0x0000000040) === 0x0000000040)) {
                                 const messages = channel.messages;
-                                const message = messages.find((x: Message) => x?.id === messageId);
+                                const message = messages.find((x: Message) => x?.id?.toString() === messageId);
                                 if (message) {
-                                    database.query('SELECT * FROM users', async (err, dbRes) => {
-                                        if (!err) {
+                                    database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                        
                                             if (message?.type !== 'WEBHOOK') {
-                                                if (message?.author !== '0') {
+                                                if (message?.author?.toString() !== '0000000-0000-0000-0000-000000000000') {
                                                     message.author = {
-                                                        id: message?.author,
-                                                        username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                        nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
-                                                        roles: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).roles,
-                                                        discriminator: dbRes.rows.find(x => x?.id === message?.author).discriminator ?? '0000',
-                                                        avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
-                                                        about: dbRes.rows.find(x => x?.id === message?.author)?.about,
-                                                        type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                        id: message?.author?.toString(),
+                                                        username: dbRes.rows.find(x => x.id.toString() === message?.author?.toString())?.username ?? 'Deleted User',
+                                                        nickname: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).nickname,
+                                                        roles: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).roles,
+                                                        discriminator: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.discriminator ?? '0000',
+                                                        avatar: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.avatar ?? 'userDefault',
+                                                        about: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.about,
+                                                        type: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.type ?? 'UNKNOWN'
                                                     };
                                                 } else {
                                                     message.author = {
-                                                        id: '0',
+                                                        id: '0000000-0000-0000-0000-000000000000',
                                                         username: 'Harmony',
                                                         roles: [],
                                                         discriminator: '0000',
@@ -133,9 +129,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             }
 
                                             res.send(message);
-                                        } else {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
-                                        }
+                                        
                                     });
                                 } else {
                                     res.status(404).send({ error: "Not found." });
@@ -149,9 +143,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -167,15 +159,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const channelId = urlParams[1];
         if (guildId && channelId && req.body.content && req.body.content.length < 4001) {
-            database.query('SELECT * FROM guilds', async (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        let channels = JSON.parse(guild.channels);
-                        let channel = channels.find((x: Channel) => x?.id === channelId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(async dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        let channels = guild.channels;
+                        let channel = channels.find((x: Channel) => x?.id?.toString() === channelId);
                         if (channel?.type === 'text') {
-                            if (JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                let messages = channel.messages;
+                            if (guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.map((x: string) => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                let messages = channel.messages ?? [];
 
                                 const message: Message = {
                                     id: crypto.randomUUID(),
@@ -194,26 +186,26 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                                 messages.push(message);
                                 channel.messages = messages;
-                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                    if (!err) {
-                                        database.query('SELECT * FROM users', async (err, dbRes) => {
-                                            if (!err) {
+                                channels[channels.findIndex((x: Channel) => x?.id?.toString() === channelId)] = channel;
+                                database.execute('UPDATE guilds SET channels = ? WHERE id = ?', [channels, guildId], { prepare: true }).then(() => {
+                                    
+                                        database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                            
                                                 if (message?.type !== 'WEBHOOK') {
-                                                    if (message?.author !== '0') {
+                                                    if (message?.author?.toString() !== '0000000-0000-0000-0000-000000000000') {
                                                         message.author = {
-                                                            id: message?.author as string,
-                                                            username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                            nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
-                                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).roles,
-                                                            discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
-                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
-                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
-                                                            type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                            id: message?.author?.toString() as string,
+                                                            username: dbRes.rows.find(x => x.id.toString() === message?.author?.toString())?.username ?? 'Deleted User',
+                                                            nickname: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).nickname,
+                                                            roles: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).roles,
+                                                            discriminator: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.about,
+                                                            type: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
                                                         message.author = {
-                                                            id: message?.author,
+                                                            id: message?.author?.toString(),
                                                             username: 'Harmony',
                                                             roles: [],
                                                             discriminator: '0000',
@@ -223,21 +215,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         };
                                                     }
                                                 }
-                                                JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                                        websockets.get(member.id)?.forEach(websocket => {
+                                                guild.members.forEach((member: Member) => {
+                                                    if (member && member.roles.map(x => (channel.roles ?? []).find((y: Channel) => y.id.toString() === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                        websockets.get(member.id.toString())?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
                                                         });
                                                     }
                                                 });
                                                 res.status(201).send(message);
-                                            } else {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            }
+                                            
                                         });
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -248,9 +236,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -267,41 +253,41 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId && req.body.content && req.body.content.length < 4001) {
-            database.query('SELECT * FROM guilds', async (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        let channels = JSON.parse(guild.channels);
-                        let channel = channels.find((x: Channel) => x?.id === channelId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        let channels = guild.channels;
+                        let channel = channels.find((x: Channel) => x?.id?.toString() === channelId);
                         if (channel?.type === 'text') {
-                            let messages = channel.messages;
-                            let message = messages.find((x: Message) => x?.id === messageId);
-                            if (message.author === res.locals.user && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                            let messages = channel.messages ?? [];
+                            let message = messages.find((x: Message) => x?.id?.toString() === messageId);
+                            if (message.author.toString() === res.locals.user && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.map((x: string) => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
 
                                 message.content = req.body.content;
                                 message.edited = Date.now();
-                                messages[messages.findIndex((x: Message) => x?.id === messageId)] = message;
+                                messages[messages.findIndex((x: Message) => x?.id?.toString() === messageId)] = message;
                                 channel.messages = messages;
-                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                    if (!err) {
-                                        database.query('SELECT * FROM users', async (err, dbRes) => {
-                                            if (!err) {
+                                channels[channels.findIndex((x: Channel) => x?.id?.toString() === channelId)] = channel;
+                                database.execute('UPDATE guilds SET channels = ? WHERE id = ?', [channels, guildId], { prepare: true }).then(() => {
+                                    
+                                        database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                            
                                                 if (message?.type !== 'WEBHOOK') {
-                                                    if (message?.author !== '0') {
+                                                    if (message?.author?.toString() !== '0000000-0000-0000-0000-000000000000') {
                                                         message.author = {
-                                                            id: message?.author,
-                                                            username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                            nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
-                                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).roles,
-                                                            discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
-                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
-                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
-                                                            type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                            id: message?.author?.toString(),
+                                                            username: dbRes.rows.find(x => x.id.toString() === message?.author?.toString())?.username ?? 'Deleted User',
+                                                            nickname: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).nickname,
+                                                            roles: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).roles,
+                                                            discriminator: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.about,
+                                                            type: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
                                                         message.author = {
-                                                            id: message?.author,
+                                                            id: message?.author?.toString(),
                                                             username: 'Harmony',
                                                             roles: [],
                                                             discriminator: '0000',
@@ -311,21 +297,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         };
                                                     }
                                                 }
-                                                JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                                        websockets.get(member.id)?.forEach(websocket => {
+                                                guild.members.forEach((member: Member) => {
+                                                    if (member && member.roles.map(x => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                        websockets.get(member.id.toString())?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageEdited', guild: guildId, channel: channelId, message: message }));
                                                         });
                                                     }
                                                 });
                                                 res.send(message);
-                                            } else {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            }
+                                            
                                         });
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -336,9 +318,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -355,42 +335,44 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const messageId = urlParams[2];
         if (guildId && channelId && messageId) {
-            database.query('SELECT * FROM guilds', async (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        let channels = JSON.parse(guild.channels);
-                        let channel = channels.find((x: Channel) => x?.id === channelId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        let channels = guild.channels;
+                        let channel = channels.find((x: Channel) => x?.id?.toString() === channelId);
                         if (channel?.type === 'text') {
-                            let messages = channel.messages;
-                            let message = messages.find((x: Message) => x?.id === messageId);
-                            if (message?.author === res.locals.user || JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)?.roles.map((x: string) => channel.roles.find((y: Role) => y.id === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                            let messages = channel.messages ?? [];
+                            let message = messages.find((x: Message) => x?.id?.toString() === messageId);
+                            if (message?.author?.toString() === res.locals.user || guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.map((x: string) => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).some((x: Role) => (x.permissions & 0x0000000080) === 0x0000000080)) {
 
-                                delete messages[messages.findIndex((x: Message) => x?.id === messageId)];
+                                messages.splice(messages.findIndex((x: Message) => x?.id?.toString() === messageId), 1);
                                 channel.messages = messages;
-                                if (channel.pins.includes(messageId)) {
-                                    channel.pins.splice(channel.pins.indexOf(messageId), 1);
+                                let pins = channel.pins ?? [];
+                                if (pins.includes(messageId)) {
+                                    pins.splice(pins.indexOf(messageId), 1);
                                 }
-                                channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                                database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                    if (!err) {
-                                        database.query('SELECT * FROM users', async (err, dbRes) => {
-                                            if (!err) {
+                                channel.pins = pins;
+                                channels[channels.findIndex((x: Channel) => x?.id?.toString() === channelId)] = channel;
+                                database.execute('UPDATE guilds SET channels = ? WHERE id = ?', [channels, guildId], { prepare: true }).then(() => {
+                                    
+                                        database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                            
                                                 if (message?.type !== 'WEBHOOK') {
-                                                    if (message?.author !== '0') {
+                                                    if (message?.author?.toString() !== '0000000-0000-0000-0000-0000000000000') {
                                                         message.author = {
-                                                            id: message?.author,
-                                                            username: dbRes.rows.find(x => x.id === message?.author).username ?? 'Deleted User',
-                                                            nickname: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).nickname,
-                                                            roles: JSON.parse(guild.members).find((x: Member) => x?.id === message?.author).roles,
-                                                            discriminator: dbRes.rows.find(x => x.id === message?.author).discriminator ?? '0000',
-                                                            avatar: dbRes.rows.find(x => x?.id === message?.author)?.avatar ?? 'userDefault',
-                                                            about: dbRes.rows.find(x => x?.id === message?.author)?.about,
-                                                            type: dbRes.rows.find(x => x?.id === message?.author)?.type ?? 'UNKNOWN'
+                                                            id: message?.author?.toString(),
+                                                            username: dbRes.rows.find(x => x.id.toString() === message?.author?.toString())?.username ?? 'Deleted User',
+                                                            nickname: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).nickname,
+                                                            roles: guild.members.find((x: Member) => x?.id?.toString() === message?.author?.toString()).roles,
+                                                            discriminator: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.discriminator ?? '0000',
+                                                            avatar: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.avatar ?? 'userDefault',
+                                                            about: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.about,
+                                                            type: dbRes.rows.find(x => x?.id?.toString() === message?.author?.toString())?.type ?? 'UNKNOWN'
                                                         };
                                                     } else {
                                                         message.author = {
-                                                            id: '0',
+                                                            id: '0000000-0000-0000-0000-000000000000',
                                                             username: 'Harmony',
                                                             roles: [],
                                                             discriminator: '0000',
@@ -400,22 +382,18 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                         };
                                                     }
                                                 }
-                                                JSON.parse(guild.members).forEach((member: Member) => {
-                                                    if (member && member.roles.map(x => channel.roles.find((y: Role) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
-                                                        websockets.get(member.id)?.forEach(websocket => {
+                                                guild.members.forEach((member: Member) => {
+                                                    if (member && member.roles.map(x => (channel.roles ?? []).find((y: Role) => y.id.toString() === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                                                        websockets.get(member.id.toString())?.forEach(websocket => {
                                                             websocket.send(JSON.stringify({ event: 'messageDeleted', guild: guildId, channel: channelId, message: messageId }));
                                                             websocket.send(JSON.stringify({ event: 'messageUnpinned', guild: guildId, channel: channelId, message: messageId }));
                                                         });
                                                     }
                                                 });
                                                 res.send(message);
-                                            } else {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            }
+                                            
                                         });
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -426,9 +404,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });

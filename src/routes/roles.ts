@@ -1,9 +1,9 @@
 import { Role, Member } from "../interfaces";
 import express from "express";
-import { Client } from "pg";
+import cassandra from 'cassandra-driver';
 import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client) => {
 
     app.get('/guilds/*/roles/*', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
@@ -14,22 +14,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const roleId = urlParams[1];
         if (guildId) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const roles = JSON.parse(guild?.roles);
-                        if (roles.find((x: Role) => x?.id === roleId)) {
-                            res.send(roles.find((x: Role) => x?.id === roleId));
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        const roles = guild?.roles ?? [];
+                        if (roles.find((x: Role) => x?.id?.toString() === roleId)) {
+                            res.send(roles.find((x: Role) => x?.id?.toString() === roleId));
                         } else {
                             res.status(404).send({ error: "Not found." });
                         }
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -44,61 +42,61 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             })[0];
         if (guildId) {
             if (req.body.name && req.body.name.length < 31) {
-                database.query('SELECT * FROM guilds', (err, dbRes) => {
-                    if (!err) {
-                        const guild = dbRes.rows.find(x => x?.id === guildId);
+                database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                    const guild = dbRes.rows[0];
                         if (guild) {
-                            const roles = JSON.parse(guild.roles);
-                            const members = JSON.parse(guild.members);
-                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
+                            const roles = guild.roles ?? [];
+                            const members = guild.members;
+                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id?.toString() === x)?.permissions & 0x0000000800) === 0x0000000800)) {
                                 let permissions = 0;
                                 let permissionsCodes: number[] = [];
                                 req.body.permissions?.forEach((permission: string) => {
                                     switch (permission) {
                                         case 'CREATE_INSTANT_INVITE':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000001) === 0x0000000001)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000001) === 0x0000000001)) {
                                                 permissionsCodes.push(0x0000000001);
                                             }
                                             break;
 
                                         case 'KICK_MEMBERS':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000002) === 0x0000000002)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000002) === 0x0000000002)) {
                                                 permissionsCodes.push(0x0000000002);
                                             }
                                             break;
 
                                         case 'BAN_MEMBERS':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000004) === 0x0000000004)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000004) === 0x0000000004)) {
                                                 permissionsCodes.push(0x0000000004);
                                             }
                                             break;
 
                                         case 'MANAGE_GUILD':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000010) === 0x0000000010)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000010) === 0x0000000010)) {
                                                 permissionsCodes.push(0x0000000010);
                                             }
                                             break;
 
                                         case 'VIEW_AUDIT_LOG':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000020) === 0x0000000020)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000020) === 0x0000000020)) {
                                                 permissionsCodes.push(0x0000000020);
                                             }
                                             break;
 
                                         case 'CHANGE_NICKNAME':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000200) === 0x0000000200)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000200) === 0x0000000200)) {
                                                 permissionsCodes.push(0x0000000200);
                                             }
                                             break;
 
                                         case 'MANAGE_NICKNAMES':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000400) === 0x0000000400)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000400) === 0x0000000400)) {
                                                 permissionsCodes.push(0x0000000400);
                                             }
                                             break;
 
                                         case 'MANAGE_ROLES':
-                                            if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000800) === 0x0000000800)) {
+                                            if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000800) === 0x0000000800)) {
                                                 permissionsCodes.push(0x0000000800);
                                             }
                                             break;
@@ -112,17 +110,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }, 0);
                                 const role = { id: crypto.randomUUID(), name: req.body.name, permissions: permissions, color: require('is-color')(req.body.color) ? req.body.color : null, hoist: req.body.hoist === true };
                                 roles.push(role);
-                                database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
-                                    if (!err) {
+                                database.execute('UPDATE guilds SET roles = ? WHERE id = ?', [roles, guildId], { prepare: true }).then(() => {
+                                    
                                         members.forEach((member: Member) => {
-                                            websockets.get(member?.id)?.forEach(websocket => {
+                                            websockets.get(member?.id?.toString())?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'roleCreated', guild: guildId, role: role }));
                                             });
                                         });
                                         res.status(201).send(role);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
 
                             } else {
@@ -131,9 +127,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(403).send({ error: "Missing permission." });
                         }
-                    } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                    }
+                    
                 });
             } else {
                 res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -152,64 +146,64 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const roleId = urlParams[1];
         if (guildId && roleId && req.body.name) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const roles = JSON.parse(guild.roles);
-                        const members = JSON.parse(guild.members);
-                        const role = roles.find((x: Role) => x?.id === roleId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        const roles = guild.roles ?? [];
+                        const members = guild.members;
+                        const role = roles.find((x: Role) => x?.id?.toString() === roleId);
                         if (role) {
-                            if (roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id === roleId) && members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800)) {
+                            if (roles.findIndex((role: Role) => members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id?.toString() === roleId) && members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id?.toString() === x)?.permissions & 0x0000000800) === 0x0000000800)) {
                                 let permissions = 0;
                                 let permissionsCodes: number[] = [];
                                 if (req.body.permissions) {
                                     req.body.permissions?.forEach((permission: string) => {
                                         switch (permission) {
                                             case 'CREATE_INSTANT_INVITE':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000001) === 0x0000000001)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000001) === 0x0000000001)) {
                                                     permissionsCodes.push(0x0000000001);
                                                 }
                                                 break;
 
                                             case 'KICK_MEMBERS':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000002) === 0x0000000002)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000002) === 0x0000000002)) {
                                                     permissionsCodes.push(0x0000000002);
                                                 }
                                                 break;
 
                                             case 'BAN_MEMBERS':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000004) === 0x0000000004)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000004) === 0x0000000004)) {
                                                     permissionsCodes.push(0x0000000004);
                                                 }
                                                 break;
 
                                             case 'MANAGE_GUILD':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000010) === 0x0000000010)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000010) === 0x0000000010)) {
                                                     permissionsCodes.push(0x0000000010);
                                                 }
                                                 break;
 
                                             case 'VIEW_AUDIT_LOG':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000020) === 0x0000000020)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000020) === 0x0000000020)) {
                                                     permissionsCodes.push(0x0000000020);
                                                 }
                                                 break;
 
                                             case 'CHANGE_NICKNAME':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000200) === 0x0000000200)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000200) === 0x0000000200)) {
                                                     permissionsCodes.push(0x0000000200);
                                                 }
                                                 break;
 
                                             case 'MANAGE_NICKNAMES':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000400) === 0x0000000400)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000400) === 0x0000000400)) {
                                                     permissionsCodes.push(0x0000000400);
                                                 }
                                                 break;
 
                                             case 'MANAGE_ROLES':
-                                                if (members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id === x).permissions & 0x0000000800) === 0x0000000800)) {
+                                                if (members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y.id.toString() === x).permissions & 0x0000000800) === 0x0000000800)) {
                                                     permissionsCodes.push(0x0000000800);
                                                 }
                                                 break;
@@ -228,18 +222,16 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 role.permissions = permissions;
                                 role.color = require('is-color')(req.body.color) ? req.body.color : req.body.color != false ? role.color : null;
                                 role.hoist = typeof req.body.hoist === 'boolean' ? req.body.hoist : role.hoist;
-                                roles[roles.findIndex((x: Role) => x?.id === roleId)] = role;
-                                database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
-                                    if (!err) {
+                                roles[roles.findIndex((x: Role) => x?.id?.toString() === roleId)] = role;
+                                database.execute('UPDATE guilds SET roles = ? WHERE id = ?', [roles, guildId], { prepare: true }).then(() => {
+                                    
                                         members.forEach((member: Member) => {
-                                            websockets.get(member?.id)?.forEach(websocket => {
+                                            websockets.get(member?.id?.toString())?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'roleEdited', guild: guildId, role: role }));
                                             });
                                         });
                                         res.send(role);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -250,9 +242,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -268,29 +258,27 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const guildId = urlParams[0];
         const roleId = urlParams[1];
         if (guildId && roleId) {
-            database.query('SELECT * FROM guilds', (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
-                    if (guild && JSON.parse(guild.members).find((x: Member) => x?.id === res.locals.user)) {
-                        const roles = JSON.parse(guild.roles);
-                        const members = JSON.parse(guild.members);
-                        const role = roles.find((x: Role) => x?.id === roleId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(dbRes => {
+                
+                const guild = dbRes.rows[0];
+                    if (guild && guild.members.find((x: Member) => x?.id?.toString() === res.locals.user)) {
+                        const roles = guild.roles ?? [];
+                        const members = guild.members;
+                        const role = roles.find((x: Role) => x?.id?.toString() === roleId);
                         if (role) {
-                            if (roles.findIndex((role: Role) => members.find((x: Member) => x?.id === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id === roleId) && members.find((x: Member) => x?.id === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id === x)?.permissions & 0x0000000800) === 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
-                                const index = roles.findIndex((x: Role) => x?.id === roleId);
-                                delete roles[index];
+                            if (roles.findIndex((role: Role) => members.find((x: Member) => x?.id?.toString() === res.locals.user)?.roles.includes(role.id)) < roles.findIndex((x: Role) => x?.id?.toString() === roleId) && members.find((x: Member) => x?.id?.toString() === res.locals.user).roles.find((x: string) => (roles.find((y: Role) => y?.id?.toString() === x)?.permissions & 0x0000000800) === 0x0000000800) && Number(roleId) != 0 && Number(roleId) != 1) {
+                                const index = roles.findIndex((x: Role) => x?.id?.toString() === roleId);
+                                roles.splice(index, 1);
 
-                                database.query('UPDATE guilds SET roles = $1 WHERE id = $2', [JSON.stringify(roles), guildId], (err, dbRes) => {
-                                    if (!err) {
+                                database.execute('UPDATE guilds SET roles = ? WHERE id = ?', [roles, guildId], { prepare: true }).then(() => {
+                                    
                                         members.forEach((member: Member) => {
-                                            websockets.get(member?.id)?.forEach(websocket => {
+                                            websockets.get(member?.id?.toString())?.forEach(websocket => {
                                                 websocket.send(JSON.stringify({ event: 'roleDeleted', guild: guildId, role: roleId }));
                                             });
                                         });
                                         res.send({});
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(403).send({ error: "Missing permission." });
@@ -301,9 +289,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });

@@ -19,11 +19,6 @@ export interface User {
     otp: string;
 };
 
-export interface Friend {
-    id: string;
-    blocked: boolean;
-}
-
 export interface ReturnedUser {
     id: string;
     username: string;

@@ -1,68 +1,131 @@
-import { Client } from "pg";
+import cassandra from "cassandra-driver";
 
-export default async (database: Client, logger: any) => {
+export default async (database: cassandra.Client, logger: any) => {
     await database.connect();
 
-    database.query(`CREATE TABLE IF NOT EXISTS users (
-        id text NOT NULL,
-        token text NOT NULL,
-        email text NOT NULL,
-        password text NOT NULL,
-        username text NOT NULL,
-        discriminator text NOT NULL,
-        avatar text NOT NULL,
-        about text NOT NULL,
-        creation text NOT NULL,
-        type text NOT NULL,
-        owner text NOT NULL,
-        verified boolean NOT NULL,
-        verificator text NOT NULL,
-        otp text NOT NULL,
+    database.execute(`CREATE TABLE IF NOT EXISTS users (
+        id uuid,
+        "token" text,
+        email text,
+        password text,
+        username text,
+        discriminator text,
+        avatar text,
+        about text,
+        creation bigint,
+        type text,
+        owner text,
+        verified BOOLEAN,
+        verificator text,
+        otp text,
         PRIMARY KEY (id)
-    )`, err => {
-        if (err) {
+    )`).catch(err => {
+        console.log(err);
             process.exit(-1);
-        }
+        });
+
+    database.execute(`CREATE TYPE IF NOT EXISTS channelRole (
+        id uuid,
+        permissions bigint
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
     });
 
-    database.query(`CREATE TABLE IF NOT EXISTS guilds (
-        id text NOT NULL,
-        name text NOT NULL,
-        description TEXT,
-        icon text NOT NULL,
-        public boolean NOT NULL,
-        channels text NOT NULL,
-        roles text NOT NULL,
-        members text NOT NULL,
-        bans text NOT NULL,
-        invites text NOT NULL,
-        PRIMARY KEY (id)
-    )`, err => {
-        if (err) {
-            process.exit(-1);
-        }
+    database.execute(`CREATE TYPE IF NOT EXISTS webhook (
+        "token" text,
+        username text
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
     });
 
-    database.query(`CREATE TABLE IF NOT EXISTS friends (
-        id text NOT NULL,
-        friends text NOT NULL,
-        PRIMARY KEY (id)
-    )`, err => {
-        if (err) {
-            process.exit(-1);
-        }
+    database.execute(`CREATE TYPE IF NOT EXISTS message (
+        id uuid,
+        author uuid,
+        content text,
+        creation bigint,
+        edited bigint,
+        type text
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
     });
 
-    database.query(`CREATE TABLE IF NOT EXISTS meta (
-        url text NOT NULL,
-        creation text NOT NULL,
-        title text NOT NULL,
-        description text NOT NULL,
-        image text NOT NULL,
+    database.execute(`CREATE TYPE IF NOT EXISTS channel (
+        id uuid,
+        position bigint,
+        name text,
+        topic text,
+        type text,
+        creation bigint,
+        roles list<frozen<channelRole>>,
+        webhooks list<frozen<webhook>>,
+        messages list<frozen<message>>,
+        pins list<uuid>
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
+
+    database.execute(`CREATE TYPE IF NOT EXISTS role (
+        id uuid,
+        name text,
+        permissions bigint,
+        color text,
+        hoist boolean
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
+
+    database.execute(`CREATE TYPE IF NOT EXISTS member (
+        id uuid,
+        nickname text,
+        roles list<text>
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
+
+    database.execute(`CREATE TYPE IF NOT EXISTS invite (
+        code text,
+        author uuid,
+        expiration bigint,
+        maxUses bigint,
+        uses bigint
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
+
+    database.execute(`CREATE TABLE IF NOT EXISTS guilds (
+        id uuid,
+        name text,
+        description text,
+        icon text,
+        public BOOLEAN,
+        channels list<frozen<channel>>,
+        roles list<frozen<role>>,
+        members list<frozen<member>>,
+        creation bigint,
+        bans list<text>,
+        invites list<frozen<invite>>,
+        PRIMARY KEY (id)
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
+
+    database.execute(`CREATE TABLE IF NOT EXISTS meta (
+        url text,
+        creation text,
+        title text,
+        description text,
+        image text,
         PRIMARY KEY (url)
-    )`, err => {
-        if (err) {
-            process.exit(-1);
-        }
+    )`).catch(err => {
+        console.log(err);
+        process.exit(-1);
     });
 };

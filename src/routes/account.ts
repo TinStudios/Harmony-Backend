@@ -4,18 +4,17 @@ import express from "express";
 import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
 import { importPKCS8 } from 'jose/key/import';
-import { Client } from 'pg';
+import cassandra from 'cassandra-driver';
 import crypto from 'crypto';
 import * as twofactor from 'node-2fa';
 import verify from '../utils/captcha';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, checkLogin: (token: string) => Promise<boolean | User>, recaptchaSecret: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client, logger: any, email: any, checkLogin: (token: string) => Promise<boolean | User>, recaptchaSecret: string, clientDomain: string) => {
     app.post('/login', (req: express.Request, res: express.Response) => {
         verify(recaptchaSecret, req.body.captcha).then(validated => {
             if (validated) {
-                database.query('SELECT * FROM users', async (err, dbRes) => {
-                    if (!err) {
-                        const user = dbRes.rows.find(x => x.email === req.body.email);
+                database.execute('SELECT * FROM users WHERE email = ? ALLOW FILTERING', [req.body.email], { prepare: true }).then(async dbRes => {
+                        const user = dbRes.rows[0];
                         if (user) {
                             try {
                                 if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id })) {
@@ -24,12 +23,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             const correct = Boolean(await checkLogin(user.token));
                                             if (!correct) {
                                                 const token = 'Bearer ' + await generateToken({ id: user.id });
-                                                database.query('UPDATE users SET token = $1 WHERE id = $2', [token, user.id], err => {
-                                                    if (!err) {
+                                                database.execute('UPDATE users SET "token" = ? WHERE id = ?', [token, user.id], { prepare: true }).then(() => {
                                                         res.send({ token: token });
-                                                    } else {
-                                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                                    }
                                                 });
                                             } else {
                                                 res.send({ token: user.token });
@@ -49,9 +44,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         } else {
                             res.status(401).send({ error: "Invalid information." });
                         }
-                    } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                    }
                 });
             } else {
                 res.status(401).send({ error: "Invalid captcha." });
@@ -63,18 +55,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         verify(recaptchaSecret, req.body.captcha).then(validated => {
             if (validated) {
                 if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email) && req.body.username && req.body.username.length < 31 && req.body.password) {
-                    database.query('SELECT * FROM users', async (err, dbRes) => {
-                        if (!err) {
-                            const badAccount = dbRes.rows.find(x => x.email === req.body.email);
+                    database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                        const badAccount = dbRes.rows.find(x => x.email === req.body.email);
                             if (!badAccount?.verified) {
                                 let canContinue = false;
 
                                 if (badAccount) {
-                                    database.query('DELETE FROM users WHERE id = $1', [badAccount.id], async (err, dbRes) => {
-                                        if (!err) {
-                                            canContinue = true;
-                                        }
-                                    });
+                                    await database.execute('DELETE FROM users WHERE id = ?', [badAccount.id]);
                                 } else {
                                     canContinue = true;
                                 }
@@ -85,8 +72,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     const token = 'Bearer ' + await generateToken({ id: id });
                                     const discriminator = generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator) ?? []);
                                     const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                                    database.query('INSERT INTO users (id, token, email, password, username, discriminator, about, avatar, creation, type, owner, verified, verificator, otp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)', [id, token, req.body.email, password, req.body.username, discriminator, '', 'userDefault', Date.now(), 'USER', '', false, verificator, ''], (err, dbRes) => {
-                                        if (!err) {
+                                    database.execute('INSERT INTO users (id, "token", email, password, username, discriminator, avatar, creation, type, verified, verificator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [id, token, req.body.email, password, req.body.username, discriminator, 'userDefault', Date.now(), 'USER', false, verificator], { prepare: true }).then(() => {
                                             try {
                                                 email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                                     'Subject: Verify your Harmony account!\n',
@@ -101,17 +87,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                                 logger.error("Error emailing " + req.body.email);
                                             }
                                             res.status(201).send({});
-                                        } else {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
-                                        }
                                     });
                                 }
                             } else {
                                 res.status(401).send({ error: "Email in use." });
                             }
-                        } else {
-                            res.status(500).send({ error: "Something went wrong with our server." });
-                        }
                     });
 
                 } else {
@@ -129,36 +109,26 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.verificator === verificator);
+        database.execute('SELECT * FROM users WHERE verificator = ? ALLOW FILTERING', [verificator], { prepare: true }).then(async dbRes => {
+                const user = dbRes.rows[0];
                 if (user) {
-                    database.query('UPDATE users SET verified = $1, verificator = $2 WHERE verificator = $3', [true, '', verificator], err => {
-                        if (!err) {
-                            res.send({ token: user.token });
-                        } else {
-                            res.status(500).send({ error: "Something went wrong with our server." });
-                        }
-                    });
+                    database.execute('UPDATE users SET verified = ?, verificator = ? WHERE id = ?', [true, '', user.id], { prepare: true }).then(() => {
+                        res.send({ token: user.token });
+                });
                 } else {
                     res.status(401).send({ error: "Invalid verification code." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
         });
     });
 
     app.post('/reset/send', (req: express.Request, res: express.Response) => {
         verify(recaptchaSecret, req.body.captcha).then(validated => {
             if (validated) {
-                database.query('SELECT * FROM users', async (err, dbRes) => {
-                    if (!err) {
-                        const user = dbRes.rows.find(x => x.email === req.body.email);
-
+                database.execute('SELECT * FROM users WHERE email = ? ALLOW FILTERING', [req.body.email], { prepare: true }).then(async dbRes => {
+                        const user = dbRes.rows[0];
+                        if(user) {
                         const verificator = Buffer.from(crypto.randomUUID()).toString('base64url');
-                        database.query('UPDATE users SET verificator = $1 WHERE id = $2', [verificator, user.id], (err, dbRes) => {
-                            if (!err) {
+                        database.execute('UPDATE users SET verificator = ? WHERE id = ?', [verificator, user.id], { prepare: true }).then(() => {
                                 try {
                                     email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                         'Subject: Reset your password\n',
@@ -174,14 +144,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                     logger.error("Error emailing " + req.body.email);
                                 }
                                 res.status(201).send({});
-                            } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
-                            }
                         });
-                    } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                    }
-                });
+                        } else {
+                            res.status(500).send({ error: "Something went wrong with our server." });
+                        }
+                    });
             } else {
                 res.status(401).send({ error: "Invalid captcha." });
             }
@@ -194,17 +161,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.verificator === verificator);
+        database.execute('SELECT * FROM users WHERE verificator = ? ALLOW FILTERING', [verificator], { prepare: true }).then(async dbRes => {
+            
+                const user = dbRes.rows[0];
                 if (user) {
                     res.send({});
                 } else {
                     res.status(401).send({ error: "Invalid reset code." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server" });
-            }
         });
     });
 
@@ -216,13 +180,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     .filter((x) => {
                         return x != '';
                     })[0];
-                database.query('SELECT * FROM users', async (err, dbRes) => {
-                    if (!err) {
-                        const user = dbRes.rows.find(x => x.verificator === verificator);
+                    database.execute('SELECT * FROM users WHERE verificator = ? ALLOW FILTERING', [verificator], { prepare: true }).then(async dbRes => {
+            
+                        const user = dbRes.rows[0];
                         if (user) {
                             const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                            database.query('UPDATE users SET token = $1, password = $2, verificator = $3 WHERE id = $4', [token, await argon2.hash(req.body.password, { type: argon2.argon2id }), '', user.id], (err, dbRes) => {
-                                if (!err) {
+                            database.execute('UPDATE users SET "token" = ?, password = ?, verificator = ? WHERE id = ?', [token, await argon2.hash(req.body.password, { type: argon2.argon2id }), '', user.id], { prepare: true }).then(() => {
+                                
                                     try {
                                         email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                             'Subject: Important changes to your account\n',
@@ -237,16 +201,11 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         logger.error("Error emailing " + req.body.email);
                                     }
                                     res.send({ token: token });
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
+                                
                             });
                         } else {
                             res.status(401).send({ error: "Invalid reset code." });
                         }
-                    } else {
-                        res.status(500).send({ error: "Something went wrong with our server." });
-                    }
                 });
             } else {
                 res.status(401).send({ error: "Invalid captcha." });

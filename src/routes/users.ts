@@ -1,10 +1,10 @@
 import express from 'express';
-import { ReturnedUser, Info } from '../interfaces';
+import { ReturnedUser, Info, User, Member } from '../interfaces';
 
 import argon2 from 'argon2';
 import { SignJWT } from 'jose/jwt/sign';
 import { importPKCS8 } from 'jose/key/import';
-import { Client } from 'pg';
+import cassandra from 'cassandra-driver';
 import mime from 'mime-types';
 import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage(), limits: {
@@ -12,28 +12,20 @@ const upload = multer({ storage: multer.memoryStorage(), limits: {
 } });
 import * as twofactor from 'node-2fa';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, email: any, uploadFile: any) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client, logger: any, email: any, uploadFile: any) => {
     app.get('/users/@me/guilds', (req: express.Request, res: express.Response) => {
-        database.query('SELECT * FROM guilds', (err, dbRes) => {
-            if (!err) {
-                const guilds = dbRes.rows.filter(x => x?.members?.includes(res.locals.user));
-                res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? JSON.parse(guild[x]) : x === 'members' ? Object.keys(JSON.parse(guild[x])).length : guild[x])[index] }), {})));
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
+        database.execute('SELECT * FROM guilds', { prepare: true }).then(dbRes => {
+                const guilds = dbRes.rows.filter(x => x?.members?.find((x: Member) => x.id.toString() === res.locals.user));
+                res.send(guilds.map(guild => Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').reduce((obj, key, index) => ({ ...obj, [key]: Object.keys(guild).filter(x => x !== 'invites' && x !== 'channels' && x !== 'bans').map(x => x === 'bans' || x === 'roles' ? guild[x] : x === 'members' ? Object.keys(guild[x]).length : guild[x])[index] }), {})));
         });
     });
 
     app.get('/users/@me', async (req: express.Request, res: express.Response) => {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === res.locals.user);
+        database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+                const user = dbRes.rows[0] as unknown as User;
                 const { token, password, verificator, otp, owner, ...rest } = user;
-                const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation), tfa: !!user.otp };
+                const returnedUser: ReturnedUser = { ...rest, creation: user.creation, tfa: !!user.otp };
                 res.send(returnedUser);
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
         });
     });
 
@@ -43,39 +35,33 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
             .filter((x) => {
                 return x != '';
             })[0];
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === userId);
+        database.execute('SELECT * FROM users WHERE id = ?', [userId], { prepare: true }).then(async dbRes => {
+            
+                const user = dbRes.rows[0];
                 if (user) {
-                    const { token, email, password, otp, verificator, ...rest } = user;
-                    const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation) };
+                    const { token, email, password, otp, verificator, ...rest } = user as unknown as User;
+                    const returnedUser: ReturnedUser = { ...rest, creation: user.creation };
                     res.send(returnedUser);
                 } else {
                     res.status(404).send({ error: "Not found." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
         });
     });
 
     app.delete('/users/@me', async (req: express.Request, res: express.Response) => {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === res.locals.user);
-                if (user.type === 'USER') {
+        database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+            
+            const user = dbRes.rows[0];
+                if (user?.type === 'USER') {
                     if (req.headers.password && (await argon2.verify(user.password, req.headers.password?.toString(), { type: argon2.argon2id }))) {
-                        database.query('DELETE FROM users WHERE token = $1', [req.headers.authorization], async (err, dbRes) => {
-                            if (!err) {
-                                const { token, password, verificator, otp, owner, ...rest } = user;
-                                const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation), tfa: !!user.otp };
-                                websockets.get(user.id)?.forEach(websocket => {
+                        database.execute('DELETE FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+                            
+                                const { token, password, verificator, otp, owner, ...rest } = user as unknown as User;
+                                const returnedUser: ReturnedUser = { ...rest, creation: user.creation, tfa: !!user.otp };
+                                websockets.get(user.id.toString())?.forEach(websocket => {
                                     websocket.send(JSON.stringify({ event: 'userDeleted', user: returnedUser }));
                                 });
                                 res.send({});
-                            } else {
-                                res.status(500).send({ error: "Something went wrong with our server." });
-                            }
                         });
                     } else {
                         res.status(401).send({ error: "Invalid information." });
@@ -83,18 +69,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 } else {
                     res.status(403).send({ error: "Only users can delete their account this way." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
         });
     });
 
     app.patch('/users/@me', async (req: express.Request, res: express.Response) => {
         if (req.body.currentPassword && (typeof req.body.username === 'undefined' || (req.body.username.length > 0 && req.body.username.length < 31)) && (typeof req.body.discriminator === 'undefined' || (!isNaN(Number(req.body.discriminator)) && req.body.discriminator.length === 4)) && (typeof req.body.about === 'undefined' || (req.body.about.length > 0 && req.body.about.length < 201)) && (typeof req.body.email === 'undefined' || /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(req.body.email))) {
-            database.query('SELECT * FROM users', async (err, dbRes) => {
-                if (!err) {
-                    const user = dbRes.rows.find(x => x.id === res.locals.user);
-                    if (user.type === 'USER') {
+            database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+            
+                const user = dbRes.rows.find(x => x.id === res.locals.user);
+                    if (user?.type === 'USER') {
                         if (await argon2.verify(user.password, req.body.currentPassword, { type: argon2.argon2id })) {
                             let discriminator = dbRes.rows.find(x => x.username === req.body.username && x.discriminator === user.discriminator) ? generateDiscriminator(dbRes.rows.filter(x => x.username === req.body.username).map(x => x.discriminator)) : user.discriminator;
                             if (req.body.discriminator) {
@@ -104,15 +87,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 }
                             }
                             const token = req.body.password ? 'Bearer ' + await generateToken({ id: user.id }) : user.token;
-                            database.query('UPDATE users SET username = $1, discriminator = $2, about = $3, email = $4, password = $5, token = $6 WHERE id = $7', [req.body.username ?? user.username, discriminator, req.body.about ?? user.about, req.body.email ?? user.email, req.body.password ? await argon2.hash(req.body.password, { type: argon2.argon2id }) : user.password, token, user.id], err => {
-                                if (!err) {
+                            database.execute('UPDATE users SET username = ?, discriminator = ?, about = ?, email = ?, password = ?, token = ? WHERE id = ?', [req.body.username ?? user.username, discriminator, req.body.about ?? user.about, req.body.email ?? user.email, req.body.password ? await argon2.hash(req.body.password, { type: argon2.argon2id }) : user.password, token, user.id], { prepare: true }).then(() => {
+                                
                                     let preReturnedUser = { ...user };
                                     preReturnedUser.username = req.body.username;
                                     preReturnedUser.discriminator = discriminator;
-                                    const { token, password, verificator, otp, owner, ...rest } = preReturnedUser;
-                                    const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation), tfa: !!user.otp };
+                                    const { token, password, verificator, otp, owner, ...rest } = preReturnedUser as unknown as User;
+                                    const returnedUser: ReturnedUser = { ...rest, creation: user.creation, tfa: !!user.otp };
 
-                                    websockets.get(user.id)?.forEach(websocket => {
+                                    websockets.get(user?.id?.toString())?.forEach(websocket => {
                                         websocket.send(JSON.stringify({ event: 'userEdited', user: returnedUser }));
                                     });
                                     if (req.body.email) {
@@ -120,20 +103,17 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                                 'Subject: Important changes to your account\n',
                                                 'From: harmonyopenchat@gmail.com\n',
-                                                'To: ' + user.email + '\n\n',
+                                                'To: ' + user?.email + '\n\n',
                                                 'Dear ' + returnedUser.username + '#' + returnedUser.discriminator + ':\n',
                                                 (req.body.email && !req.body.password ? 'We received and processed a request to change your account\'s email.' : req.body.password && !req.body.email ? 'We received and processed a request to change your account\'s password.' : 'We received and processed a request to change your account\'s email and password.') + '\n',
                                                 'If you didn\'t request this, please contact our support team as soon as possible.\n',
                                                 'Best regards,\n',
                                                 'Harmony Open Chat\n\n'].join('')).toString('base64url'));
                                         } catch {
-                                            logger.error("Error emailing " + user.email);
+                                            logger.error("Error emailing " + user?.email);
                                         }
                                     }
                                     res.send(returnedUser);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
                             });
                         } else {
                             res.status(401).send({ error: "Invalid information." });
@@ -141,9 +121,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Only users can edit their account this way." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -151,10 +128,10 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.post('/users/@me/otp', async (req: express.Request, res: express.Response) => {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === res.locals.user);
-                if (user.type === 'USER') {
+        database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(dbRes => {
+            
+            const user = dbRes.rows[0];
+                if (user?.type === 'USER') {
                     if (!user.otp) {
                         const secret = twofactor.generateSecret({ name: 'Harmony', account: user.email });;
                         res.send(secret);
@@ -164,9 +141,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 } else {
                     res.status(403).send({ error: "Only users can use 2FA." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." });
-            }
+            
         });
     });
 
@@ -178,15 +153,15 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 return x != '';
             })[0];
         if (req.body.password && otpCode) {
-            database.query('SELECT * FROM users', async (err, dbRes) => {
-                if (!err) {
-                    const user = dbRes.rows.find(x => x.id === res.locals.user);
-                    if (user.type === 'USER') {
+            database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+            
+                const user = dbRes.rows[0];
+                    if (user?.type === 'USER') {
                         if (!user.otp) {
                             if (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }) && twofactor.verifyToken(otpCode, req.body.otp)) {
                                 const token = 'Bearer ' + await generateToken({ id: user.id });
-                                database.query('UPDATE users SET token = $1, otp = $2 WHERE id = $3', [token, otpCode, user.id], err => {
-                                    if (!err) {
+                                database.execute('UPDATE users SET "token" = ?, otp = ? WHERE id = ?', [token, otpCode, user.id], { prepare: true }).then(() => {
+                                    
                                         try {
                                             email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                                 'Subject: Important changes to your account\n',
@@ -201,9 +176,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                             logger.error("Error emailing " + user.email);
                                         }
                                         res.send({});
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(401).send({ error: "Invalid information." });
@@ -214,9 +187,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Only users can use 2FA." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -225,14 +196,14 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     app.delete('/users/@me/otp', async (req: express.Request, res: express.Response) => {
         if (req.headers.password && req.headers.otp) {
-            database.query('SELECT * FROM users', async (err, dbRes) => {
-                if (!err) {
-                    const user = dbRes.rows.find(x => x.id === res.locals.user);
-                    if (user.otp) {
+            database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+            
+                const user = dbRes.rows[0];
+                    if (user?.otp) {
                         if (req.headers.password && (await argon2.verify(user.password, req.headers.password?.toString(), { type: argon2.argon2id })) && twofactor.verifyToken(user.otp, req.headers.otp?.toString())) {
                             const token = 'Bearer ' + await generateToken({ id: user.id });
-                            database.query('UPDATE users SET token = $1, otp = $2 WHERE id = $3', [token, '', user.id], err => {
-                                if (!err) {
+                            database.execute('UPDATE users SET "token" = ?, otp = ? WHERE id = ?', [token, '', user.id], { prepare: true }).then(() => {
+                                
                                     try {
                                         email.sendMessage(Buffer.from(['MIME-Version: 1.0\n',
                                             'Subject: Important changes to your account\n',
@@ -247,9 +218,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                         logger.error("Error emailing " + user.email);
                                     }
                                     res.send({});
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
+                                
                             });
                         } else {
                             res.status(401).send({ error: "Invalid information." });
@@ -257,9 +226,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "2FA not set up." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
+                
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
@@ -267,50 +234,44 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
     });
 
     app.patch('/users/@me/avatar', upload.single('avatar'), (req: express.Request, res: express.Response) => {
-        database.query('SELECT * FROM users', async (err, dbRes) => {
-            if (!err) {
-                const user = dbRes.rows.find(x => x.id === res.locals.user);
-                if (user.type === 'USER') {
+        database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(async dbRes => {
+            
+            const user = dbRes.rows[0];
+                if (user?.type === 'USER') {
                     if (req.body.password && (await argon2.verify(user.password, req.body.password, { type: argon2.argon2id }))) {
 
-                        const { token, password, verificator, otp, owner, ...rest } = user;
-                        const returnedUser: ReturnedUser = { ...rest, creation: Number(user.creation), tfa: !!user.otp };
+                        const { token, password, verificator, otp, owner, ...rest } = user as unknown as User;
+                        const returnedUser: ReturnedUser = { ...rest, creation: user.creation, tfa: !!user.otp };
                         if (req.file) {
                             if (mime.extension(req.file?.mimetype ?? '') === 'png') {
                                 const icon = await uploadFile(req.file);
-                                database.query('UPDATE users SET avatar = $1 WHERE id = $2', [icon, user.id], (err, dbRes) => {
-                                    if (!err) {
-                                        websockets.get(user.id)?.forEach(websocket => {
+                                database.execute('UPDATE users SET avatar = ? WHERE id = ?', [icon, user.id], { prepare: true }).then(() => {
+                                    
+                                        websockets.get(user.id.toString())?.forEach(websocket => {
                                             websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
                                         });
                                         res.send(returnedUser);
-                                    } else {
-                                        res.status(500).send({ error: "Something went wrong with our server." });
-                                    }
+                                    
                                 });
                             } else {
                                 res.status(400).send({ error: "We only accept PNG." });
                             }
                         } else {
-                            database.query('SELECT * FROM users', (err, dbRes) => {
-                                if (!err) {
-                                    if (dbRes.rows.find(x => x.id === user.id).avatar) {
-                                        database.query('UPDATE users SET avatar = $1 WHERE id = $2', ['userDefault', user.id], (err, dbRes) => {
-                                            if (!err) {
+                            database.execute('SELECT * FROM users WHERE id = ?', [res.locals.user], { prepare: true }).then(dbRes => {
+                                
+                                    if (dbRes.rows[0]?.avatar) {
+                                        database.execute('UPDATE users SET avatar = ? WHERE id = ?', ['userDefault', user.id], { prepare: true }).then(() => {
+                                            
                                                 websockets.get(user.id)?.forEach(websocket => {
                                                     websocket.send(JSON.stringify({ event: 'userNewAvatar', user: returnedUser }));
                                                 });
                                                 res.send(returnedUser);
-                                            } else {
-                                                res.status(500).send({ error: "Something went wrong with our server." });
-                                            }
+                                            
                                         });
                                     } else {
                                         res.status(400).send({ error: "Something is missing or it's not appropiate." });
                                     }
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
+                                
                             });
                         }
                     } else {
@@ -319,9 +280,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                 } else {
                     res.status(403).send({ error: "Only users can delete their account this way." });
                 }
-            } else {
-                res.status(500).send({ error: "Something went wrong with our server." })
-            }
+            
         });
     });
 

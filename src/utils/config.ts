@@ -6,11 +6,8 @@ const schema = Joi.object({
   // NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
   NODE_ENV: Joi.string().valid('production', 'development').required(),
   SVR_PORT: Joi.number().default(3001),
-  DB_USER: Joi.string().default('postgres'),
-  DB_HOST: Joi.string().default('localhost'),
-  DB_PASSWORD: Joi.string().default(''),
-  DB_DATABASE: Joi.string().default('postgres'),
-  DB_PORT: Joi.number().default(5432),
+  DB_USERNAME: Joi.string().default('cassandra'),
+  DB_PASSWORD: Joi.string().default('cassandra'),
   STORAGE_DOMAIN: Joi.string().default('http://localhost:3001'),
   CLIENT_DOMAIN: Joi.string().default('http://localhost:3002'),
   STORAGE_API_KEY: Joi.string().required(),
@@ -31,11 +28,8 @@ export default {
     domain: value.CLIENT_DOMAIN
   },
   db: {
-    user: value.DB_USER,
-    host: value.DB_HOST,
+    username: value.DB_USERNAME,
     password: value.DB_PASSWORD,
-    database: value.DB_DATABASE,
-    port: value.DB_PORT,
   },
   storage: {
     domain: value.STORAGE_DOMAIN,

@@ -1,4 +1,4 @@
-import { Client } from 'pg';
+import cassandra from 'cassandra-driver';
 import { createServer } from 'http';
 import { WebSocketServer, Server } from 'ws';
 
@@ -11,12 +11,14 @@ import routes from './routes';
 import db from './utils/db';
 
 const wss = new WebSocketServer({ noServer: true });
-const database = new Client({
-  user: config.db.user,
-  host: config.db.host,
-  database: config.db.database,
-  password: config.db.password,
-  port: config.db.port,
+const database = new cassandra.Client({
+  contactPoints: ['127.0.0.1'],
+  localDataCenter: 'datacenter1',
+  keyspace: 'harmony',
+  credentials: {
+    username: config.db.username,
+    password: config.db.password
+  }
 });
 
 const logger = createLogger(config.env === 'development');

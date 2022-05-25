@@ -1,5 +1,5 @@
 import express from 'express';
-import { Client } from 'pg';
+import cassandra from 'cassandra-driver';
 import got from 'got-cjs';
 import { Blob } from 'node:buffer';
 import { FormData } from 'formdata-node';
@@ -30,13 +30,11 @@ import bans from './bans';
 
 import guilds from './guilds';
 
-import friends from './friends';
-
 import bots from './bots';
 
 import webhooks from './webhooks';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client, logger: any, storageApiKey: string, recaptchaSecret: string, storageDomain: string, clientDomain: string) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client, logger: any, storageApiKey: string, recaptchaSecret: string, storageDomain: string, clientDomain: string) => {
     email.authorize();
 
     account(websockets, app, database, logger, email, checkLogin, recaptchaSecret, clientDomain);
@@ -55,7 +53,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             res.status(403).send({ error: "Bots can't have bots." });
                         }
                     } else {
-                        res.locals.user = user.id;
+                        res.locals.user = user.id.toString();
                         next();
                     }
                 } else {
@@ -87,16 +85,13 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     guilds(websockets, app, database, uploadFile);
 
-    friends(websockets, app, database);
-
     bots(websockets, app, database, uploadFile);
 
     app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (req.url.startsWith('/meta/')) {
             const url = req.url.replace('/meta/', '');
-            database.query('SELECT * FROM meta', async (err, dbRes) => {
-                if (!err) {
-                    const metasDb = dbRes.rows.find(x => x.url === url)
+            database.execute('SELECT * FROM meta WHERE url id = ?', [url], { prepare: true }).then(async dbRes => {     
+                    const metasDb = dbRes.rows[0];
                     if (!metasDb || (metasDb && Date.now() > (metasDb.creation + 86400000))) {
                         try {
                             const response = await got.get(url, {
@@ -113,12 +108,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                             metas.title = html('meta[property="og:title"]').attr('content') ?? html('meta[property="title"]').attr('content') ?? '';
                             metas.description = html('meta[property="og:description"]').attr('content') ?? html('meta[property="description"]').attr('content') ?? '';
                             metas.image = html('meta[property="og:image"]').attr('content') ?? '';
-                            database.query('INSERT INTO meta (url, creation, title, description, image) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO UPDATE SET creation = $2, title = $3, description = $4, image = $5', [url, Date.now(), metas.title, metas.description, metas.image], (err, dbRes) => {
-                                if (!err) {
+                            database.execute('INSERT INTO meta (url, creation, title, description, image) VALUES (?, ?, ?, ?, ?)', [url, Date.now(), metas.title, metas.description, metas.image], { prepare: true }).then(() => {
                                     res.send(metas);
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
                             });
                         } catch {
                             res.status(500).send({ error: "Something went wrong with our server." });
@@ -128,9 +119,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                         delete metasDb.creation;
                         res.send(metasDb);
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
             });
         } else if (req.url.startsWith('/proxy/')) {
             try {
@@ -168,9 +156,8 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
     async function checkLogin(token: string): Promise<User | boolean> {
         return await new Promise(resolve => {
-            database.query('SELECT * FROM users', async (err, res) => {
-                if (!err) {
-                    if (res.rows.find(x => x.token === token) && res.rows.find(x => x.token === token).verified) {
+            database.execute('SELECT * FROM users WHERE "token" = ? ALLOW FILTERING', [token], { prepare: true }).then(async res => {
+                    if (res.rows[0]?.verified) {
                         try {
                             const { importSPKI } = require('jose/key/import');
                             const { jwtVerify } = require('jose/jwt/verify');
@@ -181,7 +168,7 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                                 issuer: 'harmony',
                                 audience: 'harmony'
                             });
-                            resolve(res.rows.find(x => x.token === token));
+                            resolve(res.rows.find(x => x.token === token) as unknown as User);
 
                         } catch {
                             resolve(false);
@@ -189,9 +176,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         resolve(false);
                     }
-                } else {
-                    resolve(false);
-                }
             });
         });
     }

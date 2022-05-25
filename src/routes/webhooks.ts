@@ -1,9 +1,9 @@
 import { Message, Channel, Member, Role, Webhook } from '../interfaces';
 import express from "express";
-import { Client } from "pg";
+import cassandra from 'cassandra-driver';
 import crypto from 'crypto';
 
-export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: Client) => {
+export default (websockets: Map<string, WebSocket[]>, app: express.Application, database: cassandra.Client) => {
 
     app.post('/webhooks/guilds/*/channels/*/messages/*', (req: express.Request, res: express.Response) => {
         const urlParams = Object.values(req.params)
@@ -15,20 +15,21 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
         const channelId = urlParams[1];
         const token = urlParams[2];
         if (guildId && channelId && token && req.body.content && req.body.content.length < 4001) {
-            database.query('SELECT * FROM guilds', async (err, dbRes) => {
-                if (!err) {
-                    const guild = dbRes.rows.find(x => x?.id === guildId);
+            database.execute('SELECT * FROM guilds WHERE id = ?', [guildId], { prepare: true }).then(async dbRes => {
+                
+                    const guild = dbRes.rows[0];
                     if (guild) {
-                        let channels = JSON.parse(guild.channels);
-                        let channel = channels.find((x: Channel) => x?.id === channelId);
-                        if (channel && channel.webhooks.find((x: Webhook) => x.token === token)) {
-                            let messages = channel.messages;
+                        let channels = guild.channels;
+                        let channel = channels.find((x: Channel) => x?.id?.toString() === channelId);
+                        const webhooks = channel.webhooks ?? [];
+                        if (channel && (webhooks ?? []).find((x: Webhook) => x.token === token)) {
+                            let messages = channel.messages ?? [];
 
                             const message: Message = {
                                 id: crypto.randomUUID(),
                                 author: {
                                     id: 'default',
-                                    username: req.body.username ?? channel.webhooks.find((x: Webhook) => x.token === token).username,
+                                    username: req.body.username ?? webhooks.find((x: Webhook) => x.token === token).username,
                                     roles: [],
                                     discriminator: '0000',
                                     avatar: 'botDefault',
@@ -43,26 +44,20 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
 
                             messages.push(message);
                             channel.messages = messages;
-                            channels[channels.findIndex((x: Channel) => x?.id === channelId)] = channel;
-                            database.query('UPDATE guilds SET channels = $1 WHERE id = $2', [JSON.stringify(channels), guildId], (err, dbRes) => {
-                                if (!err) {
-                                    database.query('SELECT * FROM users', async (err, dbRes) => {
-                                        if (!err) {
-                                            JSON.parse(guild.members).forEach((member: Member) => {
-                                                if (member && member.roles.map(x => channel.roles.find((y: Channel) => y.id === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
+                            channels[channels.findIndex((x: Channel) => x?.id?.toString() === channelId)] = channel;
+                            database.execute('UPDATE guilds SET channels = ? WHERE id = ?', [channels, guildId], { prepare: true }).then(() => {
+                                
+                                    database.execute('SELECT * FROM users', { prepare: true }).then(async dbRes => {
+                                        
+                                            guild.members.forEach((member: Member) => {
+                                                if (member && member.roles.map(x => (channel.roles ?? []).find((y: Channel) => y.id.toString() === x)).map(x => (x.permissions & 0x0000000080) === 0x0000000080)) {
                                                     websockets.get(member.id)?.forEach(websocket => {
                                                         websocket.send(JSON.stringify({ event: 'messageSent', guild: guildId, channel: channelId, message: message }));
                                                     });
                                                 }
                                             });
                                             res.status(201).send(message);
-                                        } else {
-                                            res.status(500).send({ error: "Something went wrong with our server." });
-                                        }
                                     });
-                                } else {
-                                    res.status(500).send({ error: "Something went wrong with our server." });
-                                }
                             });
                         } else {
                             res.status(404).send({ error: "Missing permission." });
@@ -70,9 +65,6 @@ export default (websockets: Map<string, WebSocket[]>, app: express.Application, 
                     } else {
                         res.status(403).send({ error: "Missing permission." });
                     }
-                } else {
-                    res.status(500).send({ error: "Something went wrong with our server." });
-                }
             });
         } else {
             res.status(400).send({ error: "Something is missing or it's not appropiate." });
